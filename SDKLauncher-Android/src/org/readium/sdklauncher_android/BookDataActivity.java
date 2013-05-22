@@ -13,69 +13,77 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class BookDataActivity extends Activity {
-	private Context context;
-	private Button back;
+    private Context context;
+    private Button back;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.book_data);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.book_data);
 
-		context = this;
-		back = (Button) findViewById(R.id.backToContainerView);
-		TextView bookname = (TextView) findViewById(R.id.bookname);
-		Intent intent = getIntent();
-		if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
-			Bundle extras = intent.getExtras();
-			if (extras != null) {
-				String value = extras.getString("bookname");
-				bookname.setText(value);
-			}
-		}
-		final ListView metadata = (ListView) findViewById(R.id.metaData);
-		final ListView pageList = (ListView) findViewById(R.id.pageList);
-		final ListView bookmark = (ListView) findViewById(R.id.bookmark);
-		int number = 0;
-		String bookmarks = "Bookmarks(" + number + ")";
-		String[] metadata_values = new String[] { "Metadata", "Spine" };
-		String[] pageList_values = new String[] { "List of Figures",
-				"List of Illustrations", "List of Tables", "Page List",
-				"Table of Contents" };
-		String[] bookmark_values = new String[] { bookmarks };
+        context = this;
+        back = (Button) findViewById(R.id.backToContainerView);
+        TextView bookname = (TextView) findViewById(R.id.bookname);
+        Intent intent = getIntent();
+        if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                String value = extras.getString("bookname");
+                bookname.setText(value);
+            }
+        }
 
-		this.setListViewContent(metadata, metadata_values);
-		this.setListViewContent(pageList, pageList_values);
-		this.setListViewContent(bookmark, bookmark_values);
-		initListener();
-	}
+        final ListView metadata = (ListView) findViewById(R.id.metaData);
+        final ListView pageList = (ListView) findViewById(R.id.pageList);
+        final ListView bookmark = (ListView) findViewById(R.id.bookmark);
 
-	private void setListViewContent(ListView view, String[] stringArray) {
-		final ArrayList<String> list = new ArrayList<String>();
-		for (int i = 0; i < stringArray.length; i++) {
-			list.add(stringArray[i]);
-		}
-		BookListAdapter bookListAdapter = new BookListAdapter(this, list);
-		view.setAdapter(bookListAdapter);
-		view.setOnItemClickListener(new ListView.OnItemClickListener() {
+        String[] metadata_values = new String[] { getString(R.string.metadata),
+                getString(R.string.spine_items) };
 
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				// TODO Auto-generated method stub
-				Toast.makeText(context, "this is item " + list.get(arg2),
-						Toast.LENGTH_SHORT).show();
-			}
-		});
-	}
+        String[] pageList_values = new String[] {
+                getString(R.string.list_of_figures),
+                getString(R.string.list_of_illustrations),
+                getString(R.string.list_of_tables),
+                getString(R.string.page_list),
+                getString(R.string.table_of_contents) };
 
-	private void initListener() {
-		back.setOnClickListener(new Button.OnClickListener() {
+        int number = 0;
+        String bookmarks = "Bookmarks(" + number + ")";
+        String[] bookmark_values = new String[] { bookmarks };
 
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				finish();
-			}
-		});
-	}
+        this.setListViewContent(metadata, metadata_values);
+        this.setListViewContent(pageList, pageList_values);
+        this.setListViewContent(bookmark, bookmark_values);
+
+        initListener();
+    }
+
+    private void setListViewContent(ListView view, String[] stringArray) {
+        final ArrayList<String> list = new ArrayList<String>();
+        for (int i = 0; i < stringArray.length; i++) {
+            list.add(stringArray[i]);
+        }
+        BookListAdapter bookListAdapter = new BookListAdapter(this, list);
+        view.setAdapter(bookListAdapter);
+        view.setOnItemClickListener(new ListView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                    long arg3) {
+                Toast.makeText(context, "this is item " + list.get(arg2),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void initListener() {
+        back.setOnClickListener(new Button.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                finish();
+            }
+        });
+    }
 }
