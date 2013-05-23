@@ -70,7 +70,7 @@ public class BookDataActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                     long arg3) {
-                Toast.makeText(context, "this is item " + list.get(arg2),
+                Toast.makeText(context, "this is item " + Integer.toString(arg2),
                         Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(getApplicationContext(),
