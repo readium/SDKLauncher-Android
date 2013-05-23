@@ -42,7 +42,7 @@ public class BookDataActivity extends Activity {
 
         ArrayList<Class<?>> classList = new ArrayList<Class<?>>();
         classList.add(MetaDataActivity.class);
-        classList.add(MetaDataActivity.class);
+        classList.add(SpineItemsActivity.class);
         this.setListViewContent(metadata, metadata_values, classList);
         classList = null;
         
