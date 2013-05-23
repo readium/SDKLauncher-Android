@@ -40,25 +40,41 @@ public class BookDataActivity extends Activity {
         String[] metadata_values = new String[] { getString(R.string.metadata),
                 getString(R.string.spine_items) };
 
+        ArrayList<Class<?>> classList = new ArrayList<Class<?>>();
+        classList.add(MetaDataActivity.class);
+        classList.add(MetaDataActivity.class);
+        this.setListViewContent(metadata, metadata_values, classList);
+        classList = null;
+        
         String[] pageList_values = new String[] {
                 getString(R.string.list_of_figures),
                 getString(R.string.list_of_illustrations),
                 getString(R.string.list_of_tables),
                 getString(R.string.page_list),
                 getString(R.string.table_of_contents) };
+        
+        classList = new ArrayList<Class<?>>();
+        classList.add(MetaDataActivity.class);
+        classList.add(MetaDataActivity.class);
+        classList.add(MetaDataActivity.class);
+        classList.add(MetaDataActivity.class);
+        classList.add(MetaDataActivity.class);
+        this.setListViewContent(pageList, pageList_values, classList);
+        classList = null;
 
         int number = 0;
         String bookmarks = "Bookmarks(" + number + ")";
         String[] bookmark_values = new String[] { bookmarks };
 
-        this.setListViewContent(metadata, metadata_values);
-        this.setListViewContent(pageList, pageList_values);
-        this.setListViewContent(bookmark, bookmark_values);
+        classList = new ArrayList<Class<?>>();
+        classList.add(MetaDataActivity.class);
+        this.setListViewContent(bookmark, bookmark_values, classList);
+        classList = null;
 
         initListener();
     }
 
-    private void setListViewContent(ListView view, String[] stringArray) {
+    private void setListViewContent(ListView view, String[] stringArray,final ArrayList<Class<?>> classList) {
         final ArrayList<String> list = new ArrayList<String>();
         for (int i = 0; i < stringArray.length; i++) {
             list.add(stringArray[i]);
@@ -74,7 +90,7 @@ public class BookDataActivity extends Activity {
                         Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(getApplicationContext(),
-                        MetaDataActivity.class);
+                		classList.get(arg2));
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra("bookname", bookname.getText());
                 startActivity(intent);
