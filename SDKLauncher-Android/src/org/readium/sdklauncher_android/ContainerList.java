@@ -46,6 +46,7 @@ public class ContainerList extends Activity {
                 Intent intent = new Intent(getApplicationContext(),
                         BookDataActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                //TODO: Get book content object.....
                 intent.putExtra("bookname", list.get(arg2));
                 startActivity(intent);
             }
