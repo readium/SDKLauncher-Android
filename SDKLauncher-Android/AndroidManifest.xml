@@ -30,6 +30,10 @@
             android:name="org.readium.sdklauncher_android.BookDataActivity"
             android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar">
         </activity>
-    </application>
+        <activity
+            android:name="org.readium.sdklauncher_android.MetaDataActivity"
+            android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar">
+        </activity>
+        </application>
 
 </manifest>

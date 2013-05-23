@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class BookDataActivity extends Activity {
     private Context context;
     private Button back;
-
+    private TextView bookname;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,7 +23,7 @@ public class BookDataActivity extends Activity {
 
         context = this;
         back = (Button) findViewById(R.id.backToContainerView);
-        TextView bookname = (TextView) findViewById(R.id.bookname);
+        bookname = (TextView) findViewById(R.id.bookname);
         Intent intent = getIntent();
         if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
             Bundle extras = intent.getExtras();
@@ -72,6 +72,12 @@ public class BookDataActivity extends Activity {
                     long arg3) {
                 Toast.makeText(context, "this is item " + list.get(arg2),
                         Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(getApplicationContext(),
+                        MetaDataActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("bookname", bookname.getText());
+                startActivity(intent);
             }
         });
     }
@@ -81,7 +87,6 @@ public class BookDataActivity extends Activity {
 
             @Override
             public void onClick(View v) {
-                // TODO Auto-generated method stub
                 finish();
             }
         });
