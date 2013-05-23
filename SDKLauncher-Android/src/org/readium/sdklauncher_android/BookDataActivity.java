@@ -54,11 +54,11 @@ public class BookDataActivity extends Activity {
                 getString(R.string.table_of_contents) };
         
         classList = new ArrayList<Class<?>>();
-        classList.add(MetaDataActivity.class);
-        classList.add(MetaDataActivity.class);
-        classList.add(MetaDataActivity.class);
-        classList.add(MetaDataActivity.class);
-        classList.add(MetaDataActivity.class);
+        classList.add(ListOfFiguresActivity.class);
+        classList.add(ListOfIllustrationsActivity.class);
+        classList.add(ListOfTablesActivity.class);
+        classList.add(PageListActivity.class);
+        classList.add(TableOfContentsActivity.class);
         this.setListViewContent(pageList, pageList_values, classList);
         classList = null;
 
@@ -67,7 +67,7 @@ public class BookDataActivity extends Activity {
         String[] bookmark_values = new String[] { bookmarks };
 
         classList = new ArrayList<Class<?>>();
-        classList.add(MetaDataActivity.class);
+        classList.add(BookmarksActivity.class);
         this.setListViewContent(bookmark, bookmark_values, classList);
         classList = null;
 
