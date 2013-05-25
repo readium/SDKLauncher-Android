@@ -3,14 +3,16 @@
  */
 package org.readium.sdklauncher_android;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
+
+import com.readium.EPubJNI;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,6 +25,7 @@ import android.widget.Toast;
  */
 public class ContainerList extends Activity {
     private Context context;
+    private final String testPath = "epubtest";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +38,16 @@ public class ContainerList extends Activity {
 
         BookListAdapter bookListAdapter = new BookListAdapter(this, list);
         view.setAdapter(bookListAdapter);
+
+        if (0 == list.size()) {
+            Toast.makeText(
+                    context,
+                    Environment.getExternalStorageDirectory().getAbsolutePath()
+                            + "/" + testPath
+                            + "/ is empty, copy epub3 test file first please.",
+                    Toast.LENGTH_LONG).show();
+        }
+
         view.setOnItemClickListener(new ListView.OnItemClickListener() {
 
             @Override
@@ -43,33 +56,39 @@ public class ContainerList extends Activity {
 
                 Toast.makeText(context, "Select " + list.get(arg2),
                         Toast.LENGTH_SHORT).show();
+
+                // TODO: Get book content object.....
+                EPubJNI jni = new EPubJNI();
+                int handle = jni.openBook(Environment
+                        .getExternalStorageDirectory().getAbsolutePath()
+                        + "/"
+                        + testPath + "/" + list.get(arg2));
+                // ---------------------------
+
                 Intent intent = new Intent(getApplicationContext(),
                         BookDataActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                //TODO: Get book content object.....
                 intent.putExtra("bookname", list.get(arg2));
                 startActivity(intent);
             }
         });
     }
 
-    // get books in asset
+    // get books in /sdcard/epubtest path
     private ArrayList<String> getInnerBooks() {
         ArrayList<String> list = new ArrayList<String>();
-        AssetManager assetManager = context.getAssets();
-        try {
-            String[] files = assetManager.list("TestData");
-            for (int i = 0; i < files.length; i++) {
-                String temp = files[i];
-                if (temp.length() > 5
-                        && temp.substring(temp.length() - 5).equals(".epub")) {
+        File sdcard = Environment.getExternalStorageDirectory();
+        File epubpath = new File(sdcard, "epubtest");
+        for (File f : epubpath.listFiles()) {
+            if (f.isFile()) {
+                String name = f.getName();
+                if (name.length() > 5
+                        && name.substring(name.length() - 5).equals(".epub")) {
 
-                    list.add(files[i]);
-                    Log.e("the books", files[i]);
+                    list.add(name);
+                    Log.i("books", name);
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return list;

@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
-//import android.view.Menu;
 import android.content.Intent;
 
 public class MainActivity extends Activity {
