@@ -1,6 +1,9 @@
 package org.readium.sdklauncher_android;
 
 import java.util.ArrayList;
+
+import com.readium.EPubJNI;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -86,13 +89,17 @@ public class BookDataActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                     long arg3) {
-                Toast.makeText(context, "this is item " + Integer.toString(arg2),
+                EPubJNI jni = new EPubJNI();
+                int handle  = jni.openBook("/sdcard/epubtest/a-christmas-carol3.epub");
+                
+                Toast.makeText(context, "this is item " + Integer.toString(arg2) + Integer.toString(handle),
                         Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(getApplicationContext(),
                 		classList.get(arg2));
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra("bookname", bookname.getText());
+                
                 startActivity(intent);
             }
         });
