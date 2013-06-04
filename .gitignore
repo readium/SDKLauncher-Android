@@ -2,6 +2,11 @@
 *.apk
 *.ap_
 
+# built native files
+*.o
+*.o.d
+*.so
+
 # files for the dex VM
 *.dex
 
@@ -17,4 +22,4 @@ local.properties
 
 # Eclipse project files
 .classpath
-.project
+#.project
