@@ -1,13 +1,17 @@
 /**
  * 
  */
-package org.readium.sdklauncher_android;
+package org.readium.sdk.android.launcher;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-import org.readium.sdk.android.Container;
 import org.readium.sdk.android.EPub3;
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 
 import android.app.Activity;
 import android.content.Context;
@@ -33,14 +37,15 @@ public class ContainerList extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.container_list);
         context = this;
+        BookmarkDatabase.initInstance(getApplicationContext());
         final ListView view = (ListView) findViewById(R.id.containerList);
 
-        final ArrayList<String> list = getInnerBooks();
+        final List<String> list = getInnerBooks();
 
         BookListAdapter bookListAdapter = new BookListAdapter(this, list);
         view.setAdapter(bookListAdapter);
 
-        if (0 == list.size()) {
+        if (list.isEmpty()) {
             Toast.makeText(
                     context,
                     Environment.getExternalStorageDirectory().getAbsolutePath()
@@ -58,39 +63,48 @@ public class ContainerList extends Activity {
                 Toast.makeText(context, "Select " + list.get(arg2),
                         Toast.LENGTH_SHORT).show();
 
-                // TODO: Get book content object.....
-                Container container = EPub3.openBook(Environment
-                        .getExternalStorageDirectory().getAbsolutePath()
-                        + "/"
-                        + testPath + "/" + list.get(arg2));
-                // ---------------------------
-
                 Intent intent = new Intent(getApplicationContext(),
                         BookDataActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra("bookname", list.get(arg2));
+                intent.putExtra(Constants.BOOK_NAME, list.get(arg2));
+
+                Container container = EPub3.openBook(Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + "/" + testPath + "/" + list.get(arg2));
+                ContainerHolder.getInstance().put(container.getNativePtr(), container);
+                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
                 startActivity(intent);
             }
         });
     }
 
     // get books in /sdcard/epubtest path
-    private ArrayList<String> getInnerBooks() {
-        ArrayList<String> list = new ArrayList<String>();
+    private List<String> getInnerBooks() {
+        List<String> list = new ArrayList<String>();
         File sdcard = Environment.getExternalStorageDirectory();
         File epubpath = new File(sdcard, "epubtest");
-        for (File f : epubpath.listFiles()) {
-            if (f.isFile()) {
-                String name = f.getName();
-                if (name.length() > 5
-                        && name.substring(name.length() - 5).equals(".epub")) {
-
-                    list.add(name);
-                    Log.i("books", name);
-                }
-            }
+        epubpath.mkdirs();
+        File[] files = epubpath.listFiles();
+		if (files != null) {
+	        for (File f : files) {
+	            if (f.isFile()) {
+	                String name = f.getName();
+	                if (name.length() > 5
+	                        && name.substring(name.length() - 5).equals(".epub")) {
+	
+	                    list.add(name);
+	                    Log.i("books", name);
+	                }
+	            }
+	        }
         }
+		Collections.sort(list, new Comparator<String>() {
 
+			@Override
+			public int compare(String s1, String s2) {
+				return s1.compareToIgnoreCase(s2);
+			}
+
+		});
         return list;
     }
 
