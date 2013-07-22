@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.readium.sdklauncher_android"
+    package="org.readium.sdk.android.launcher"
     android:versionCode="1"
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="org.readium.sdklauncher_android.MainActivity"
+            android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.NoTitleBar" >
             <intent-filter>
@@ -29,54 +29,58 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.ContainerList"
-            android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:name=".ContainerList"
+            android:label="@string/app_name">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.BookDataActivity"
+            android:name=".BookDataActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:launchMode="singleTask"
+            android:parentActivityName=".ContainerList">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.MetaDataActivity"
+            android:name=".MetaDataActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.SpineItemsActivity"
+            android:name=".SpineItemsActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.ListOfFiguresActivity"
+            android:name=".ListOfFiguresActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.ListOfIllustrationsActivity"
+            android:name=".ListOfIllustrationsActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.ListOfTablesActivity"
+            android:name=".ListOfTablesActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.PageListActivity"
+            android:name=".PageListActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.TableOfContentsActivity"
+            android:name=".TableOfContentsActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
-            android:name="org.readium.sdklauncher_android.BookmarksActivity"
+            android:name=".BookmarksActivity"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:parentActivityName=".BookDataActivity">
+        </activity>
+        <activity
+            android:name=".WebViewActivity"
+            android:label="@string/app_name" >
         </activity>
     </application>
 

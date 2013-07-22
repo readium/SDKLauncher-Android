@@ -6,6 +6,7 @@
     <string name="add_bookmark_prompt_placeholder">Name</string>
     <string name="add_bookmark_prompt_title">Add Bookmark</string>
     <string name="bookmarks">Bookmarks</string>
+    <string name="delete_bookmark">Do you want to delete this bookmark?</string>
     <string name="bookmarks_with_count">Bookmarks (%1$d)</string>
     <string name="container_list_title">Choose an EPUB</string>
     <string name="generic_cancel">Cancel</string>
@@ -29,5 +30,10 @@
     <string name="page_x_of_y">Page %1$d of %2$d</string>
     <string name="spine_items">Spine Items</string>
     <string name="table_of_contents">Table of Contents</string>
+    <string name="title_activity_web_view">WebViewActivity</string>
+    <string name="add_bookmark">Add bookmark</string>
+    <string name="title">Title</string>
+    <string name="left">&lt;&lt;</string>
+    <string name="right">&gt;&gt;</string>
 
 </resources>

@@ -14,6 +14,7 @@
             android:id="@+id/backToBookView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimaryInverse"
             android:text="@string/container_list_title" />
     </LinearLayout>
 
@@ -26,7 +27,8 @@
         <ListView
             android:id="@+id/listOfIllustrations"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:fastScrollEnabled="true">
         </ListView>
 
     </LinearLayout>

@@ -4,7 +4,6 @@
     android:layout_height="fill_parent"
     android:clickable="false"
     android:focusable="false"
-    android:background="#ffffff"
     android:focusableInTouchMode="false"
     android:orientation="vertical" >
 
@@ -15,7 +14,6 @@
         android:background="#ffffff"
         android:gravity="center_vertical"
         android:paddingLeft="20dip"
-        android:textColor="#000000"
         android:textIsSelectable="false" />
 
 </LinearLayout>

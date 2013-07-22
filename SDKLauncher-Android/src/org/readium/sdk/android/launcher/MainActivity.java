@@ -1,4 +1,4 @@
-package org.readium.sdklauncher_android;
+package org.readium.sdk.android.launcher;
 
 import android.os.Bundle;
 import android.os.Handler;
