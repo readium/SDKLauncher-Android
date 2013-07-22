@@ -6,6 +6,7 @@ package org.readium.sdklauncher_android;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.readium.sdk.android.Container;
 import org.readium.sdk.android.EPub3;
 
 import android.app.Activity;
@@ -58,8 +59,7 @@ public class ContainerList extends Activity {
                         Toast.LENGTH_SHORT).show();
 
                 // TODO: Get book content object.....
-                EPub3 epub = new EPub3();
-                int handle = epub.openBook(Environment
+                Container container = EPub3.openBook(Environment
                         .getExternalStorageDirectory().getAbsolutePath()
                         + "/"
                         + testPath + "/" + list.get(arg2));
