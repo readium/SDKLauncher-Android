@@ -1,7 +1,7 @@
 <LinearLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff"
+    android:background="@null"
     android:orientation="vertical"
     tools:context=".MainActivity" xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -14,13 +14,14 @@
             android:id="@+id/backToContainerView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimaryInverse"
             android:text="@string/container_list_title" />
 
         <TextView
             android:id="@+id/bookname"
             android:layout_width="fill_parent"
             android:layout_height="48dip"
-            android:background="#000000"
+            android:textColor="?android:attr/textColorPrimaryInverse"
             android:gravity="center"
             android:text=""
             android:textSize="@dimen/activity_horizontal_margin" />
@@ -33,37 +34,40 @@
         android:background="#cccccc"
         android:orientation="vertical" >
 
-        <TextView
+        <View
             android:layout_width="match_parent"
             android:layout_height="20dip" />
 
         <ListView
             android:id="@+id/metaData"
+    		android:background="#ffffff"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </ListView>
 
-        <TextView
+        <View
             android:layout_width="match_parent"
             android:layout_height="20dip"/>
 
         <ListView
             android:id="@+id/pageList"
+    		android:background="#ffffff"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </ListView>
 
-        <TextView
+        <View
             android:layout_width="match_parent"
             android:layout_height="20dip"/>
 
         <ListView
             android:id="@+id/bookmark"
+    		android:background="#ffffff"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </ListView>
 
-        <TextView
+        <View
             android:layout_width="match_parent"
             android:layout_height="20dip" />
     </LinearLayout>

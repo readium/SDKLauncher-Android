@@ -12,12 +12,14 @@
         android:layout_height="48dip"
         android:background="#000000"
         android:gravity="center"
+        android:textColor="?android:attr/textColorPrimaryInverse"
         android:text="@string/container_list_title"
         android:textAlignment="center" />
     <ListView
         android:id="@+id/containerList"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:fastScrollEnabled="true">
     </ListView>
 
 </LinearLayout>
