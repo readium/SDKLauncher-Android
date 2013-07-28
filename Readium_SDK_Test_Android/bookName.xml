@@ -1,0 +1,31 @@
+<books>
+	<bookname>Creative Commons - A Shared Culture.epub</bookname>
+	<bookname>ch.epub</bookname>
+	<bookname>epub2.epub</bookname>
+	<bookname>a-christmas-carol3.epub</bookname>
+	<bookname>igpn-28languages-01-EPUB3.epub</bookname>
+	<bookname>OCF_2.0.1_draft.epub</bookname>
+	<bookname>pg10609-images.epub</bookname>
+	<bookname>siddhartha3.epub</bookname>
+	<bookname>linear-algebra-20120306.epub</bookname>
+	<bookname>anchor_test.epub</bookname>
+	<bookname>BigTest.epub</bookname>
+	<bookname>GhV-oeb-page-20121015.epub</bookname>
+	<bookname>china.epub</bookname>
+	<bookname>aliceDynamic.epub</bookname>
+</books>
+<!-- <testBooks>
+	<bookname>siddhartha3.epub</bookname>
+	<bookname>a-christmas-carol3.epub</bookname>
+	<bookname>epub2.epub</bookname>
+	<bookname>siddhartha3.epub</bookname>
+</testBooks>
+<bigBook>
+	<bookname>Creative Commons - A Shared Culture.epub</bookname>
+</bigBook>
+<badBook>
+	<bookname>OCF_2.0.1_draft.epub</bookname>
+</badBook>
+<ghvBook>
+	<bookname>GhV-oeb-page-20121015.epub</bookname>
+</ghvBook> -->
