@@ -12,9 +12,7 @@ public class xmlReadTest extends AndroidTestCase {
 
 	public void testReadXml() throws Exception {
 		XmlReader read = new XmlReader();
-		Assert.assertEquals(14,
-				read.getValue(testPath + "bookName.xml", "bookname").size());
 		Assert.assertEquals("Creative Commons - A Shared Culture.epub", read
-				.getValue(testPath + "bookName.xml", "bookname").get(0));
+				.getValue(testPath + "bookName.xml", "epubBook/books/bookname").get(0));
 	}
 }

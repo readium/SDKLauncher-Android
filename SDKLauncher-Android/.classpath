@@ -5,5 +5,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="lib" path="/home/zwhu/下载/dom4j-2.0.0-ALPHA-2.jar"/>
+	<classpathentry kind="lib" path="/home/zwhu/下载/jaxen-1.1.6-bin.zip"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
