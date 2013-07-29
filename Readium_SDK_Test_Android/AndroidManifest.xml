@@ -9,6 +9,8 @@
     <instrumentation
         android:name="android.test.InstrumentationTestRunner"
         android:targetPackage="com.anfengde.epub.test" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
         android:icon="@drawable/ic_launcher"
