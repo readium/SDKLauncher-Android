@@ -12,25 +12,19 @@ import javax.xml.parsers.DocumentBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import android.os.Environment;
-
 public class XmlReader {
 
-	public List<String> getValue(String fileName, String tag) {
+	public List<String> getValue(String fileName, String selector) {
 		List<String> list = new ArrayList<String>();
-		String testPath = Environment.getExternalStorageDirectory().getPath()
-				+ "/readiumtest/" + fileName;
+		
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
 					.newInstance();
 			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			Document dom = docBuilder.parse(new File(testPath));
+			Document dom = docBuilder.parse(new File(fileName));
 			Element root = dom.getDocumentElement();
 
-			NodeList listOfBooks = root.getElementsByTagName(tag);
-			if (listOfBooks.getLength() == 0) {
-				return null;
-			}
+			NodeList listOfBooks = root.getElementsByTagName(selector);
 			for (int i = 0; i < listOfBooks.getLength(); i++) {
 				list.add(listOfBooks.item(i).getFirstChild().getNodeValue());
 			}
