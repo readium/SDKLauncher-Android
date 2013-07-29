@@ -12,7 +12,9 @@
  *      <file name="a.epub3" url="http://google.com/a.epub3" />
  *      <assert value="-1" msg="bad zip format"/>
  *  </testcase>
- *  <li> 
+ *  <li> tag function : can be single or list, describe readium sdk call flow  
+ *  <li> tag file: config file get url
+ *  <li> tag assert: can be single or list
  *  </ul>
  *  @author chtian@anfengde.com
  */
