@@ -5,15 +5,24 @@ import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.Package;
+import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.android.launcher.model.Page;
+import org.readium.sdk.android.launcher.model.PaginationInfo;
+import org.readium.sdk.android.launcher.model.ViewerSettings;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,13 +37,7 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.readium.sdk.android.Container;
-import org.readium.sdk.android.Package;
-import org.readium.sdk.android.launcher.model.BookmarkDatabase;
-import org.readium.sdk.android.launcher.model.Page;
-import org.readium.sdk.android.launcher.model.PaginationInfo;
-
-public class WebViewActivity extends Activity {
+public class WebViewActivity extends FragmentActivity implements ViewerSettingsDialog.OnViewerSettingsChange {
 
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
@@ -45,6 +48,7 @@ public class WebViewActivity extends Activity {
 	private Package pckg;
 	private String openPageRequestData;
 	private TextView pageInfo;
+	private ViewerSettings mViewerSettings;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +75,7 @@ public class WebViewActivity extends Activity {
 
         // Load the page skeleton
         webview.loadUrl(READER_SKELETON);
+        mViewerSettings = new ViewerSettings(false, 100, 20);
 	}
 	
 	@Override
@@ -97,20 +102,39 @@ public class WebViewActivity extends Activity {
 	}
 
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-	    if (item.getItemId() == R.id.add_bookmark) {
+	    int itemId = item.getItemId();
+	    switch (itemId) {
+	    case R.id.add_bookmark:
 			Log.i(TAG, "Add a bookmark");
 			bookmarkCurrentPage();
+			return true;
+	    case R.id.settings:
+			Log.i(TAG, "Show settings");
+			showSettings();
 			return true;
 	    }
 	    return false;
 	}
-	
+
 	public void onClick(View v) {
 		if (v.getId() == R.id.left) {
 			openPageLeft();
 		} else if (v.getId() == R.id.right) {
 			openPageRight();
 		}
+	}
+	
+	private void showSettings() {
+		FragmentManager fm = getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = fm.beginTransaction();
+		DialogFragment dialog = new ViewerSettingsDialog(this, mViewerSettings);
+        dialog.show(fm, "dialog");
+		fragmentTransaction.commit();
+	}
+
+	@Override
+	public void onViewerSettingsChange(ViewerSettings viewerSettings) {
+		updateSettings(viewerSettings);
 	}
 	
 	private void bookmarkCurrentPage() {
@@ -128,6 +152,16 @@ public class WebViewActivity extends Activity {
 	private void openBook(String packageData, String openPageRequest) {
 		Log.i(TAG, "packageData: "+packageData);
 		loadJSOnReady("ReadiumSDK.reader.openBook("+packageData+", "+openPageRequest+");");
+	}
+	
+	private void updateSettings(ViewerSettings viewerSettings) {
+		Log.i(TAG, "viewerSettings: "+viewerSettings);
+		mViewerSettings = viewerSettings;
+		try {
+			loadJSOnReady("ReadiumSDK.reader.updateSettings("+viewerSettings.toJSON().toString()+");");
+		} catch (JSONException e) {
+			Log.e(TAG, ""+e.getMessage(), e);
+		}
 	}
 	
 	private void openContentUrl(String href, String baseUrl) {
@@ -169,6 +203,7 @@ public class WebViewActivity extends Activity {
         	if (url.equals(READER_SKELETON)) {
         		Log.i(TAG, "openPageRequestData: "+openPageRequestData);
         		openBook(pckg.toJSON(), openPageRequestData);
+        		updateSettings(mViewerSettings);
         	}
         }
         

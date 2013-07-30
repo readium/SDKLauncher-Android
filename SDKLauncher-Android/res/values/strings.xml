@@ -32,8 +32,12 @@
     <string name="table_of_contents">Table of Contents</string>
     <string name="title_activity_web_view">WebViewActivity</string>
     <string name="add_bookmark">Add bookmark</string>
+    <string name="settings">Settings</string>
     <string name="title">Title</string>
     <string name="left">&lt;&lt;</string>
     <string name="right">&gt;&gt;</string>
+    <string name="fontSize">Font size (in %)</string>
+    <string name="columnGap">Column gap</string>
+    <string name="syntheticSpread">Synthetic spread</string>
 
 </resources>
