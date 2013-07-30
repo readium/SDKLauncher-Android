@@ -14,7 +14,7 @@ import android.os.Environment;
 
 public class DownloadFile {
     public static void downLoad(String dLName) {
-        String path = "epubtest";
+        String path = "readiumtest";
         String fileName = dLName;
         OutputStream output = null;
         boolean bookExist = false;
