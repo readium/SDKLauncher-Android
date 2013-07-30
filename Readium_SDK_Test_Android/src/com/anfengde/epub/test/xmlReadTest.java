@@ -1,5 +1,7 @@
 package com.anfengde.epub.test;
 
+import java.util.List;
+
 import junit.framework.Assert;
 import android.os.Environment;
 import android.test.AndroidTestCase;
@@ -13,17 +15,13 @@ public class xmlReadTest extends AndroidTestCase {
 
 	public void testReadXml() throws Exception {
 		XmlReader read = new XmlReader();
-		Assert.assertEquals("Creative Commons - A Shared Culture.epub", read
-				.getValue(testPath + "bookName.xml", "epubBook/books/bookname")
-				.get(0));
-	}
-
-	public void testLoadFiles() throws Exception {
-		XmlReader read = new XmlReader();
-		//DownloadFile down = new DownloadFile();
-		String bookname = read
-				.getValue(testPath + "bookName.xml", "epubBook/books/bookname")
-				.get(0);
-		DownloadFile.downLoad(bookname);
+		List<String> list = read
+				.getValue(testPath + "bookName.xml", "epubBook/books/bookname");
+		
+		Assert.assertEquals(14, list.size());
+		Assert.assertEquals("Creative Commons - A Shared Culture.epub",
+				list.get(0));
+		
+		DownloadFile.downLoad(list.get(0));
 	}
 }

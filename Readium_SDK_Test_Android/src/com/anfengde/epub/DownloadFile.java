@@ -14,7 +14,7 @@ import android.os.Environment;
 
 public class DownloadFile {
     public static void downLoad(String dLName) {
-        String path = "epubtest";
+        String path = "readiumtest";
         String fileName = dLName;
         OutputStream output = null;
         boolean bookExist = false;
@@ -30,19 +30,19 @@ public class DownloadFile {
             String pathName = SDCard + "/" + path + "/" + fileName;
 
             File file = new File(pathName);
-            if (fileName == "bookName.ini" && file.exists())
+            if (fileName == "bookName.xml" && file.exists())
                 file.delete();
-            if (fileName == "expectedData.ini" && file.exists())
-                file.delete();
-            if (fileName == "TestData.ini" && file.exists())
-                file.delete();
+//            if (fileName == "expectedData.ini" && file.exists())
+//                file.delete();
+//            if (fileName == "TestData.ini" && file.exists())
+//                file.delete();
             if (file.exists()) {
                 System.out.println("exits");
                 bookExist = true;
             } else {
                 InputStream input = conn.getInputStream();
                 String dir = SDCard + "/" + path;
-                new File(dir).mkdirs();
+                new File(dir).mkdir();
                 file.createNewFile();
                 output = new FileOutputStream(file);
                 byte[] buffer = new byte[4 * 1024];
