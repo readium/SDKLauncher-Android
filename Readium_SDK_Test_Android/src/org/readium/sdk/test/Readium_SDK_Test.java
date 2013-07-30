@@ -19,7 +19,7 @@
  *  
  *  @author chtian@anfengde.com
  */
-package com.anfengde.epub.test;
+package org.readium.sdk.test;
 
 import junit.framework.Assert;
 import android.test.AndroidTestCase;

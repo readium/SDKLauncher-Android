@@ -1,4 +1,4 @@
-package com.anfengde.epub;
+package org.readium.sdk.test.util;
 
 import java.io.File;
 import java.io.FileOutputStream;

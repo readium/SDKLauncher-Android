@@ -1,13 +1,14 @@
-package com.anfengde.epub.test;
+package org.readium.sdk.test;
 
 import java.util.List;
+
+import org.readium.sdk.test.util.DownloadFile;
+import org.readium.sdk.test.util.XmlReader;
 
 import junit.framework.Assert;
 import android.os.Environment;
 import android.test.AndroidTestCase;
 
-import com.anfengde.epub.DownloadFile;
-import com.anfengde.epub.XmlReader;
 
 public class xmlReadTest extends AndroidTestCase {
 	private final static String testPath = Environment

@@ -2,10 +2,9 @@
  * readium test case data class definition
  * 
  */
-package com.anfengde.epub.test;
+package org.readium.sdk.test;
 
 import java.util.List;
-import javax.s
 /**
  * @author chtian@anfengde.com
  * 
