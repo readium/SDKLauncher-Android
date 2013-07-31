@@ -44,9 +44,11 @@ public class Readium_SDK_Test extends AndroidTestCase {
         super.setUp();
         //download default test case config file
         if (!firstDownload){
-            Util.download("", "");
+            Util.download(Util.getConfig_url(), Util.getConfig_file());
             firstDownload = true;
         }
+        
+        //tests = getAllTests(Util.getConfig_file());
     }
 
     protected void tearDown() throws Exception {

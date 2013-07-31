@@ -26,6 +26,15 @@ public class Util {
      * test case config url
      */
     private static String config_url = "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/TestCase.xml";
+    private static String config_file = "TestCase.xml";
+    
+    public static final String getConfig_url() {
+        return config_url;
+    }
+
+    public static final String getConfig_file() {
+        return config_file;
+    }
 
     public static final String getCachePath() {
         return cachePath;
