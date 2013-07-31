@@ -23,6 +23,6 @@ public class xmlReadTest extends AndroidTestCase {
 		Assert.assertEquals("Creative Commons - A Shared Culture.epub",
 				list.get(0));
 		
-		Util.download(list.get(0));
+		Util.download(list.get(0), "");
 	}
 }

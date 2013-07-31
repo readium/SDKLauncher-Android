@@ -12,13 +12,21 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 
 import android.os.Environment;
+import android.util.Log;
 
 public class Util {
+    private static final String TAG = "Download";
+    /**
+     * local cache
+     */
     private static String cachePath = "readium_test";
-    
+    /**
+     * test case config url
+     */
+    private static String config_url = "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/TestCase.xml";
+
     public static final String getCachePath() {
         return cachePath;
     }
@@ -27,38 +35,59 @@ public class Util {
         Util.cachePath = cachePath;
     }
 
-    public static void download(String dLName) {
-        String fileName = dLName;
+    /**
+     * check dir is exist or not, create dir when is not exist
+     * 
+     * @param dir
+     *            the dir name string
+     */
+    public static void createDirWhenNotExist(String dir) {
+        File f = new File(dir);
+        if (!f.exists()) {
+            // create
+            f.mkdir();
+        }
+    }
+
+    public static void download(String fileUrl, String fileName) {
         OutputStream output = null;
-        
+
         boolean bookExist = false;
-        
+
+        // get config xml check
+        if ("" == fileName) {
+            fileUrl = config_url;
+            fileName = "TestCase.xml";
+        }
+
         try {
-            String tempDL = URLEncoder.encode(dLName, "UTF-8").replace("+",
-                    "%20");
-            String temp = "http://192.168.66.254/incoming/epub/test/data/"
-                    + tempDL;
-            URL url = new URL(temp);
-            
+            URL url = new URL(fileUrl);
+
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-            String SDCard = Environment.getExternalStorageDirectory() + "";
-            String pathName = SDCard + "/" + cachePath + "/" + fileName;
+            String pathName = Environment.getExternalStorageDirectory() + "/"
+                    + cachePath;
+            String fullName = pathName + "/" + fileName;
 
-            File file = new File(pathName);
+            Util.createDirWhenNotExist(pathName);
+
+            File file = new File(fullName);
+
+            // if get config file, clean local config and get newest file.
             if (fileName == "TestCase.xml" && file.exists())
                 file.delete();
-            
+
             if (file.exists()) {
-                System.out.println("exits");
+                Log.i(TAG, "File " + fullName + " exist, skip.");
                 bookExist = true;
-            } else {
+            } else { // download...
+
                 InputStream input = conn.getInputStream();
-                String dir = SDCard + "/" + cachePath;
-                new File(dir).mkdir();
+
                 file.createNewFile();
                 output = new FileOutputStream(file);
                 byte[] buffer = new byte[4 * 1024];
+
                 int len;
                 while ((len = input.read(buffer)) != -1) {
                     output.write(buffer, 0, len);
@@ -66,16 +95,18 @@ public class Util {
                 output.flush();
             }
         } catch (MalformedURLException e) {
+            Log.i(TAG, "Malformed URL exception:" + fileUrl);
             e.printStackTrace();
         } catch (IOException e) {
+            Log.i(TAG, "IO exception:" + fileName);
             e.printStackTrace();
         } finally {
             if (!bookExist) {
                 try {
                     output.close();
-                    System.out.println("download success");
+                    Log.i(TAG, "Download success:" + fileUrl);
                 } catch (IOException e) {
-                    System.out.println("download fail");
+                    Log.i(TAG, "Download fail:" + fileUrl);
                     e.printStackTrace();
                 }
             }

@@ -21,6 +21,10 @@
  */
 package org.readium.sdk.test;
 
+import java.util.List;
+
+import org.readium.sdk.test.util.Util;
+
 import junit.framework.Assert;
 import android.test.AndroidTestCase;
 
@@ -29,8 +33,20 @@ import android.test.AndroidTestCase;
  * 
  */
 public class Readium_SDK_Test extends AndroidTestCase {
+    
+    /**
+     * test case list
+     */
+    private List<ReadiumTestCase> tests;
+    
+    private boolean firstDownload = false;
     protected void setUp() throws Exception {
         super.setUp();
+        //download default test case config file
+        if (!firstDownload){
+            Util.download("", "");
+            firstDownload = true;
+        }
     }
 
     protected void tearDown() throws Exception {

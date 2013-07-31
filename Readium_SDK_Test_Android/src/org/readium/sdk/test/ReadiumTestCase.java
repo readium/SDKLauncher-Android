@@ -5,6 +5,7 @@
 package org.readium.sdk.test;
 
 import java.util.List;
+
 /**
  * @author chtian@anfengde.com
  * 
@@ -13,8 +14,7 @@ public class ReadiumTestCase {
 
     /**
      * <ul>
-     * <li>xml definition:
-     * 
+     * <li>xml definition: <code>
      * <testcase name="open bad format file">
      * 
      * <function name="openBook"/>
@@ -24,9 +24,10 @@ public class ReadiumTestCase {
      * <assert expression="=-1" msg="bad zip format"/>
      * 
      * </testcase>
-     * 
-     * <li> expression: if first char is '='(=-1), that mean check last function return value
-     * <li> expression: normally like "MetaData.title=='Alice'" 
+     * </code>
+     * <li>expression: if first char is '='(=-1), that mean check last function
+     * return value
+     * <li>expression: normally like "MetaData.title=='Alice'"
      * </ul>
      */
 
