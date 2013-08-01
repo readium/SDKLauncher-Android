@@ -24,6 +24,7 @@ package org.readium.sdk.test;
 import java.util.List;
 
 import org.readium.sdk.test.util.Util;
+import org.readium.sdk.test.util.XmlReader;
 
 import junit.framework.Assert;
 import android.test.AndroidTestCase;
@@ -33,22 +34,23 @@ import android.test.AndroidTestCase;
  * 
  */
 public class Readium_SDK_Test extends AndroidTestCase {
-    
+
     /**
      * test case list
      */
     private List<ReadiumTestCase> tests;
-    
-    private boolean firstDownload = false;
+
+    private static boolean firstDownload = false;
+
     protected void setUp() throws Exception {
         super.setUp();
-        //download default test case config file
-        if (!firstDownload){
+        // download default test case config file
+        if (!firstDownload) {
             Util.download(Util.getConfig_url(), Util.getConfig_file());
             firstDownload = true;
+            XmlReader read = new XmlReader(Util.getConfigFullName());
+            tests = read.getTests();
         }
-        
-        //tests = getAllTests(Util.getConfig_file());
     }
 
     protected void tearDown() throws Exception {

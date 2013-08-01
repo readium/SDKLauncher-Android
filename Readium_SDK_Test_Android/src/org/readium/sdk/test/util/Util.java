@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import android.os.Environment;
 import android.util.Log;
 
@@ -21,13 +20,13 @@ public class Util {
     /**
      * local cache
      */
-    private static String cachePath = "readium_test";
+    private static String cachePath = Environment.getExternalStorageDirectory() + "/readium_test";
     /**
      * test case config url
      */
     private static String config_url = "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/TestCase.xml";
     private static String config_file = "TestCase.xml";
-    
+
     public static final String getConfig_url() {
         return config_url;
     }
@@ -39,7 +38,9 @@ public class Util {
     public static final String getCachePath() {
         return cachePath;
     }
-
+    public static final String getConfigFullName(){
+        return cachePath + "/" + config_file;
+    }
     public static final void setCachePath(String cachePath) {
         Util.cachePath = cachePath;
     }
@@ -58,6 +59,14 @@ public class Util {
         }
     }
 
+    /**
+     * download file by url, and save file to cache path
+     * 
+     * @param fileUrl
+     *            the file download url string
+     * @param fileName
+     *            the file name
+     */
     public static void download(String fileUrl, String fileName) {
         OutputStream output = null;
 
@@ -74,9 +83,8 @@ public class Util {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-            String pathName = Environment.getExternalStorageDirectory() + "/"
-                    + cachePath;
-            String fullName = pathName + "/" + fileName;
+            String pathName = getCachePath();
+            String fullName = getConfigFullName();
 
             Util.createDirWhenNotExist(pathName);
 

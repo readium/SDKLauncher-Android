@@ -4,6 +4,7 @@
  */
 package org.readium.sdk.test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,11 +33,61 @@ public class ReadiumTestCase {
      */
 
     private String name;
-    private List<String> functions;
+    private List<String> functions = new ArrayList<String>();
     private String file;
-    private List<String> assertMessag;
-    private List<String> assertExpression;
+    private String url;
+    private List<String> assertMessag = new ArrayList<String>();
+    private List<String> assertExpression = new ArrayList<String>();
 
     public ReadiumTestCase() {
     }
+
+    public final String getName() {
+        return name;
+    }
+
+    public final void setName(String name) {
+        this.name = name;
+    }
+
+    public final List<String> getFunctions() {
+        return functions;
+    }
+
+    public final void addFunction(String function) {
+        this.functions.add(function);
+    }
+
+    public final String getFile() {
+        return file;
+    }
+
+    public final void setFile(String file) {
+        this.file = file;
+    }
+
+    public final String getUrl() {
+        return url;
+    }
+
+    public final void setUrl(String url) {
+        this.url = url;
+    }
+
+    public final List<String> getAssertMessag() {
+        return assertMessag;
+    }
+
+    public final void addAssertMessag(String assertMessag) {
+        this.assertMessag.add(assertMessag);
+    }
+
+    public final List<String> getAssertExpression() {
+        return assertExpression;
+    }
+
+    public final void addAssertExpression(String assertExpression) {
+        this.assertExpression.add(assertExpression);
+    }
+
 }
