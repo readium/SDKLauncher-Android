@@ -2,7 +2,8 @@
 <projectDescription>
 	<name>Readium_SDK_Test_Android</name>
 	<comment></comment>
-	<projects>
+    <projects>
+         <project>SDKLauncher-Android</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

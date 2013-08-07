@@ -39,7 +39,8 @@ public class Readium_SDK_Test extends AndroidTestCase {
      * test case list
      */
     private List<ReadiumTestCase> tests;
-
+    private AssertActivity webview;
+    
     private static boolean firstDownload = false;
 
     protected void setUp() throws Exception {
@@ -50,6 +51,9 @@ public class Readium_SDK_Test extends AndroidTestCase {
             firstDownload = true;
             XmlReader read = new XmlReader(Util.getConfigFullName());
             tests = read.getTests();
+            
+            webview = new AssertActivity();
+            
         }
     }
 
