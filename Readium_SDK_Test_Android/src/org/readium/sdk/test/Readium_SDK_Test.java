@@ -7,27 +7,25 @@ import org.readium.sdk.test.util.XmlReader;
 
 import android.test.ActivityInstrumentationTestCase2;
 
-public class LayoutAssertTest extends
+public class Readium_SDK_Test extends
         ActivityInstrumentationTestCase2<AssertActivity> {
 
     /**
      * test case list
      */
     private List<ReadiumTestCase> tests;
-    private AssertActivity webview;
 
     private static boolean firstDownload = false;
 
-    private AssertActivity mActivity;
+    private AssertActivity web;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         setActivityInitialTouchMode(false);
-
         this.setActivityInitialTouchMode(true);
-        mActivity = getActivity();
+        web = getActivity();
 
         if (!firstDownload) {
             Util.download(Util.getConfig_url(), Util.getConfig_file());
@@ -35,17 +33,14 @@ public class LayoutAssertTest extends
             XmlReader read = new XmlReader(Util.getConfigFullName());
             tests = read.getTests();
         }
+
     }
 
-    public LayoutAssertTest(Class<AssertActivity> activityClass) {
-        super(activityClass);
-    }
-
-    public LayoutAssertTest() {
+    public Readium_SDK_Test() {
         super(AssertActivity.class);
     }
 
     public void testTestShow() {
-        assertTrue(mActivity != null);
+        assertTrue(web != null);
     }
 }

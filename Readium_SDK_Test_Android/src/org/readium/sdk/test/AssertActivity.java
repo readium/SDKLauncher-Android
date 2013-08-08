@@ -14,7 +14,7 @@ import android.webkit.WebViewClient;
  */
 public class AssertActivity extends Activity {
 
-    WebView web;
+    private WebView web;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -26,11 +26,14 @@ public class AssertActivity extends Activity {
         web.getSettings().setJavaScriptEnabled(true);
     }
     
+    public WebView getWeb(){
+        return web;
+    }
+    
     /**
      * 
      */
     public AssertActivity() {
-        // TODO Auto-generated constructor stub
     }
 
 }
