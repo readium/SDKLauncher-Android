@@ -4,8 +4,36 @@
         <meta charset="utf-8">
         <meta name="author" content="AnFengDe Team">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
         <title>Assert Page</title>
+        <script>
+            $(document).ready(function() {
+                var data = {};
+                $.ajax({
+                    type : 'GET',
+                    url : 'epub.json',
+                    dataType : 'text',
+                    async : false,
+                    success : function(json) {
+                        data = JSON.parse(json);
+                        $('#testName').text(data.test.testName);
+                        $('#testExpr').text(data.test.testExpr);
+                        var container = data.container;
+                        var package = container.package;
+                        var result = eval(data.test.testExpr);
+                        $('#testResult').text(result);
+                        javascriptAccessor.getResult(result);
+                    },
+                    error : function(xhr, status, error) {
+                        javascriptAccessor.getResult('false');
+                    }
+                });
+            });
+        </script>
     </head>
     <body>
+        <p id="testName"></p>
+        <p id="testExpr"></p>
+        <p id="testResult"></p>
     </body>
 </html>

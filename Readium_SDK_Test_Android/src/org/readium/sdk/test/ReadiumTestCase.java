@@ -5,7 +5,10 @@
 package org.readium.sdk.test;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import org.readium.sdk.test.util.Util;
 
 /**
  * @author chtian@anfengde.com
@@ -88,6 +91,19 @@ public class ReadiumTestCase {
 
     public final void addAssertExpression(String assertExpression) {
         this.assertExpression.add(assertExpression);
+    }
+
+    private final String getExprJson() {
+        String json = "";
+        for (Iterator<String> i = assertExpression.iterator(); i.hasNext();) {
+            String expr = i.next();
+            json = "".equals(json) ? expr : json + " && " + expr;
+        }
+        return Util.format(json);
+    }
+
+    public final String getJson() {
+        return "{\"testName\":\"" + name + "\",\"testExpr\":" + getExprJson() + "}";
     }
 
 }

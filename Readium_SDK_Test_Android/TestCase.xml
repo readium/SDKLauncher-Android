@@ -10,7 +10,7 @@
             url="https://github.com/readium/Launcher-Android/raw/afd/Readium_SDK_Test_Android/a-christmas-carol3.epub" />
 
         <assert
-            expression="===1"
+            expression="container.name==='a-christmas-carol3.epub'"
             msg="open a-christmas-carol3.epub file failed" />
     </testcase>
 

@@ -4,23 +4,33 @@
  */
 package org.readium.sdk.test.util;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
+
 import android.os.Environment;
 import android.util.Log;
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.Package;
+import org.readium.sdk.android.SpineItem;
+import org.readium.sdk.android.components.navigation.NavigationTable;
 
 public class Util {
     private static final String TAG = "Download";
     /**
      * local cache
      */
-    private static String cachePath = Environment.getExternalStorageDirectory() + "/readium_test";
+    private static String cachePath = Environment.getExternalStorageDirectory()
+            + "/readium_test";
     /**
      * test case config url
      */
@@ -38,9 +48,15 @@ public class Util {
     public static final String getCachePath() {
         return cachePath;
     }
-    public static final String getConfigFullName(){
+
+    public static final String getConfigFullName() {
         return cachePath + "/" + config_file;
     }
+
+    public static final String getFullName(String name) {
+        return cachePath + "/" + name;
+    }
+
     public static final void setCachePath(String cachePath) {
         Util.cachePath = cachePath;
     }
@@ -84,7 +100,7 @@ public class Util {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             String pathName = getCachePath();
-            String fullName = getConfigFullName();
+            String fullName = getFullName(fileName);
 
             Util.createDirWhenNotExist(pathName);
 
@@ -128,5 +144,135 @@ public class Util {
                 }
             }
         }
+    }
+
+    public static void saveEPubJson(String json) {
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(
+                    getCachePath() + "/epub.json"));
+            out.write(json);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String format(String s) {
+        String res = (null == s) ? "null" : "\"" + s.replace("'", "\\'") + "\"";
+
+        return res;
+    }
+
+    private static String getContainerJson(Container c) {
+        return "\"version\":" + format(c.getVersion()) + ",\"name\":"
+                + format(c.getName()) + "";
+    }
+
+    private static String getSpineItemsJson(List<SpineItem> l) {
+        String json = "\"spineItems\":[";
+        for (Iterator<SpineItem> i = l.iterator(); i.hasNext();) {
+            SpineItem si = i.next();
+            json = json + "{\"idRef\":" + Util.format(si.getIdRef()) + ",";
+            json = json + "\"href\":" + Util.format(si.getHref()) + ",";
+            json = json + "\"pageSpread\":" + Util.format(si.getPageSpread())
+                    + ",";
+            json = json + "\"renditionLayout\":"
+                    + Util.format(si.getRenditionLayout()) + "}";
+
+            json = i.hasNext() ? json + "," : json;
+        }
+        return json + "]";
+    }
+
+    private static String getListJson(String name, List<String> l) {
+        String json = name + ":[";
+        for (Iterator<String> i = l.iterator(); i.hasNext();) {
+            String s = Util.format(i.next());
+            json = json + s;
+            json = i.hasNext() ? json + "," : json;
+        }
+        json = json + "]";
+        return json;
+    }
+
+    private static String getNavigationTableJson(String name, NavigationTable n) {
+        String json = "";
+        if (null == n) {
+            json = name + ":{}";
+        } else {
+            json = name + ":{";
+            json = json + "\"title\":" + Util.format(n.getTitle())
+                    + ",\"sourceHref\":" + Util.format(n.getSourceHref()) + "}";
+        }
+        return json;
+    }
+
+    private static String getPackage(Package p) {
+        return "\"package\":{\"title\":"
+                + format(p.getTitle())
+                + ",\"subtitle\":"
+                + format(p.getSubtitle())
+                + ",\"shortTitle\":"
+                + format(p.getShortTitle())
+                + ",\"collectionTitle\":"
+                + format(p.getCollectionTitle())
+                + ",\"editionTitle\":"
+                + format(p.getEditionTitle())
+                + ",\"expandedTitle\":"
+                + format(p.getExpandedTitle())
+                + ",\"fullTitle\":"
+                + format(p.getFullTitle())
+                + ",\"uniqueID\":"
+                + format(p.getUniqueID())
+                + ",\"urlSafeUniqueID\":"
+                + format(p.getUrlSafeUniqueID())
+                + ",\"packageID\":"
+                + format(p.getPackageID())
+                + ",\"basePath\":"
+                + format(p.getBasePath())
+                + ",\"type\":"
+                + format(p.getType())
+                + ",\"version\":"
+                + format(p.getVersion())
+                + ",\"isbn\":"
+                + format(p.getIsbn())
+                + ",\"language\":"
+                + format(p.getLanguage())
+                + ",\"copyrightOwner\":"
+                + format(p.getCopyrightOwner())
+                + ",\"source\":"
+                + format(p.getSource())
+                + ",\"authors\":"
+                + format(p.getAuthors())
+                + ",\"modificationDate\":"
+                + format(p.getModificationDate())
+                + ",\"pageProgressionDirection\":"
+                + format(p.getPageProgressionDirection())
+                + ","
+                + getListJson("\"authorList\"", p.getAuthorList())
+                + ","
+                + getListJson("\"subjects\"", p.getSubjects())
+                + ","
+                + getSpineItemsJson(p.getSpineItems())
+                + ","
+                + getNavigationTableJson("\"tableOfContents\"",
+                        p.getTableOfContents())
+                + ","
+                + getNavigationTableJson("\"listOfFigures\"",
+                        p.getListOfFigures())
+                + ","
+                + getNavigationTableJson("\"listOfIllustrations\"",
+                        p.getListOfIllustrations()) + ","
+                + getNavigationTableJson("\"listOfTables\"", p.getListOfTables())
+                + "," + getNavigationTableJson("\"pageList\"", p.getPageList())
+                + "}";
+    }
+
+    public static String getJson(String test, Container c) {
+        Package p = c.getDefaultPackage();
+        String json = "";
+        json = "{\"test\":" + test + ",\"container\":";
+        json += "{" + getContainerJson(c) + "," + getPackage(p) + "}}";
+        return json;
     }
 }
