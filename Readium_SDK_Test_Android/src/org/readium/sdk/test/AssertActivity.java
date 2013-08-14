@@ -20,17 +20,15 @@ public class AssertActivity extends Activity {
     private boolean done = false;
     private boolean result = false;
     private WebView web;
-    // private final String ASSERT_HTML =
-    // "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html";
-    private final String ASSERT_HTML = "file:///mnt/sdcard/readium_test/assert.html";
+    private final String ASSERT_HTML = "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html";
 
     private class JavascriptAccessor {
-        JavascriptAccessor(){
+        JavascriptAccessor() {
         }
-        
+
         @JavascriptInterface
         public void getResult(String res) {
-            result = "true".equals(res) ? true:false;
+            result = "true".equals(res) ? true : false;
             done = true;
         }
     }
@@ -67,12 +65,19 @@ public class AssertActivity extends Activity {
     public void setDone(boolean done) {
         this.done = done;
     }
-    
-    public void assertTest(String json){
+
+    public void assertTest(String json) {
         done = false;
-        
-        Util.saveEPubJson(json);
-        web.loadUrl(ASSERT_HTML);
+        String js = "javascript:data=" + json + ";";
+        js += "$('#testName').text(data.test.testName);";
+        js += "$('#testExpr').text(data.test.testExpr);";
+        js += "var container = data.container;";
+        js += "var package = container.package;";
+        js += "var result = eval(data.test.testExpr);";
+        js += "$('#testResult').text(result);";
+        js += "javascriptAccessor.getResult(result)";
+        // Util.saveEPubJson(json);
+        web.loadUrl(js);
     }
 
 }

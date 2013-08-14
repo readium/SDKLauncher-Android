@@ -158,7 +158,7 @@ public class Util {
     }
 
     public static String format(String s) {
-        String res = (null == s) ? "null" : "\"" + s.replace("'", "\\'") + "\"";
+        String res = (null == s) ? "null" : "\"" + s + "\"";
 
         return res;
     }
