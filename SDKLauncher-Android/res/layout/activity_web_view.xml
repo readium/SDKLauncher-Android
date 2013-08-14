@@ -23,6 +23,14 @@
             android:layout_weight="1"
             android:text="@string/left"
             android:onClick="onClick" />
+
+	    <TextView
+	        android:id="@+id/page_info"
+	        android:layout_width="wrap_content"
+	        android:layout_height="match_parent"
+	        android:gravity="center_vertical"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+
         <Button
             android:id="@+id/right"
             android:layout_width="0dp"

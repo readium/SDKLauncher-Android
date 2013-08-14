@@ -13,6 +13,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import org.readium.sdk.android.Container;
+import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 
 public class BookDataActivity extends Activity {
@@ -120,6 +121,9 @@ public class BookDataActivity extends Activity {
     	super.onBackPressed();
     	if (container != null) {
     		ContainerHolder.getInstance().remove(container.getNativePtr());
+    		
+    		// Close book (need to figure out if this is the best place...)
+    		EPub3.closeBook(container);
     	}
     }
 
