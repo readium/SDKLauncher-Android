@@ -40,7 +40,7 @@ public class ReadiumTestCase {
     private String file;
     private String url;
     private List<String> assertMessag = new ArrayList<String>();
-    private List<String> assertExpression = new ArrayList<String>();
+    private List<String> assertExpression = new ArrayList<String>(); 
 
     public ReadiumTestCase() {
     }

@@ -12,6 +12,15 @@
         <assert
             expression="container.name==='a-christmas-carol3.epub'"
             msg="open a-christmas-carol3.epub file failed" />
-    </testcase>
+        <assert
+            expression="package.title==='A Christmas Carol - IGP EPUB3'"
+            msg="package title parse failed" />
+        <assert
+            expression="package.fullTitle==='A Christmas Carol - IGP EPUB3'"
+            msg="package full title parse failed" />
+        <assert
+            expression="package.uniqueID==='urn:isbn:a-christmas-carol@2012-01-17T03:23:@'"
+            msg="package uniqueID parse failed" />
+        </testcase>
 
 </testcases>

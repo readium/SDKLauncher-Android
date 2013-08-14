@@ -262,10 +262,11 @@ public class Util {
                         p.getListOfFigures())
                 + ","
                 + getNavigationTableJson("\"listOfIllustrations\"",
-                        p.getListOfIllustrations()) + ","
-                + getNavigationTableJson("\"listOfTables\"", p.getListOfTables())
-                + "," + getNavigationTableJson("\"pageList\"", p.getPageList())
-                + "}";
+                        p.getListOfIllustrations())
+                + ","
+                + getNavigationTableJson("\"listOfTables\"",
+                        p.getListOfTables()) + ","
+                + getNavigationTableJson("\"pageList\"", p.getPageList()) + "}";
     }
 
     public static String getJson(String test, Container c) {

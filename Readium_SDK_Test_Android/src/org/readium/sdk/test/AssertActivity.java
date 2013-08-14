@@ -20,7 +20,9 @@ public class AssertActivity extends Activity {
     private boolean done = false;
     private boolean result = false;
     private WebView web;
-    private final String ASSERT_HTML = "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html";
+    // private final String ASSERT_HTML =
+    // "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html";
+    private final String ASSERT_HTML = "file:///mnt/sdcard/readium_test/assert.html";
 
     private class JavascriptAccessor {
         JavascriptAccessor() {
@@ -75,8 +77,8 @@ public class AssertActivity extends Activity {
         js += "var package = container.package;";
         js += "var result = eval(data.test.testExpr);";
         js += "$('#testResult').text(result);";
-        js += "javascriptAccessor.getResult(result)";
-        // Util.saveEPubJson(json);
+        js += "javascriptAccessor.getResult(result);";
+        Util.saveEPubJson(json);
         web.loadUrl(js);
     }
 

@@ -37,9 +37,9 @@ public class Readium_SDK_Test extends
             firstDownload = true;
             XmlReader read = new XmlReader(Util.getConfigFullName());
             tests = read.getTests();
-            // Util.download(
-            // "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html",
-            // "assert.html");
+            Util.download(
+                    "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html",
+                    "assert.html");
         }
 
     }
