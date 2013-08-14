@@ -23,15 +23,15 @@ public class ReadiumTestCase {
      * 
      * <function name="openBook"/>
      * 
-     * <file name="a.epub3" url="http://google.com/a.epub3" />
+     * <file name="a.epub3" url="http://google.com/a-christmas-carol3.epub" />
      * 
-     * <assert expression="=-1" msg="bad zip format"/>
+        <assert
+            expression="container.name==='a-christmas-carol3.epub'"
+            msg="open a-christmas-carol3.epub file failed" />
      * 
      * </testcase>
      * </code>
-     * <li>expression: if first char is '='(=-1), that mean check last function
-     * return value
-     * <li>expression: normally like "MetaData.title=='Alice'"
+     * <li>expression: normally like "container.name==='a-christmas-carol3.epub'"
      * </ul>
      */
 

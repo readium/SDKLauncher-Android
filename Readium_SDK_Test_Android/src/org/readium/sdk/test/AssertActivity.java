@@ -20,8 +20,6 @@ public class AssertActivity extends Activity {
     private boolean done = false;
     private boolean result = false;
     private WebView web;
-    // private final String ASSERT_HTML =
-    // "https://raw.github.com/readium/Launcher-Android/afd/Readium_SDK_Test_Android/assert.html";
     private final String ASSERT_HTML = "file:///mnt/sdcard/readium_test/assert.html";
 
     private class JavascriptAccessor {
