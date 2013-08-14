@@ -19,7 +19,7 @@
             expression="package.fullTitle==='A Christmas Carol - IGP EPUB3'"
             msg="package full title parse failed" />
         <assert
-            expression="package.uniqueID==='urn:isbn:a-christmas-carol@2012-01-17T03:23:@'"
+            expression="package.uniqueID==='urn:isbn:a-christmas-carol@2012-01-17T03:23:23Z'"
             msg="package uniqueID parse failed" />
         </testcase>
 
