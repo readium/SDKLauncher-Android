@@ -1,34 +1,43 @@
 package org.readium.sdk.android.launcher;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.Package;
+import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.android.launcher.model.Page;
+import org.readium.sdk.android.launcher.model.PaginationInfo;
+import org.readium.sdk.android.launcher.model.ViewerSettings;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.TextView;
 
-import org.readium.sdk.android.Container;
-import org.readium.sdk.android.Package;
-import org.readium.sdk.android.launcher.model.BookmarkDatabase;
-
-public class WebViewActivity extends Activity {
+public class WebViewActivity extends FragmentActivity implements ViewerSettingsDialog.OnViewerSettingsChange {
 
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
@@ -38,6 +47,8 @@ public class WebViewActivity extends Activity {
 	private Container container;
 	private Package pckg;
 	private String openPageRequestData;
+	private TextView pageInfo;
+	private ViewerSettings mViewerSettings;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +56,7 @@ public class WebViewActivity extends Activity {
 		setContentView(R.layout.activity_web_view);
 		
 		webview = (WebView) findViewById(R.id.webview);
+		pageInfo = (TextView) findViewById(R.id.page_info);
 		initWebView();
 
         Intent intent = getIntent();
@@ -63,6 +75,17 @@ public class WebViewActivity extends Activity {
 
         // Load the page skeleton
         webview.loadUrl(READER_SKELETON);
+        mViewerSettings = new ViewerSettings(false, 100, 20);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		((ViewGroup) webview.getParent()).removeView(webview);
+		webview.removeAllViews();
+		webview.clearCache(true);
+		webview.clearHistory();
+		webview.destroy();
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
@@ -74,24 +97,44 @@ public class WebViewActivity extends Activity {
 		webview.getSettings().setLightTouchEnabled(true);
 		webview.getSettings().setPluginState(WebSettings.PluginState.ON);
 		webview.setWebViewClient(new EpubWebViewClient());
+		webview.setWebChromeClient(new EpubWebChromeClient());
 		webview.addJavascriptInterface(new EpubInterface(), "LauncherUI");
 	}
 
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-	    if (item.getItemId() == R.id.add_bookmark) {
+	    int itemId = item.getItemId();
+	    switch (itemId) {
+	    case R.id.add_bookmark:
 			Log.i(TAG, "Add a bookmark");
 			bookmarkCurrentPage();
+			return true;
+	    case R.id.settings:
+			Log.i(TAG, "Show settings");
+			showSettings();
 			return true;
 	    }
 	    return false;
 	}
-	
+
 	public void onClick(View v) {
 		if (v.getId() == R.id.left) {
 			openPageLeft();
 		} else if (v.getId() == R.id.right) {
 			openPageRight();
 		}
+	}
+	
+	private void showSettings() {
+		FragmentManager fm = getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = fm.beginTransaction();
+		DialogFragment dialog = new ViewerSettingsDialog(this, mViewerSettings);
+        dialog.show(fm, "dialog");
+		fragmentTransaction.commit();
+	}
+
+	@Override
+	public void onViewerSettingsChange(ViewerSettings viewerSettings) {
+		updateSettings(viewerSettings);
 	}
 	
 	private void bookmarkCurrentPage() {
@@ -109,6 +152,16 @@ public class WebViewActivity extends Activity {
 	private void openBook(String packageData, String openPageRequest) {
 		Log.i(TAG, "packageData: "+packageData);
 		loadJSOnReady("ReadiumSDK.reader.openBook("+packageData+", "+openPageRequest+");");
+	}
+	
+	private void updateSettings(ViewerSettings viewerSettings) {
+		Log.i(TAG, "viewerSettings: "+viewerSettings);
+		mViewerSettings = viewerSettings;
+		try {
+			loadJSOnReady("ReadiumSDK.reader.updateSettings("+viewerSettings.toJSON().toString()+");");
+		} catch (JSONException e) {
+			Log.e(TAG, ""+e.getMessage(), e);
+		}
 	}
 	
 	private void openContentUrl(String href, String baseUrl) {
@@ -148,7 +201,9 @@ public class WebViewActivity extends Activity {
         public void onPageFinished(WebView view, String url) {
         	Log.i(TAG, "onPageFinished: "+url);
         	if (url.equals(READER_SKELETON)) {
+        		Log.i(TAG, "openPageRequestData: "+openPageRequestData);
         		openBook(pckg.toJSON(), openPageRequestData);
+        		updateSettings(mViewerSettings);
         	}
         }
         
@@ -157,16 +212,17 @@ public class WebViewActivity extends Activity {
         	Log.i(TAG, "onLoadResource: "+url);
         	byte[] data = pckg.getContent(cleanResourceUrl(url));
             if (data.length > 0) {
+            	Log.i(TAG, "Load : "+url);
                 // TODO Pass the correct mimetype
-            	webview.loadDataWithBaseURL(url, new String(data), null, "utf-8", null);
+            	webview.loadData(new String(data), null, "utf-8");
             }
         }
         
-//        @Override
-//        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//        	byte[] data = pckg.getContent(cleanResourceUrl(url));
-//        	return (data.length > 0);
-//        }
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        	Log.i(TAG, "shouldOverrideUrlLoading: "+url);
+    		return false;
+        }
 
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
@@ -184,17 +240,35 @@ public class WebViewActivity extends Activity {
         			cleanUrl.replaceFirst(pckg.getBasePath(), "") : cleanUrl;
         }
     }
+
+	public class EpubWebChromeClient extends WebChromeClient {
+
+	}
     
 	public class EpubInterface {
 
 		@JavascriptInterface
-		public void onOpenPage(String currentPagesInfo) {
-			Log.i(TAG, "currentPagesInfo: "+currentPagesInfo);
+		public void onPaginationChanged(String currentPagesInfo) {
+			try {
+				PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
+				List<Page> openPages = paginationInfo.getOpenPages();
+				if (!openPages.isEmpty()) {
+					final Page page = openPages.get(0);
+					runOnUiThread(new Runnable() {
+						public void run() {
+							pageInfo.setText(getString(R.string.page_x_of_y,
+									page.getSpineItemPageIndex() + 1,
+									page.getSpineItemPageCount()));
+						}
+					});
+				}
+			} catch (JSONException e) {
+				Log.e(TAG, ""+e.getMessage(), e);
+			}
 		}
 		
 		@JavascriptInterface
 		public void getBookmarkData(final String bookmarkData) {
-			Log.i(TAG, "bookmarkData: "+bookmarkData);
 			AlertDialog.Builder builder = new AlertDialog.Builder(WebViewActivity.this).
 					setTitle(R.string.add_bookmark);
 	        
@@ -222,5 +296,4 @@ public class WebViewActivity extends Activity {
 	        builder.show();
 		}
 	}
-
 }
