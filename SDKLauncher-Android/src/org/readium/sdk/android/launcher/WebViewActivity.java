@@ -201,8 +201,9 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         public void onPageFinished(WebView view, String url) {
         	Log.i(TAG, "onPageFinished: "+url);
         	if (url.equals(READER_SKELETON)) {
+        		updateSettings(mViewerSettings);
         		Log.i(TAG, "openPageRequestData: "+openPageRequestData);
-        		openBook(pckg.toJSON(), openPageRequestData);
+        		openBook(pckg.toJSON().toString(), openPageRequestData);
         		updateSettings(mViewerSettings);
         	}
         }
@@ -265,6 +266,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			} catch (JSONException e) {
 				Log.e(TAG, ""+e.getMessage(), e);
 			}
+		}
+		
+		@JavascriptInterface
+		public void onSettingsApplied() {
+			Log.d(TAG, "onSettingsApplied");
 		}
 		
 		@JavascriptInterface
