@@ -51,10 +51,33 @@
             msg="package full title parse failed" />
 
         <assert
-            expression="package.uniqueID==='青空文庫の番号'"
+            expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:00Z'"
             msg="package uniqueID parse failed" />
-    </testcase>
 
-</testcases><testcases>
+        <assert
+            expression="package.packageID==='http://www.aozora.gr.jp/cards/000148/card776.html'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.pageProgressionDirection==='rtl'"
+            msg="package pageProgressionDirection parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='夏目 漱石'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[15].idRef==='後付'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
+            expression="package.spineItems[15].href==='xhtml/後付.xhtml'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <testcases>
 
 </testcases>
