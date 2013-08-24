@@ -12,15 +12,49 @@
         <assert
             expression="container.name==='a-christmas-carol3.epub'"
             msg="open a-christmas-carol3.epub file failed" />
+
         <assert
             expression="package.title==='A Christmas Carol - IGP EPUB3'"
             msg="package title parse failed" />
+
         <assert
             expression="package.fullTitle==='A Christmas Carol - IGP EPUB3'"
             msg="package full title parse failed" />
+
         <assert
             expression="package.uniqueID==='urn:isbn:a-christmas-carol@2012-01-17T03:23:23Z'"
             msg="package uniqueID parse failed" />
-        </testcase>
+    </testcase>
+
+    <!--
+      Real-world but designed sample files
+      url:http://code.google.com/p/epub-samples/wiki/SamplesListing     
+    -->
+    <testcase name="kusamakura-japanese-vertical-writing" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#kusamakura-japanese-vertical-writing -->
+        <function name="openBook" />
+
+        <file
+            name="kusamakura-japanese-vertical-writing-20121124.epub"
+            url="http://epub-samples.googlecode.com/files/kusamakura-japanese-vertical-writing-20121124.epub" />
+
+        <assert
+            expression="container.name==='kusamakura-japanese-vertical-writing-20121124.epub'"
+            msg="open kusamakura-japanese-vertical-writing-20121124.epub file failed" />
+
+        <assert
+            expression="package.title==='草枕'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='草枕'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='青空文庫の番号'"
+            msg="package uniqueID parse failed" />
+    </testcase>
+
+</testcases><testcases>
 
 </testcases>
