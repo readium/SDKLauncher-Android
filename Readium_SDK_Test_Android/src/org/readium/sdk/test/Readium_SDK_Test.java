@@ -72,6 +72,7 @@ public class Readium_SDK_Test extends
             waitUI();
 
             Log.v(TAG, test.getName() + " result:" + activity.getResult());
+            EPub3.closeBook(container);
             assertTrue(true == activity.getResult());
         }
     }

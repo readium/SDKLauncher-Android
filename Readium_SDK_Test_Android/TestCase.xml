@@ -78,6 +78,51 @@
             expression="package.spineItems[15].href==='xhtml/後付.xhtml'"
             msg="package pageProgressionDirection parse failed" />
         
-        <testcases>
+    </testcase>
 
+    <testcase name="wasteland" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland -->
+        <function name="openBook" />
+
+        <file
+            name="wasteland-20120118.epub"
+            url="http://epub-samples.googlecode.com/files/wasteland-20120118.epub" />
+
+        <assert
+            expression="container.name==='wasteland-20120118.epub'"
+            msg="open kusamakura-japanese-vertical-writing-20121124.epub file failed" />
+
+        <assert
+            expression="package.title==='The Waste Land'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='The Waste Land'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-basic@2012-01-18T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.wasteland-basic@'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='T.S. Eliot'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='t1'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='wasteland-content.xhtml'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
 </testcases>
