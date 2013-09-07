@@ -75,6 +75,9 @@ public class ContainerList extends Activity {
                 startActivity(intent);
             }
         });
+        
+        // Loads the native lib and sets the path to use for cache
+        EPub3.setCachePath(getCacheDir().getAbsolutePath());
     }
 
     // get books in /sdcard/epubtest path
