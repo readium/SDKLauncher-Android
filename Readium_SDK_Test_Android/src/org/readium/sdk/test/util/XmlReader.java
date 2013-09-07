@@ -41,7 +41,7 @@ public class XmlReader {
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) throws SAXException {
 
-            Log.i(TAG, "start element:" + qName);
+            Log.i(TAG, "start element:" + qName + "value:" + attributes.getValue("name"));
 
             if ("testcase".equals(qName)) {
                 test = new ReadiumTestCase();

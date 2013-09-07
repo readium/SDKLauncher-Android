@@ -71,19 +71,24 @@ public class Readium_SDK_Test extends
             // wait ui thread processing...
             waitUI();
 
-            Log.v(TAG, test.getName() + " result:" + activity.getResult());
+            Log.v(TAG, test.getName() + " result:" + activity.getResult()
+                    + "invalid expr:" + activity.getExpression());
             EPub3.closeBook(container);
-            assertTrue(true == activity.getResult());
+
+            assertEquals("invalid expression:" + activity.getExpression(),
+                    true, activity.getResult());
         }
     }
-    private void assertByActivity(final String json){
-        activity.runOnUiThread(new Runnable(){
-            public void run(){
+
+    private void assertByActivity(final String json) {
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
                 activity.assertTest(json);
             }
         });
     }
-    private void waitUI(){
+
+    private void waitUI() {
         while (!activity.getDone()) {
             try {
                 Thread.sleep(200);

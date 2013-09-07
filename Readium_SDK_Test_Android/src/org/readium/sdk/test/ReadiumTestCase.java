@@ -94,12 +94,14 @@ public class ReadiumTestCase {
     }
 
     private final String getExprJson() {
-        String json = "";
+        String json = "[";
         for (Iterator<String> i = assertExpression.iterator(); i.hasNext();) {
             String expr = i.next();
-            json = "".equals(json) ? expr : json + " && " + expr;
+            json = json + "\"" + expr + "\"";
+            if (i.hasNext()) json += ",";
         }
-        return Util.format(json);
+        json += "]";
+        return json;
     }
 
     public final String getJson() {

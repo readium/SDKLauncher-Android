@@ -99,6 +99,9 @@ public class Util {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
+            String sLen = conn.getHeaderField("content-Length");
+            int iLen = (null == sLen) ? 0 : Integer.parseInt(sLen);
+
             String pathName = getCachePath();
             String fullName = getFullName(fileName);
 
@@ -106,8 +109,7 @@ public class Util {
 
             File file = new File(fullName);
 
-            // if get config file, clean local config and get newest file.
-            if (fileName == "TestCase.xml" && file.exists())
+            if (iLen > 0 && iLen < file.length())
                 file.delete();
 
             if (file.exists()) {
