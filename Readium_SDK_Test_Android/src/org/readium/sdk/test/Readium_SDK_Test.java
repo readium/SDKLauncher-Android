@@ -50,6 +50,8 @@ public class Readium_SDK_Test extends
 
     public void testTestCases() {
 
+        boolean result = true;
+        
         for (Iterator<ReadiumTestCase> i = tests.iterator(); i.hasNext();) {
             ReadiumTestCase test = i.next();
             activity.setDone(false);
@@ -72,12 +74,14 @@ public class Readium_SDK_Test extends
             waitUI();
 
             Log.v(TAG, test.getName() + " result:" + activity.getResult()
-                    + "invalid expr:" + activity.getExpression());
+                    + " invalid expr:" + activity.getExpression());
+            if (false == activity.getResult()) {
+                result = false;
+            }
             EPub3.closeBook(container);
-
-            assertEquals("invalid expression:" + activity.getExpression(),
-                    true, activity.getResult());
         }
+
+        assertEquals("Test failed, please open LogCat view for more detail.", true, result);
     }
 
     private void assertByActivity(final String json) {

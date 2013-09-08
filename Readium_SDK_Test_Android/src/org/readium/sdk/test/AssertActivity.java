@@ -29,7 +29,7 @@ public class AssertActivity extends Activity {
 
         @JavascriptInterface
         public void getResult(String res, String expr) {
-            result = "true".equals(res) ? true : false;
+            result = "true".equals(res) ? true : false; 
             expression = expr;
             done = true;
         }
@@ -78,6 +78,7 @@ public class AssertActivity extends Activity {
 
     public void assertTest(String json) {
         done = false;
+        result = false;
         expression = "";
         String js = "javascript:data=" + json + ";";
         js += "$('#testName').text(data.test.testName);";
@@ -89,7 +90,7 @@ public class AssertActivity extends Activity {
         js += "for (var i = 0; i < data.test.testExpr.length; i++) {";
         js += "    result = eval(data.test.testExpr[i]);";
         js += "    if (false === result){";
-        js += "        expr = data.test.testExpr[i];";
+        js += "        expr = data.test.testExpr[i];break;";
         js += "    }}";
         js += "$('#testResult').text(result);";
         js += "javascriptAccessor.getResult(result, expr);";

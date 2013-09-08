@@ -210,6 +210,8 @@ public class Util {
     }
 
     private static String getPackage(Package p) {
+        Log.i("LOGPACK", "Book:" + p.getTitle());
+        Log.i("LOGPACK", "UniqueID:" + p.getUniqueID());
         return "\"package\":{\"title\":"
                 + format(p.getTitle())
                 + ",\"subtitle\":"

@@ -51,7 +51,7 @@
             msg="package full title parse failed" />
 
         <assert
-            expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:00Z'"
+            expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:0X'"
             msg="package uniqueID parse failed" />
 
         <assert
@@ -90,7 +90,7 @@
 
         <assert
             expression="container.name==='wasteland-20120118.epub'"
-            msg="open kusamakura-japanese-vertical-writing-20121124.epub file failed" />
+            msg="open wasteland-20120118.epub file failed" />
 
         <assert
             expression="package.title==='The Waste Land'"
@@ -105,7 +105,53 @@
             msg="package uniqueID parse failed" />
 
         <assert
-            expression="package.packageID==='code.google.com.epub-samples.wasteland-basic@'"
+            expression="package.packageID==='code.google.com.epub-samples.wasteland-basic'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='T.S. Eliot'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='t1'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='wasteland-content.xhtml'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
+
+    <testcase name="wasteland-otf" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland-otf -->
+        <function name="openBook" />
+
+        <file
+            name="wasteland-otf-20120118.epub"
+            url="http://epub-samples.googlecode.com/files/wasteland-otf-20120118.epub" />
+
+        <assert
+            expression="container.name==='wasteland-otf-20120118.epub'"
+            msg="open wasteland-otf-20120118.epub file failed" />
+
+        <assert
+            expression="package.title==='The Waste Land'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='The Waste Land'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-otf@2012-01-18T12:47:P'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.wasteland-otf'"
             msg="package packageID parse failed" />
 
         <assert
