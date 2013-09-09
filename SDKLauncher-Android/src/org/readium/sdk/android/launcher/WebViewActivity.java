@@ -30,6 +30,7 @@ import org.readium.sdk.android.Container;
 import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.android.launcher.model.OpenPageRequest;
 import org.readium.sdk.android.launcher.model.Page;
 import org.readium.sdk.android.launcher.model.PaginationInfo;
 import org.readium.sdk.android.launcher.model.ReadiumJSApi;
@@ -73,7 +74,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private WebView mWebview;
 	private Container mContainer;
 	private Package mPackage;
-	private String mOpenPageRequestData;
+	private OpenPageRequest mOpenPageRequestData;
 	private TextView mPageInfo;
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
@@ -97,7 +98,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                 	return;
                 }
                 mPackage = mContainer.getDefaultPackage();
-                mOpenPageRequestData = extras.getString(Constants.OPEN_PAGE_REQUEST_DATA);
+                try {
+					mOpenPageRequestData = OpenPageRequest.fromJSON(extras.getString(Constants.OPEN_PAGE_REQUEST_DATA));
+				} catch (JSONException e) {
+					Log.e(TAG, "Constants.OPEN_PAGE_REQUEST_DATA must be a valid JSON object: "+e.getMessage(), e);
+				}
             }
         }
 
@@ -195,10 +200,10 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         public void onPageFinished(WebView view, String url) {
         	Log.i(TAG, "onPageFinished: "+url);
         	if (url.equals(READER_SKELETON)) {
-        		updateSettings(mViewerSettings);
+//        		updateSettings(mViewerSettings);
         		Log.i(TAG, "openPageRequestData: "+mOpenPageRequestData);
-        		mReadiumJSApi.openBook(mPackage, mOpenPageRequestData);
-        		updateSettings(mViewerSettings);
+        		mReadiumJSApi.openBook(mPackage, mViewerSettings, mOpenPageRequestData);
+//        		updateSettings(mViewerSettings);
         	}
         }
         

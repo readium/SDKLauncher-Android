@@ -1,6 +1,7 @@
 package org.readium.sdk.android.launcher.model;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.readium.sdk.android.Package;
 
 import android.util.Log;
@@ -31,8 +32,17 @@ public class ReadiumJSApi {
 		loadJS("ReadiumSDK.reader.openPageRight();");
 	}
 	
-	public void openBook(Package pckg, String openPageRequest) {
-		loadJSOnReady("ReadiumSDK.reader.openBook("+pckg.toJSON().toString()+", "+openPageRequest+");");
+	public void openBook(Package pckg, ViewerSettings viewerSettings,
+			OpenPageRequest openPageRequestData) {
+		JSONObject openBookData = new JSONObject();
+		try {
+			openBookData.put("package", pckg.toJSON());
+			openBookData.put("settings", viewerSettings.toJSON());
+			openBookData.put("openPageRequestData", openPageRequestData.toJSON());
+		} catch (JSONException e) {
+			Log.e(TAG, ""+e.getMessage(), e);
+		}
+		loadJSOnReady("ReadiumSDK.reader.openBook("+openBookData.toString()+");");
 	}
 	
 	public void updateSettings(ViewerSettings viewerSettings) {

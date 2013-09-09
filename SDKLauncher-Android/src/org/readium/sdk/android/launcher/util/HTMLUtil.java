@@ -25,7 +25,6 @@ import java.io.File;
 import java.text.MessageFormat;
 
 import android.net.Uri;
-import android.util.Log;
 
 /**
  * This utility class replaces all the local video and audio URI references by a
@@ -98,7 +97,7 @@ public class HTMLUtil {
 	private static String updateSourceAttributesInFragment(String fragment,
 			String relativePath, String packageUUID) {
 		// Strip off the HTML file name.
-		String relativeParentPath = doGetFullPath(relativePath, true);
+		String relativeParentPath = getFullPath(relativePath);
 		int i = 0;
 		while (i < fragment.length()) {
 			int indexOfSrc = fragment.indexOf("src", i);
@@ -193,8 +192,6 @@ public class HTMLUtil {
 			}
 
 			path = MessageFormat.format("http://{0}:{1}/{2}", EpubServer.HTTP_HOST, ""+EpubServer.HTTP_PORT, path);
-//			path = "http://192.168.1.49:8080/BookariCloud/"+path;
-			Log.e("HTMLUtil", "path: "+path);
 			
 			fragment = fragment.substring(0, p0) + path + fragment.substring(p1);
 		}
@@ -204,14 +201,10 @@ public class HTMLUtil {
 	/**
 	 * Does the work of getting the path.
 	 * 
-	 * @param filename
-	 *            the filename
-	 * @param includeSeparator
-	 *            true to include the end separator
+	 * @param filename the filename
 	 * @return the path
 	 */
-	private static String doGetFullPath(String filename,
-			boolean includeSeparator) {
+	private static String getFullPath(String filename) {
 		if (filename == null) {
 			return null;
 		}
@@ -220,77 +213,34 @@ public class HTMLUtil {
 			return null;
 		}
 		if (prefix >= filename.length()) {
-			if (includeSeparator) {
-				return getPrefix(filename); // add end slash if necessary
-			} else {
-				return filename;
-			}
+			return getPrefix(filename);
 		}
 		int index = indexOfLastSeparator(filename);
 		if (index < 0) {
 			return filename.substring(0, prefix);
 		}
-		int end = index + (includeSeparator ? 1 : 0);
-		if (end == 0) {
-			end++;
-		}
+		int end = Math.max(1, index + 1);
 		return filename.substring(0, end);
 	}
 
 	/**
 	 * Returns the index of the last directory separator character.
-	 * <p>
-	 * This method will handle a file in either Unix or Windows format. The
-	 * position of the last forward or backslash is returned.
-	 * <p>
-	 * The output will be the same irrespective of the machine that the code is
-	 * running on.
 	 * 
-	 * @param filename
-	 *            the filename to find the last path separator in, null returns
-	 *            -1
-	 * @return the index of the last separator character, or -1 if there is no
-	 *         such character
+	 * @param filename the filename
+	 * @return the index of the last separator character, 
+	 * 			or -1 if there is no such character
 	 */
 	public static int indexOfLastSeparator(String filename) {
 		if (filename == null) {
 			return -1;
 		}
-		int lastUnixPos = filename.lastIndexOf(UNIX_SEPARATOR);
-		int lastWindowsPos = filename.lastIndexOf(WINDOWS_SEPARATOR);
-		return Math.max(lastUnixPos, lastWindowsPos);
+		return filename.lastIndexOf(File.separatorChar);
 	}
 
-	// -----------------------------------------------------------------------
 	/**
-	 * Gets the prefix from a full filename, such as <code>C:/</code> or
-	 * <code>~/</code>.
-	 * <p>
-	 * This method will handle a file in either Unix or Windows format. The
-	 * prefix includes the first slash in the full filename where applicable.
+	 * Gets the prefix from a full filename
 	 * 
-	 * <pre>
-	 * Windows:
-	 * a\b\c.txt           --> ""          --> relative
-	 * \a\b\c.txt          --> "\"         --> current drive absolute
-	 * C:a\b\c.txt         --> "C:"        --> drive relative
-	 * C:\a\b\c.txt        --> "C:\"       --> absolute
-	 * \\server\a\b\c.txt  --> "\\server\" --> UNC
-	 * 
-	 * Unix:
-	 * a/b/c.txt           --> ""          --> relative
-	 * /a/b/c.txt          --> "/"         --> absolute
-	 * ~/a/b/c.txt         --> "~/"        --> current user
-	 * ~                   --> "~/"        --> current user (slash added)
-	 * ~user/a/b/c.txt     --> "~user/"    --> named user
-	 * ~user               --> "~user/"    --> named user (slash added)
-	 * </pre>
-	 * <p>
-	 * The output will be the same irrespective of the machine that the code is
-	 * running on. ie. both Unix and Windows prefixes are matched regardless.
-	 * 
-	 * @param filename
-	 *            the filename to query, null returns null
+	 * @param filename the filename to query, null returns null
 	 * @return the prefix of the file, null if invalid
 	 */
 	public static String getPrefix(String filename) {
@@ -302,45 +252,15 @@ public class HTMLUtil {
 			return null;
 		}
 		if (len > filename.length()) {
-			return filename + UNIX_SEPARATOR; // we know this only happens for
-												// unix
+			return filename + File.separatorChar;
 		}
 		return filename.substring(0, len);
 	}
 
-	// -----------------------------------------------------------------------
 	/**
-	 * Returns the length of the filename prefix, such as <code>C:/</code> or
-	 * <code>~/</code>.
-	 * <p>
-	 * This method will handle a file in either Unix or Windows format.
-	 * <p>
-	 * The prefix length includes the first slash in the full filename if
-	 * applicable. Thus, it is possible that the length returned is greater than
-	 * the length of the input string.
+	 * Returns the length of the filename prefix
 	 * 
-	 * <pre>
-	 * Windows:
-	 * a\b\c.txt           --> ""          --> relative
-	 * \a\b\c.txt          --> "\"         --> current drive absolute
-	 * C:a\b\c.txt         --> "C:"        --> drive relative
-	 * C:\a\b\c.txt        --> "C:\"       --> absolute
-	 * \\server\a\b\c.txt  --> "\\server\" --> UNC
-	 * 
-	 * Unix:
-	 * a/b/c.txt           --> ""          --> relative
-	 * /a/b/c.txt          --> "/"         --> absolute
-	 * ~/a/b/c.txt         --> "~/"        --> current user
-	 * ~                   --> "~/"        --> current user (slash added)
-	 * ~user/a/b/c.txt     --> "~user/"    --> named user
-	 * ~user               --> "~user/"    --> named user (slash added)
-	 * </pre>
-	 * <p>
-	 * The output will be the same irrespective of the machine that the code is
-	 * running on. ie. both Unix and Windows prefixes are matched regardless.
-	 * 
-	 * @param filename
-	 *            the filename to find the prefix in, null returns -1
+	 * @param filename the filename to find the prefix in, null returns -1
 	 * @return the length of the prefix, -1 if invalid or null
 	 */
 	public static int getPrefixLength(String filename) {
@@ -352,71 +272,29 @@ public class HTMLUtil {
 			return 0;
 		}
 		char ch0 = filename.charAt(0);
-		if (ch0 == ':') {
-			return -1;
-		}
 		if (len == 1) {
-			if (ch0 == '~') {
-				return 2; // return a length greater than the input
-			}
 			return isSeparator(ch0) ? 1 : 0;
 		} else {
-			if (ch0 == '~') {
-				int posUnix = filename.indexOf(UNIX_SEPARATOR, 1);
-				int posWin = filename.indexOf(WINDOWS_SEPARATOR, 1);
-				if (posUnix == -1 && posWin == -1) {
-					return len + 1; // return a length greater than the input
-				}
-				posUnix = posUnix == -1 ? posWin : posUnix;
-				posWin = posWin == -1 ? posUnix : posWin;
-				return Math.min(posUnix, posWin) + 1;
-			}
 			char ch1 = filename.charAt(1);
-			if (ch1 == ':') {
-				ch0 = Character.toUpperCase(ch0);
-				if (ch0 >= 'A' && ch0 <= 'Z') {
-					if (len == 2 || isSeparator(filename.charAt(2)) == false) {
-						return 2;
-					}
-					return 3;
-				}
-				return -1;
-
-			} else if (isSeparator(ch0) && isSeparator(ch1)) {
-				int posUnix = filename.indexOf(UNIX_SEPARATOR, 2);
-				int posWin = filename.indexOf(WINDOWS_SEPARATOR, 2);
-				if (posUnix == -1 && posWin == -1 || posUnix == 2
-						|| posWin == 2) {
+			if (isSeparator(ch0) && isSeparator(ch1)) {
+				int pos = filename.indexOf(File.separatorChar, 2);
+				if (pos == -1 && pos == 2) {
 					return -1;
 				}
-				posUnix = posUnix == -1 ? posWin : posUnix;
-				posWin = posWin == -1 ? posUnix : posWin;
-				return Math.min(posUnix, posWin) + 1;
+				return pos + 1;
 			} else {
 				return isSeparator(ch0) ? 1 : 0;
 			}
 		}
 	}
 
-	// -----------------------------------------------------------------------
 	/**
 	 * Checks if the character is a separator.
 	 * 
-	 * @param ch
-	 *            the character to check
+	 * @param ch the character to check
 	 * @return true if it is a separator character
 	 */
 	private static boolean isSeparator(char ch) {
-		return ch == UNIX_SEPARATOR || ch == WINDOWS_SEPARATOR;
+		return ch == File.separatorChar;
 	}
-
-	/**
-	 * The Unix separator character.
-	 */
-	private static final char UNIX_SEPARATOR = '/';
-
-	/**
-	 * The Windows separator character.
-	 */
-	private static final char WINDOWS_SEPARATOR = '\\';
 }
