@@ -8,34 +8,34 @@ import android.util.Log;
 public class Bookmark {
 
 	private static final String TAG = "Bookmark";
-	private final String title;
-	private final String idref;
-	private final String contentCfi;
+	private final String mTitle;
+	private final String mIdref;
+	private final String mContentCfi;
 
 	public Bookmark(String title, String idref, String contentCfi) {
-		this.title = title;
-		this.idref = idref;
-		this.contentCfi = contentCfi;
+		mTitle = title;
+		mIdref = idref;
+		mContentCfi = contentCfi;
 	}
 
 	public String getTitle() {
-		return title;
+		return mTitle;
 	}
 
 	public String getIdref() {
-		return idref;
+		return mIdref;
 	}
 
 	public String getContentCfi() {
-		return contentCfi;
+		return mContentCfi;
 	}
 	
 	public JSONObject toJSON() {
 		JSONObject json = new JSONObject();
 		try {
-			json.put("title", title);
-			json.put("idref", idref);
-			json.put("contentCFI", contentCfi);
+			json.put("title", mTitle);
+			json.put("idref", mIdref);
+			json.put("contentCFI", mContentCfi);
 		} catch (JSONException e) {
 			Log.e(TAG, ""+e.getMessage(), e);
 		}

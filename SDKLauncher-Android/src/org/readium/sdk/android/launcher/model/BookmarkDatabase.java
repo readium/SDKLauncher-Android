@@ -15,14 +15,14 @@ public class BookmarkDatabase {
 	private static final String TAG = "BookmarkDatabase";
 	private static final String BOOKMARKS_KEY = "bookmarks";
 	private static BookmarkDatabase INSTANCE;
-	private final Context c;
+	private final Context mContext;
 	
-	private BookmarkDatabase(Context c) {
-		this.c = c;
+	private BookmarkDatabase(Context context) {
+		mContext = context;
 	}
 	
-	public static void initInstance(Context c) {
-		INSTANCE = new BookmarkDatabase(c);
+	public static void initInstance(Context context) {
+		INSTANCE = new BookmarkDatabase(context);
 	}
 	
 	public static BookmarkDatabase getInstance() {
@@ -61,6 +61,6 @@ public class BookmarkDatabase {
 	}
 
 	private SharedPreferences getPreference(String container) {
-		return c.getSharedPreferences(container, Context.MODE_PRIVATE);
+		return mContext.getSharedPreferences(container, Context.MODE_PRIVATE);
 	}
 }
