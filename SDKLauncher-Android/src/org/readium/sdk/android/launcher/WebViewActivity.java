@@ -27,12 +27,14 @@ import java.util.List;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.readium.sdk.android.Container;
+import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.launcher.model.Page;
 import org.readium.sdk.android.launcher.model.PaginationInfo;
 import org.readium.sdk.android.launcher.model.ReadiumJSApi;
 import org.readium.sdk.android.launcher.model.ViewerSettings;
+import org.readium.sdk.android.launcher.util.HTMLUtil;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -224,7 +226,14 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         	String cleanedUrl = cleanResourceUrl(url);
         	Log.e(TAG, url+" => "+cleanedUrl);
         	byte[] data = mPackage.getContent(cleanedUrl);
-        	return new WebResourceResponse(null, "utf-8", new ByteArrayInputStream(data));
+        	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+        	if (item != null && item.isHtml()) {
+            	Log.e(TAG, "htmlByReplacingMediaURLsInHTML: "+cleanedUrl);
+	            data = HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(data), 
+	            		cleanedUrl, "PackageUUID").getBytes();
+        	}
+        	String mimetype = (item != null) ? item.getMediaType() : null;
+        	return new WebResourceResponse(mimetype, "utf-8", new ByteArrayInputStream(data));
         }
     }
     
