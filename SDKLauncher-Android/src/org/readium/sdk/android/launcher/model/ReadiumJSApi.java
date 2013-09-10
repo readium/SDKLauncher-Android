@@ -38,7 +38,7 @@ public class ReadiumJSApi {
 		try {
 			openBookData.put("package", pckg.toJSON());
 			openBookData.put("settings", viewerSettings.toJSON());
-			openBookData.put("openPageRequestData", openPageRequestData.toJSON());
+			openBookData.put("openPageRequest", openPageRequestData.toJSON());
 		} catch (JSONException e) {
 			Log.e(TAG, ""+e.getMessage(), e);
 		}

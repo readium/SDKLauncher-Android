@@ -22,6 +22,8 @@
 package org.readium.sdk.android.launcher;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import org.json.JSONException;
@@ -35,6 +37,7 @@ import org.readium.sdk.android.launcher.model.Page;
 import org.readium.sdk.android.launcher.model.PaginationInfo;
 import org.readium.sdk.android.launcher.model.ReadiumJSApi;
 import org.readium.sdk.android.launcher.model.ViewerSettings;
+import org.readium.sdk.android.launcher.util.EpubServer;
 import org.readium.sdk.android.launcher.util.HTMLUtil;
 
 import android.annotation.SuppressLint;
@@ -43,6 +46,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -57,7 +61,6 @@ import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -78,6 +81,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private TextView mPageInfo;
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
+	private EpubServer mServer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +109,14 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 				}
             }
         }
+        new AsyncTask<Void, Void, Void>() {
+			@Override
+			protected Void doInBackground(Void... params) {
+        		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, true);
+    			mServer.startServer();
+    			return null;
+        	}
+        }.execute();
 
         // Load the page skeleton
         mWebview.loadUrl(READER_SKELETON);
@@ -121,6 +133,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		mServer.stop();
 		((ViewGroup) mWebview.getParent()).removeView(mWebview);
 		mWebview.removeAllViews();
 		mWebview.clearCache(true);
@@ -134,8 +147,6 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			mWebview.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
-		mWebview.getSettings().setLightTouchEnabled(true);
-		mWebview.getSettings().setPluginState(WebSettings.PluginState.ON);
 		mWebview.setWebViewClient(new EpubWebViewClient());
 		mWebview.setWebChromeClient(new EpubWebChromeClient());
 
@@ -146,11 +157,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	    int itemId = item.getItemId();
 	    switch (itemId) {
 	    case R.id.add_bookmark:
-			Log.i(TAG, "Add a bookmark");
+			Log.d(TAG, "Add a bookmark");
 			mReadiumJSApi.bookmarkCurrentPage();
 			return true;
 	    case R.id.settings:
-			Log.i(TAG, "Show settings");
+			Log.d(TAG, "Show settings");
 			showSettings();
 			return true;
 	    }
@@ -191,54 +202,58 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 
     public final class EpubWebViewClient extends WebViewClient {
     	
-        @Override
+        private static final String UTF_8 = "utf-8";
+
+		@Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        	Log.i(TAG, "onPageStarted: "+url);
+        	Log.d(TAG, "onPageStarted: "+url);
         }
         
         @Override
         public void onPageFinished(WebView view, String url) {
-        	Log.i(TAG, "onPageFinished: "+url);
+        	Log.d(TAG, "onPageFinished: "+url);
         	if (url.equals(READER_SKELETON)) {
-//        		updateSettings(mViewerSettings);
-        		Log.i(TAG, "openPageRequestData: "+mOpenPageRequestData);
+        		Log.d(TAG, "openPageRequestData: "+mOpenPageRequestData);
         		mReadiumJSApi.openBook(mPackage, mViewerSettings, mOpenPageRequestData);
-//        		updateSettings(mViewerSettings);
         	}
         }
         
         @Override
         public void onLoadResource(WebView view, String url) {
-        	Log.i(TAG, "onLoadResource: "+url);
-        	byte[] data = mPackage.getContent(cleanResourceUrl(url));
+        	String cleanedUrl = cleanResourceUrl(url);
+        	byte[] data = mPackage.getContent(cleanedUrl);
             if (data.length > 0) {
-            	Log.i(TAG, "Load : "+url);
-                // TODO Pass the correct mimetype
-            	mWebview.loadData(new String(data), null, "utf-8");
+            	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+            	String mimetype = (item != null) ? item.getMediaType() : null;
+            	mWebview.loadData(new String(data), mimetype, UTF_8);
             }
         }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        	Log.i(TAG, "shouldOverrideUrlLoading: "+url);
     		return false;
         }
 
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-        	Log.i(TAG, "shouldInterceptRequest ? "+url);
 
         	String cleanedUrl = cleanResourceUrl(url);
-        	Log.e(TAG, url+" => "+cleanedUrl);
-        	byte[] data = mPackage.getContent(cleanedUrl);
+        	InputStream data = mPackage.getInputStream(cleanedUrl);
         	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
         	if (item != null && item.isHtml()) {
-            	Log.e(TAG, "htmlByReplacingMediaURLsInHTML: "+cleanedUrl);
-	            data = HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(data), 
-	            		cleanedUrl, "PackageUUID").getBytes();
+            	byte[] binary;
+				try {
+					binary = new byte[data.available()];
+	            	data.read(binary);
+	            	data.close();
+		            data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary), 
+		            		cleanedUrl, "PackageUUID").getBytes());
+				} catch (IOException e) {
+					Log.e(TAG, ""+e.getMessage(), e);
+				}
         	}
         	String mimetype = (item != null) ? item.getMediaType() : null;
-        	return new WebResourceResponse(mimetype, "utf-8", new ByteArrayInputStream(data));
+        	return new WebResourceResponse(mimetype, UTF_8, data);
         }
     }
     
