@@ -45,4 +45,13 @@ public class OpenPageRequest {
 		json.put("sourceFileHref", sourceFileHref);
 		return json;
 	}
+	
+	public static OpenPageRequest fromJSON(String data) throws JSONException {
+		JSONObject json = new JSONObject(data);
+		return new OpenPageRequest(json.optString("idref"), 
+				json.optInt("spineItemPageIndex"), 
+				json.optString("elementCfi"), 
+				json.optString("contentRefUrl"), 
+				json.optString("sourceFileHref"));
+	}
 }

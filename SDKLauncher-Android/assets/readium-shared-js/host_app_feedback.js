@@ -23,10 +23,22 @@ ReadiumSDK.HostAppFeedback = function() {
 
     ReadiumSDK.on("ReaderInitialized", function(){
         ReadiumSDK.reader.on("PaginationChanged", this.onPaginationChanged, this);
+        ReadiumSDK.reader.on("SettingsApplied", this.onSettingsApplied, this);
+
     }, this);
 
     this.onPaginationChanged = function(paginationInfo) {
-		window.LauncherUI.onPaginationChanged(JSON.stringify(paginationInfo));
+        if (window.LauncherUI) {
+			window.LauncherUI.onPaginationChanged(JSON.stringify(paginationInfo));
+        }
+
+    };
+
+    this.onSettingsApplied = function() {
+
+        if(window.LauncherUI) {
+            window.LauncherUI.onSettingsApplied();
+        }
     };
 
 }();
