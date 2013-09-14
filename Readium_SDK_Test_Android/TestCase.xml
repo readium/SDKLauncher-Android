@@ -49,11 +49,11 @@
         <assert
             expression="package.fullTitle==='草枕'"
             msg="package full title parse failed" />
-
+<!-- 
         <assert
             expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:0X'"
             msg="package uniqueID parse failed" />
-
+ -->
         <assert
             expression="package.packageID==='http://www.aozora.gr.jp/cards/000148/card776.html'"
             msg="package packageID parse failed" />
@@ -145,11 +145,11 @@
         <assert
             expression="package.fullTitle==='The Waste Land'"
             msg="package full title parse failed" />
-
+<!-- 
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.wasteland-otf@2012-01-18T12:47:P'"
             msg="package uniqueID parse failed" />
-
+ -->
         <assert
             expression="package.packageID==='code.google.com.epub-samples.wasteland-otf'"
             msg="package packageID parse failed" />
@@ -169,6 +169,306 @@
         <assert
             expression="package.spineItems[0].href==='wasteland-content.xhtml'"
             msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
+
+    <testcase name="wasteland-woff" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland-woff -->
+        <function name="openBook" />
+
+        <file
+            name="wasteland-woff-20120118.epub"
+            url="http://epub-samples.googlecode.com/files/wasteland-woff-20120118.epub" />
+
+        <assert
+            expression="container.name==='wasteland-woff-20120118.epub'"
+            msg="open wasteland-woff-20120118.epub file failed" />
+
+        <assert
+            expression="package.title==='The Waste Land'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='The Waste Land'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-woff@2012-01-18T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.wasteland-woff'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='T.S. Eliot'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='t1'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='wasteland-content.xhtml'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
+
+    <testcase name="wasteland-woff-obf" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland-woff-obf -->
+        <function name="openBook" />
+
+        <file
+            name="wasteland-woff-obf-20120118.epub"
+            url="http://epub-samples.googlecode.com/files/wasteland-woff-obf-20120118.epub" />
+
+        <assert
+            expression="container.name==='wasteland-woff-obf-20120118.epub'"
+            msg="open wasteland-woff-obf-20120118.epub file failed" />
+
+        <assert
+            expression="package.title==='The Waste Land'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='The Waste Land'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-woff-obfuscated@2012-01-18T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='code.google.com.epub-samples.wasteland-woff-obfuscated'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='T.S. Eliot'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='t1'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='wasteland-content.xhtml'"
+            msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
+        
+    <testcase name="moby-dick" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#moby-dick -->
+        <function name="openBook" />
+
+        <file
+            name="moby-dick-20120118.epub"
+            url="http://epub-samples.googlecode.com/files/moby-dick-20120118.epub" />
+
+        <assert
+            expression="container.name==='moby-dick-20120118.epub'"
+            msg="open moby-dick-20120118.epub file failed" />
+
+        <assert
+            expression="package.title==='Moby-Dick'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Moby-Dick'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.moby-dick-basic@2012-01-18T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.moby-dick-basic'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Herman Melville'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[143].idRef==='toc'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[143].href==='toc.xhtml'"
+            msg="package spine item parse failed" />
+        
+        </testcase>
+
+    <testcase name="moby-dick-mo" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#moby-dick -->
+        <function name="openBook" />
+
+        <file
+            name="moby-dick-mo-20120214.epub"
+            url="http://epub-samples.googlecode.com/files/moby-dick-mo-20120214.epub" />
+
+        <assert
+            expression="container.name==='moby-dick-mo-20120214.epub'"
+            msg="open moby-dick-mo-20120214.epub file failed" />
+
+        <assert
+            expression="package.title==='Moby-Dick'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Moby-Dick'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='urn:isbn:9780316000000@2012-01-13T01:13:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='urn:isbn:9780316000000'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Herman Melville'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[143].idRef==='toc'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[143].href==='toc.xhtml'"
+            msg="package spine item parse failed" />
+        
+        </testcase>
+
+    <testcase name="cc-shared-culture" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#cc-shared-culture -->
+        <function name="openBook" />
+
+        <file
+            name="cc-shared-culture-20120130.epub"
+            url="http://epub-samples.googlecode.com/files/cc-shared-culture-20120130.epub" />
+
+        <assert
+            expression="container.name==='cc-shared-culture-20120130.epub'"
+            msg="open cc-shared-culture-20120130.epub file failed" />
+
+        <assert
+            expression="package.title==='Creative Commons - A Shared Culture'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Creative Commons - A Shared Culture'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.cc-shared-culture@2012-01-20T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.cc-shared-culture'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Jesse Dylan'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='xhtml/cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.title==='table of contents'"
+            msg="package TOC parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.sourceHref==='xhtml/toc.xhtml'"
+            msg="package TOC parse failed" />
+        
+        </testcase>
+
+    <testcase name="widget-figure-gallery" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#widget-figure-gallery -->
+        <function name="openBook" />
+
+        <file
+            name="widget-figure-gallery-20121022.epub"
+            url="http://epub-samples.googlecode.com/files/widget-figure-gallery-20121022.epub" />
+
+        <assert
+            expression="container.name==='widget-figure-gallery-20121022.epub'"
+            msg="open widget-figure-gallery-20121022.epub file failed" />
+
+        <assert
+            expression="package.title==='EPUB Widgets: Figure Gallery'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='EPUB Widgets: Figure Gallery'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.widget-figure-gallery@2012-04-05T21:03:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.widget-figure-gallery'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='E.L. Starr'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='t1'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='text.xhtml'"
+            msg="package spine item parse failed" />
         
         </testcase>
 </testcases>
