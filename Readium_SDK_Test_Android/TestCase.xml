@@ -396,10 +396,10 @@
             expression="package.uniqueID==='code.google.com.epub-samples.cc-shared-culture@2012-01-20T12:47:00Z'"
             msg="package uniqueID parse failed" />
  -->
-        <assert
+<!--         <assert
             expression="package.packageID==='code.google.com.epub-samples.cc-shared-culture'"
             msg="package packageID parse failed" />
-
+ -->
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -469,6 +469,214 @@
         <assert
             expression="package.spineItems[0].href==='text.xhtml'"
             msg="package spine item parse failed" />
+        
+        </testcase>
+        
+    <testcase name="georgia" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#georgia -->
+        <function name="openBook" />
+
+        <file
+            name="georgia-pls-ssml-20120322.epub"
+            url="http://epub-samples.googlecode.com/files/georgia-pls-ssml-20120322.epub" />
+
+        <assert
+            expression="container.name==='georgia-pls-ssml-20120322.epub'"
+            msg="open georgia-pls-ssml-20120322.epub file failed" />
+
+        <assert
+            expression="package.title==='Georgia'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7 / Georgia'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.georgia-pls-ssml@2012-02-07T16:38:35Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='code.google.com.epub-samples.georgia-pls-ssm'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Various'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        </testcase>
+        
+    <testcase name="georgia-cfi" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#georgia-cfi -->
+        <function name="openBook" />
+
+        <file
+            name="georgia-cfi-20120521.epub"
+            url="http://epub-samples.googlecode.com/files/georgia-cfi-20120521.epub" />
+
+        <assert
+            expression="container.name==='georgia-cfi-20120521.epub'"
+            msg="open georgia-cfi-20120521.epub file failed" />
+
+        <assert
+            expression="package.title==='Georgia'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7 / Georgia'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.georgia-pls-ssml@2012-02-07T16:38:35Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='code.google.com.epub-samples.georgia-pls-ssm'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Various'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        </testcase>
+        
+    <testcase name="accessible_epub_3" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#accessible_epub_3 -->
+        <function name="openBook" />
+
+        <file
+            name="accessible_epub_3-20120228.epub"
+            url="http://epub-samples.googlecode.com/files/accessible_epub_3-20120228.epub" />
+
+        <assert
+            expression="container.name==='accessible_epub_3-20120228.epub'"
+            msg="open accessible_epub_3-20120228.epub file failed" />
+
+        <assert
+            expression="package.title==='Accessible EPUB 3'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Accessible EPUB 3'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='urn:isbn:9781449328030@2012-02-20T22:17:24Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='urn:isbn:97814493280'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Matt Garrish'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.title==='Table of Contents'"
+            msg="package TOC parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.sourceHref==='bk01-toc.xhtml'"
+            msg="package TOC parse failed" />
+        
+        </testcase>
+
+    <testcase name="mahabharata" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#mahabharata -->
+        <function name="openBook" />
+
+        <file
+            name="mahabharata-20120305.epub"
+            url="http://epub-samples.googlecode.com/files/mahabharata-20120305.epub" />
+
+        <assert
+            expression="container.name==='mahabharata-20120305.epub'"
+            msg="open mahabharata-20120305.epub file failed" />
+
+        <assert
+            expression="package.title==='Accessible EPUB 3'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Accessible EPUB 3'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='urn:isbn:9781449328030@2012-02-20T22:17:24Z'"
+            msg="package uniqueID parse failed" />
+ -->
+<!--         <assert
+            expression="package.packageID==='urn:isbn:97814493280'"
+            msg="package packageID parse failed" />
+ -->
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Matt Garrish'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='cover'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.title==='Table of Contents'"
+            msg="package TOC parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.sourceHref==='bk01-toc.xhtml'"
+            msg="package TOC parse failed" />
         
         </testcase>
 </testcases>

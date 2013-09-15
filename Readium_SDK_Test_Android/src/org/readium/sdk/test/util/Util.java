@@ -171,6 +171,7 @@ public class Util {
     }
 
     private static String getSpineItemsJson(List<SpineItem> l) {
+        int n = 0;
         String json = "\"spineItems\":[";
         for (Iterator<SpineItem> i = l.iterator(); i.hasNext();) {
             SpineItem si = i.next();
@@ -182,6 +183,7 @@ public class Util {
                     + Util.format(si.getRenditionLayout()) + "}";
 
             json = i.hasNext() ? json + "," : json;
+            n++;
         }
         return json + "]";
     }
