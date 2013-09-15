@@ -75,12 +75,12 @@ public class Readium_SDK_Test extends
 
             if (activity.getResult()) {
                 Log.v(TAG,
-                        "TestCase:" + test.getName() + " result:"
+                        "TestCase:" + test.getName() + " Result:"
                                 + activity.getResult());
             } else {
                 Log.v(TAG,
-                        "TestCase:" + test.getName() + " result:"
-                                + activity.getResult() + "; invalid expression:"
+                        "TestCase:" + test.getName() + " Result:"
+                                + activity.getResult() + "; Invalid expression:"
                                 + activity.getExpression());
             }
 

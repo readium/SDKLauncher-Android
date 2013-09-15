@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -160,9 +161,7 @@ public class Util {
     }
 
     public static String format(String s) {
-        String res = (null == s) ? "null" : "\"" + s + "\"";
-
-        return res;
+        return (null == s) ? "null" : "\"" + s + "\"";
     }
 
     private static String getContainerJson(Container c) {
@@ -172,31 +171,35 @@ public class Util {
 
     private static String getSpineItemsJson(List<SpineItem> l) {
         int n = 0;
-        String json = "\"spineItems\":[";
+        List<String> list = new ArrayList<String>();
+        String json = "\"spineItems\":";
         for (Iterator<SpineItem> i = l.iterator(); i.hasNext();) {
             SpineItem si = i.next();
-            json = json + "{\"idRef\":" + Util.format(si.getIdRef()) + ",";
-            json = json + "\"href\":" + Util.format(si.getHref()) + ",";
-            json = json + "\"pageSpread\":" + Util.format(si.getPageSpread())
-                    + ",";
-            json = json + "\"renditionLayout\":"
+            String s = "{\"idRef\":" + Util.format(si.getIdRef()) + ","
+                    + "\"href\":" + Util.format(si.getHref()) + ","
+                    + "\"pageSpread\":" + Util.format(si.getPageSpread()) + ","
+                    + "\"renditionLayout\":"
                     + Util.format(si.getRenditionLayout()) + "}";
 
-            json = i.hasNext() ? json + "," : json;
-            n++;
+            // s = i.hasNext() ? s + "," : s;
+            list.add(s);
+
+            n = n + 1;
+            if (n % 100 == 0) {
+                Log.v(TAG, "count = " + n);
+            }
         }
-        return json + "]";
+
+        return json + list.toString();
     }
 
     private static String getListJson(String name, List<String> l) {
-        String json = name + ":[";
+        String json = name + ":";
+        List<String> list = new ArrayList<String>();
         for (Iterator<String> i = l.iterator(); i.hasNext();) {
-            String s = Util.format(i.next());
-            json = json + s;
-            json = i.hasNext() ? json + "," : json;
+            list.add(Util.format(i.next()));
         }
-        json = json + "]";
-        return json;
+        return json + list.toString();
     }
 
     private static String getNavigationTableJson(String name, NavigationTable n) {

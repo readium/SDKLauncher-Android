@@ -635,47 +635,47 @@
             msg="open mahabharata-20120305.epub file failed" />
 
         <assert
-            expression="package.title==='Accessible EPUB 3'"
+            expression="package.title==='महाभारत'"
             msg="package title parse failed" />
 
         <assert
-            expression="package.fullTitle==='Accessible EPUB 3'"
+            expression="package.fullTitle==='महाभारत'"
             msg="package full title parse failed" />
 <!-- 
         <assert
-            expression="package.uniqueID==='urn:isbn:9781449328030@2012-02-20T22:17:24Z'"
+            expression="package.uniqueID==='code.google.com.epub-samples.mahabarata@2012-03-01T12:47:00Z'"
             msg="package uniqueID parse failed" />
  -->
-<!--         <assert
-            expression="package.packageID==='urn:isbn:97814493280'"
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.mahabarata'"
             msg="package packageID parse failed" />
- -->
+
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
 
         <assert
-            expression="package.language==='en'"
+            expression="package.language==='sa'"
             msg="package language parse failed" />
 
         <assert
-            expression="package.authorList[0]==='Matt Garrish'"
+            expression="package.authorList.length===0"
             msg="package authorList parse failed" />
         
         <assert
-            expression="package.spineItems[0].idRef==='cover'"
+            expression="package.spineItems[0].idRef==='b00000'"
             msg="package spine item parse failed" />
         
         <assert
-            expression="package.spineItems[0].href==='cover.xhtml'"
+            expression="package.spineItems[0].href==='xhtml/b00000.xhtml'"
             msg="package spine item parse failed" />
         
         <assert
-            expression="package.tableOfContents.title==='Table of Contents'"
+            expression="package.tableOfContents.title===''"
             msg="package TOC parse failed" />
         
         <assert
-            expression="package.tableOfContents.sourceHref==='bk01-toc.xhtml'"
+            expression="package.tableOfContents.sourceHref==='nav/nav.xhtml'"
             msg="package TOC parse failed" />
         
         </testcase>
