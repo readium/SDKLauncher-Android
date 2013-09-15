@@ -679,4 +679,132 @@
             msg="package TOC parse failed" />
         
         </testcase>
+
+    <testcase name="linear-algebra" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#linear-algebra -->
+        <function name="openBook" />
+
+        <file
+            name="linear-algebra-20120306.epub"
+            url="http://epub-samples.googlecode.com/files/linear-algebra-20120306.epub" />
+
+        <assert
+            expression="container.name==='linear-algebra-20120306.epub'"
+            msg="open linear-algebra-20120306.epub file failed" />
+
+        <assert
+            expression="package.title==='A First Course in Linear Algebra'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='A First Course in Linear Algebra'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.linear-algebra@2012-03-05T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.linear-algebra'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Robert A. Beezer'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='c1'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='xhtml/titlepage.html'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.sourceHref==='xhtml/nav.html'"
+            msg="package TOC parse failed" />
+        
+        </testcase>
+
+    <testcase name="page-blanche" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#page-blanche -->
+        <function name="openBook" />
+
+        <file
+            name="page-blanche-20130322.epub"
+            url="http://epub-samples.googlecode.com/files/page-blanche-20130322.epub" />
+
+        <assert
+            expression="container.name==='page-blanche-20130322.epub'"
+            msg="open page-blanche-20130322.epub file failed" />
+
+        <assert
+            expression="package.title==='Page Blanche'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Page Blanche'"
+            msg="package full title parse failed" />
+<!-- 
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.page-blanche@2012-08-28T18:00:00Z'"
+            msg="package uniqueID parse failed" />
+ -->
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.page-blanche'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='fr'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Boulet'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.authorList[1]==='Bagieu Pénélope'"
+            msg="package authorList parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].idRef==='id-cover-xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].href==='Content/cover.xhtml'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.spineItems[0].pageSpread==='page-spread-right'"
+            msg="package spine item parse failed" />
+        
+                <assert
+            expression="package.spineItems[0].renditionLayout==='pre-paginated'"
+            msg="package spine item parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+        
+        <assert
+            expression="package.tableOfContents.sourceHref==='Navigation/nav.xhtml'"
+            msg="package TOC parse failed" />
+        
+        </testcase>
 </testcases>
