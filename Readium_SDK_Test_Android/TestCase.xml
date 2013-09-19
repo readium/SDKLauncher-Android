@@ -49,11 +49,11 @@
         <assert
             expression="package.fullTitle==='草枕'"
             msg="package full title parse failed" />
-<!-- 
+
         <assert
-            expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:0X'"
+            expression="package.uniqueID==='http://www.aozora.gr.jp/cards/000148/card776.html@2012-04-24T00:00:00Z'"
             msg="package uniqueID parse failed" />
- -->
+                               
         <assert
             expression="package.packageID==='http://www.aozora.gr.jp/cards/000148/card776.html'"
             msg="package packageID parse failed" />
@@ -145,11 +145,11 @@
         <assert
             expression="package.fullTitle==='The Waste Land'"
             msg="package full title parse failed" />
-<!-- 
+    
         <assert
-            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-otf@2012-01-18T12:47:P'"
+            expression="package.uniqueID==='code.google.com.epub-samples.wasteland-otf@2012-01-18T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
+    
         <assert
             expression="package.packageID==='code.google.com.epub-samples.wasteland-otf'"
             msg="package packageID parse failed" />
@@ -191,11 +191,11 @@
         <assert
             expression="package.fullTitle==='The Waste Land'"
             msg="package full title parse failed" />
-<!-- 
+    
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.wasteland-woff@2012-01-18T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
+    
         <assert
             expression="package.packageID==='code.google.com.epub-samples.wasteland-woff'"
             msg="package packageID parse failed" />
@@ -237,15 +237,15 @@
         <assert
             expression="package.fullTitle==='The Waste Land'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.wasteland-woff-obfuscated@2012-01-18T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
+    
+        <assert
             expression="package.packageID==='code.google.com.epub-samples.wasteland-woff-obfuscated'"
             msg="package packageID parse failed" />
- -->
+    
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -283,11 +283,11 @@
         <assert
             expression="package.fullTitle==='Moby-Dick'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.moby-dick-basic@2012-01-18T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
+    
         <assert
             expression="package.packageID==='code.google.com.epub-samples.moby-dick-basic'"
             msg="package packageID parse failed" />
@@ -337,15 +337,15 @@
         <assert
             expression="package.fullTitle==='Moby-Dick'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
             expression="package.uniqueID==='urn:isbn:9780316000000@2012-01-13T01:13:00Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
+    
+        <assert
             expression="package.packageID==='urn:isbn:9780316000000'"
             msg="package packageID parse failed" />
- -->
+    
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -391,15 +391,15 @@
         <assert
             expression="package.fullTitle==='Creative Commons - A Shared Culture'"
             msg="package full title parse failed" />
-<!-- 
+    
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.cc-shared-culture@2012-01-20T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
+    
+        <assert
             expression="package.packageID==='code.google.com.epub-samples.cc-shared-culture'"
             msg="package packageID parse failed" />
- -->
+    
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -445,11 +445,11 @@
         <assert
             expression="package.fullTitle==='EPUB Widgets: Figure Gallery'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.widget-figure-gallery@2012-04-05T21:03:00Z'"
             msg="package uniqueID parse failed" />
- -->
+    
         <assert
             expression="package.packageID==='code.google.com.epub-samples.widget-figure-gallery'"
             msg="package packageID parse failed" />
@@ -491,15 +491,15 @@
         <assert
             expression="package.fullTitle==='Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7 / Georgia'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.georgia-pls-ssml@2012-02-07T16:38:35Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
-            expression="package.packageID==='code.google.com.epub-samples.georgia-pls-ssm'"
+    
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.georgia-pls-ssml'"
             msg="package packageID parse failed" />
- -->
+    
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -537,15 +537,15 @@
         <assert
             expression="package.fullTitle==='Encyclopaedia Britannica, 11th Edition, Volume 11, Slice 7 / Georgia'"
             msg="package full title parse failed" />
-<!-- 
+     
         <assert
-            expression="package.uniqueID==='code.google.com.epub-samples.georgia-pls-ssml@2012-02-07T16:38:35Z'"
+            expression="package.uniqueID==='code.google.com.epub-samples.georgia-cfi@2012-02-07T16:38:35Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
-            expression="package.packageID==='code.google.com.epub-samples.georgia-pls-ssm'"
+    
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.georgia-cfi'"
             msg="package packageID parse failed" />
- -->
+                  
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -583,15 +583,15 @@
         <assert
             expression="package.fullTitle==='Accessible EPUB 3'"
             msg="package full title parse failed" />
-<!-- 
+    
         <assert
             expression="package.uniqueID==='urn:isbn:9781449328030@2012-02-20T22:17:24Z'"
             msg="package uniqueID parse failed" />
- -->
-<!--         <assert
-            expression="package.packageID==='urn:isbn:97814493280'"
+
+        <assert
+            expression="package.packageID==='urn:isbn:9781449328030'"
             msg="package packageID parse failed" />
- -->
+          
         <assert
             expression="package.version==='3.0'"
             msg="package version parse failed" />
@@ -641,11 +641,11 @@
         <assert
             expression="package.fullTitle==='महाभारत'"
             msg="package full title parse failed" />
-<!-- 
+
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.mahabarata@2012-03-01T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
+       
         <assert
             expression="package.packageID==='code.google.com.epub-samples.mahabarata'"
             msg="package packageID parse failed" />
@@ -699,11 +699,11 @@
         <assert
             expression="package.fullTitle==='A First Course in Linear Algebra'"
             msg="package full title parse failed" />
-<!-- 
+      
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.linear-algebra@2012-03-05T12:47:00Z'"
             msg="package uniqueID parse failed" />
- -->
+      
         <assert
             expression="package.packageID==='code.google.com.epub-samples.linear-algebra'"
             msg="package packageID parse failed" />
@@ -757,11 +757,11 @@
         <assert
             expression="package.fullTitle==='Page Blanche'"
             msg="package full title parse failed" />
-<!-- 
+ 
         <assert
             expression="package.uniqueID==='code.google.com.epub-samples.page-blanche@2012-08-28T18:00:00Z'"
             msg="package uniqueID parse failed" />
- -->
+
         <assert
             expression="package.packageID==='code.google.com.epub-samples.page-blanche'"
             msg="package packageID parse failed" />
