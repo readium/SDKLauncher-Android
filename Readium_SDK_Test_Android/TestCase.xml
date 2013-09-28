@@ -963,7 +963,7 @@
             msg="package version parse failed" />
 
         <assert
-            expression="package.language==='en'"
+            expression="package.language==='ar'"
             msg="package language parse failed" />
 
         <assert
