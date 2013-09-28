@@ -808,6 +808,398 @@
 
     </testcase>
 
+    <testcase name="page-blanche-bitmaps-in-spine" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#page-blanche-bitmaps-in-spine -->
+        <function name="openBook" />
+
+        <file
+            name="page-blanche-bitmaps-in-spine-20120809.epub"
+            url="http://epub-samples.googlecode.com/files/page-blanche-bitmaps-in-spine-20120809.epub" />
+
+        <assert
+            expression="container.name==='page-blanche-bitmaps-in-spine-20120809.epub'"
+            msg="open page-blanche-bitmaps-in-spine-20120809.epub file failed" />
+
+        <assert
+            expression="package.title==='Page Blanche (bitmaps directly in spine)'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Page Blanche (bitmaps directly in spine)'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.page-blanche_bitmaps-in-spine@2012-08-08T15:00:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.page-blanche_bitmaps-in-spine'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='fr'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Boulet'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.authorList[1]==='Bagieu Pénélope'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='id-cover-jpg'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='Image/cover.jpg'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].pageSpread==='page-spread-right'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].renditionLayout==='pre-paginated'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='Navigation/nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+
+    <testcase name="sous-le-vent" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#sous-le-vent -->
+        <function name="openBook" />
+
+        <file
+            name="sous-le-vent-20121022.epub"
+            url="http://epub-samples.googlecode.com/files/sous-le-vent-20121022.epub" />
+
+        <assert
+            expression="container.name==='sous-le-vent-20121022.epub'"
+            msg="open sous-le-vent-20121022.epub file failed" />
+
+        <assert
+            expression="package.title==='Sous le vent'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Sous le vent'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.gogle.com.epub-sample.sous-le-vent@2012-08-28T18:00:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.gogle.com.epub-sample.sous-le-vent'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='fr'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Jean-Bernard Pouy'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.authorList[1]==='Joe G. Pinelli'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='ch1'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='Content/pageNum-1.xhtml'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].pageSpread==='page-spread-right'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].renditionLayout==='pre-paginated'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='Navigation/nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+
+    <testcase name="sous-le-vent_svg-in-spine" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#sous-le-vent_svg-in-spine -->
+        <function name="openBook" />
+
+        <file
+            name="sous-le-vent_svg-in-spine-20121022.epub"
+            url="http://epub-samples.googlecode.com/files/sous-le-vent_svg-in-spine-20121022.epub" />
+
+        <assert
+            expression="container.name==='sous-le-vent_svg-in-spine-20121022.epub'"
+            msg="open sous-le-vent_svg-in-spine-20121022.epub file failed" />
+
+        <assert
+            expression="package.title==='Sous le vent (SVG directly in spine)'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Sous le vent (SVG directly in spine)'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.gogle.com.epub-sample.sous-le-vent_svg-in-spine@2012-08-28T18:00:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.gogle.com.epub-sample.sous-le-vent_svg-in-spine'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='fr'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Jean-Bernard Pouy'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.authorList[1]==='Joe G. Pinelli'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='ch1'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='Content/pageNum-1.svg'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].pageSpread==='page-spread-right'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].renditionLayout==='pre-paginated'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='Navigation/nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+    
+    <testcase name="svg-in-spine" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#svg-in-spine -->
+        <function name="openBook" />
+
+        <file
+            name="svg-in-spine-20120417.epub"
+            url="http://epub-samples.googlecode.com/files/svg-in-spine-20120417.epub" />
+
+        <assert
+            expression="container.name==='svg-in-spine-20120417.epub'"
+            msg="open svg-in-spine-20120417.epub file failed" />
+
+        <assert
+            expression="package.title==='SVG in Spine'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='SVG in Spine'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.svg-in-spine@2012-04-12T12:00:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.svg-in-spine'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en-US'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='ePub Sample project'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='page001'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='Images/cover.svg'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].pageSpread==='page-spread-right'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].renditionLayout==='pre-paginated'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+    
+    <testcase name="cole-voyage-of-life" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#cole-voyage-of-life -->
+        <function name="openBook" />
+
+        <file
+            name="cole-voyage-of-life-20120320.epub"
+            url="http://epub-samples.googlecode.com/files/cole-voyage-of-life-20120320.epub" />
+
+        <assert
+            expression="container.name==='cole-voyage-of-life-20120320.epub'"
+            msg="open cole-voyage-of-life-20120320.epub file failed" />
+
+        <assert
+            expression="package.title==='Thomas Cole - The Voyage of Life'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Thomas Cole - The Voyage of Life'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.cole-voyage-of-life@2012-03-20T11:37:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.cole-voyage-of-life'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en-US'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Jesse Dylan'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='i'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='xhtml/0-intro.xhtml'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='xhtml/nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+    
+    <testcase name="cole-voyage-of-life-tol" >
+        <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#cole-voyage-of-life-tol -->
+        <function name="openBook" />
+
+        <file
+            name="cole-voyage-of-life-tol-20120405.epub"
+            url="http://epub-samples.googlecode.com/files/cole-voyage-of-life-tol-20120405.epub" />
+
+        <assert
+            expression="container.name==='cole-voyage-of-life-tol-20120405.epub'"
+            msg="open cole-voyage-of-life-tol-20120405.epub file failed" />
+
+        <assert
+            expression="package.title==='Thomas Cole - The Voyage of Life'"
+            msg="package title parse failed" />
+
+        <assert
+            expression="package.fullTitle==='Thomas Cole - The Voyage of Life'"
+            msg="package full title parse failed" />
+
+        <assert
+            expression="package.uniqueID==='code.google.com.epub-samples.cole-voyage-of-life-tol@2012-04-02T12:47:00Z'"
+            msg="package uniqueID parse failed" />
+
+        <assert
+            expression="package.packageID==='code.google.com.epub-samples.cole-voyage-of-life-tol'"
+            msg="package packageID parse failed" />
+
+        <assert
+            expression="package.version==='3.0'"
+            msg="package version parse failed" />
+
+        <assert
+            expression="package.language==='en-US'"
+            msg="package language parse failed" />
+
+        <assert
+            expression="package.authorList[0]==='Jesse Dylan'"
+            msg="package authorList parse failed" />
+
+        <assert
+            expression="package.spineItems[0].idRef==='i'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.spineItems[0].href==='xhtml/0-intro.xhtml'"
+            msg="package spine item parse failed" />
+
+        <assert
+            expression="package.tableOfContents.title===''"
+            msg="package TOC parse failed" />
+
+        <assert
+            expression="package.tableOfContents.sourceHref==='xhtml/nav.xhtml'"
+            msg="package TOC parse failed" />
+
+    </testcase>
+    
     <testcase name="hefty-water" >
         <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#hefty-water -->
         <function name="openBook" />
