@@ -1075,7 +1075,7 @@
             msg="package full title parse failed" />
 
         <assert
-            expression="package.uniqueID===''urn:uuid:ACA8C671-6C1F-1014-8433-7416564D7508@2012-08-14T13:54:00Z'"
+            expression="package.uniqueID==='urn:uuid:ACA8C671-6C1F-1014-8433-7416564D7508@2012-08-14T13:54:00Z'"
             msg="package uniqueID parse failed" />
 
         <assert
