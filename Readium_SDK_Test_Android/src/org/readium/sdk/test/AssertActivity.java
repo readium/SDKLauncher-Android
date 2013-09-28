@@ -88,7 +88,8 @@ public class AssertActivity extends Activity {
         js += "var result = true;";
         js += "var expr = '';";
         js += "for (var i = 0; i < data.test.testExpr.length; i++) {";
-        js += "    result = eval(data.test.testExpr[i]);";
+        js += "    try{result = eval(data.test.testExpr[i]);}";
+        js += "    catch(e){result=false;}";
         js += "    if (false === result){";
         js += "        expr = data.test.testExpr[i];break;";
         js += "    }}";
