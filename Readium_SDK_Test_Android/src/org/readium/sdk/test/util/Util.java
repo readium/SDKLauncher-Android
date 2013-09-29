@@ -169,19 +169,23 @@ public class Util {
                 + format(c.getName()) + "";
     }
 
-    private static String getSpineItemsJson(List<SpineItem> l) {
+    private static String getSpineItemsJson(Package p, List<SpineItem> l) {
         int n = 0;
         List<String> list = new ArrayList<String>();
         String json = "\"spineItems\":";
         for (Iterator<SpineItem> i = l.iterator(); i.hasNext();) {
             SpineItem si = i.next();
+            Log.i("LOGPACK",
+                    si.getHref() + " uncompress size:"
+                            + p.getArchiveInfoSize(si.getHref()));
             String s = "{\"idRef\":" + Util.format(si.getIdRef()) + ","
                     + "\"href\":" + Util.format(si.getHref()) + ","
                     + "\"pageSpread\":" + Util.format(si.getPageSpread()) + ","
+                    + "\"archiveInfoSize\":"
+                    + p.getArchiveInfoSize(si.getHref()) + ","
                     + "\"renditionLayout\":"
                     + Util.format(si.getRenditionLayout()) + "}";
 
-            // s = i.hasNext() ? s + "," : s;
             list.add(s);
 
             n = n + 1;
@@ -262,7 +266,7 @@ public class Util {
                 + ","
                 + getListJson("\"subjects\"", p.getSubjects())
                 + ","
-                + getSpineItemsJson(p.getSpineItems())
+                + getSpineItemsJson(p, p.getSpineItems())
                 + ","
                 + getNavigationTableJson("\"tableOfContents\"",
                         p.getTableOfContents())

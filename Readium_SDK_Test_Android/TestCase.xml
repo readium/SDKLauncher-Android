@@ -24,7 +24,8 @@
         <assert
             expression="package.uniqueID==='urn:isbn:a-christmas-carol@2012-01-17T03:23:23Z'"
             msg="package uniqueID parse failed" />
-    </testcase>
+        
+        </testcase>
 
     <!--
       Real-world but designed sample files
@@ -124,7 +125,11 @@
             expression="package.spineItems[0].href==='wasteland-content.xhtml'"
             msg="package pageProgressionDirection parse failed" />
 
-    </testcase>
+        <assert
+            expression="package.spineItems[0].archiveInfoSize===50238"
+            msg="package pageProgressionDirection parse failed" />
+
+        </testcase>
 
     <testcase name="wasteland-otf" >
         <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland-otf -->
@@ -170,7 +175,11 @@
             expression="package.spineItems[0].href==='wasteland-content.xhtml'"
             msg="package pageProgressionDirection parse failed" />
 
-    </testcase>
+        <assert
+            expression="package.spineItems[0].archiveInfoSize===50238"
+            msg="package pageProgressionDirection parse failed" />
+
+        </testcase>
 
     <testcase name="wasteland-woff" >
         <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland-woff -->
@@ -216,6 +225,10 @@
             expression="package.spineItems[0].href==='wasteland-content.xhtml'"
             msg="package pageProgressionDirection parse failed" />
 
+        <assert
+            expression="package.spineItems[0].archiveInfoSize===50238"
+            msg="package pageProgressionDirection parse failed" />
+        
     </testcase>
 
     <testcase name="wasteland-woff-obf" >
@@ -262,6 +275,10 @@
             expression="package.spineItems[0].href==='wasteland-content.xhtml'"
             msg="package pageProgressionDirection parse failed" />
 
+        <assert
+            expression="package.spineItems[0].archiveInfoSize===50238"
+            msg="package pageProgressionDirection parse failed" />
+        
     </testcase>
 
     <testcase name="moby-dick" >
@@ -309,6 +326,10 @@
             msg="package spine item parse failed" />
 
         <assert
+            expression="package.spineItems[0].archiveInfoSize===372"
+            msg="package pageProgressionDirection parse failed" />
+        
+        <assert
             expression="package.spineItems[143].idRef==='toc'"
             msg="package spine item parse failed" />
 
@@ -316,7 +337,11 @@
             expression="package.spineItems[143].href==='toc.xhtml'"
             msg="package spine item parse failed" />
 
-    </testcase>
+        <assert
+            expression="package.spineItems[143].archiveInfoSize===24455"
+            msg="package pageProgressionDirection parse failed" />
+        
+        </testcase>
 
     <testcase name="moby-dick-mo" >
         <!-- http://code.google.com/p/epub-samples/wiki/SamplesListing#moby-dick -->
