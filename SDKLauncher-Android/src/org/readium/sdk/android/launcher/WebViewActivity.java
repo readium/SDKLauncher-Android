@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import org.readium.sdk.android.Container;
 import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
+import org.readium.sdk.android.SpineItem;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.launcher.model.OpenPageRequest;
 import org.readium.sdk.android.launcher.model.Page;
@@ -134,11 +135,28 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	protected void onDestroy() {
 		super.onDestroy();
 		mServer.stop();
+        mWebview.loadUrl(READER_SKELETON);
 		((ViewGroup) mWebview.getParent()).removeView(mWebview);
 		mWebview.removeAllViews();
 		mWebview.clearCache(true);
 		mWebview.clearHistory();
 		mWebview.destroy();
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mWebview.onPause();
+		}
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mWebview.onResume();
+		}
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
@@ -312,6 +330,10 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 							mPageInfo.setText(getString(R.string.page_x_of_y,
 									page.getSpineItemPageIndex() + 1,
 									page.getSpineItemPageCount()));
+							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
+							boolean isFixedLayout = spineItem.isFixedLayout();
+				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
+				            mWebview.getSettings().setDisplayZoomControls(false);
 						}
 					});
 				}
@@ -323,6 +345,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		@JavascriptInterface
 		public void onSettingsApplied() {
 			Log.d(TAG, "onSettingsApplied");
+		}
+		
+		@JavascriptInterface
+		public void onReaderInitialized() {
+			Log.d(TAG, "onReaderInitialized");
 		}
 		
 		@JavascriptInterface

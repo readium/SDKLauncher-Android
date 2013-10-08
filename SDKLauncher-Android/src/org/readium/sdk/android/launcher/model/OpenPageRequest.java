@@ -48,10 +48,11 @@ public class OpenPageRequest {
 	
 	public static OpenPageRequest fromJSON(String data) throws JSONException {
 		JSONObject json = new JSONObject(data);
-		return new OpenPageRequest(json.optString("idref"), 
-				json.optInt("spineItemPageIndex"), 
-				json.optString("elementCfi"), 
-				json.optString("contentRefUrl"), 
-				json.optString("sourceFileHref"));
+        Integer spineItemPageIndex = json.has("spineItemPageIndex") ? json.getInt("spineItemPageIndex") : null;
+        return new OpenPageRequest(json.optString("idref", null), spineItemPageIndex,
+                // get elementCfi and then contentCFI (from bookmarkData) if it was empty
+                json.optString("elementCfi", json.optString("contentCFI", null)),
+                json.optString("contentRefUrl", null),
+                json.optString("sourceFileHref", null));
 	}
 }
