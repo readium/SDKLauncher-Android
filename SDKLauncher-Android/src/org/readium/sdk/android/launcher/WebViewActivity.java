@@ -276,9 +276,13 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
     }
     
     private String cleanResourceUrl(String url) {
-    	String cleanUrl = url.replace(ASSET_PREFIX, "");
-    	return (cleanUrl.startsWith(mPackage.getBasePath())) ? 
-    			cleanUrl.replaceFirst(mPackage.getBasePath(), "") : cleanUrl;
+        String cleanUrl = url.replace(ASSET_PREFIX, "");
+        cleanUrl = (cleanUrl.startsWith(mPackage.getBasePath())) ? cleanUrl.replaceFirst(mPackage.getBasePath(), "") : cleanUrl;
+        int indexOfSharp = cleanUrl.indexOf('#');
+        if (indexOfSharp >= 0) {
+            cleanUrl = cleanUrl.substring(0, indexOfSharp);
+        }
+        return cleanUrl;
     }
 
 	public class EpubWebChromeClient extends WebChromeClient implements
