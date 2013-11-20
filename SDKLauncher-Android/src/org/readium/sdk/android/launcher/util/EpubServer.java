@@ -177,7 +177,7 @@ public class EpubServer extends NanoHTTPD {
 				if (etag.equals(header.get("if-none-match"))) {
 					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 				} else {
-					InputStream is = pckg.getInputStream(uri);
+                    InputStream is = pckg.getInputStream(uri);
 					res = new Response(Response.Status.OK, mime, is);
 				}
 			}

@@ -24,6 +24,9 @@ package org.readium.sdk.android.launcher;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 
 import org.json.JSONException;
@@ -47,6 +50,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -206,7 +210,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	public void onViewerSettingsChange(ViewerSettings viewerSettings) {
 		updateSettings(viewerSettings);
 	}
-	
+
 	private void updateSettings(ViewerSettings viewerSettings) {
 		mViewerSettings = viewerSettings;
 		mReadiumJSApi.updateSettings(viewerSettings);
@@ -219,28 +223,32 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	}
 
     public final class EpubWebViewClient extends WebViewClient {
-    	
-        private static final String UTF_8 = "utf-8";
+
+        private static final String HTTP = "http";
+		private static final String UTF_8 = "utf-8";
+        private boolean skeletonPageLoaded = false;
 
 		@Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
         	Log.d(TAG, "onPageStarted: "+url);
         }
-        
+
         @Override
         public void onPageFinished(WebView view, String url) {
         	Log.d(TAG, "onPageFinished: "+url);
-        	if (url.equals(READER_SKELETON)) {
+        	if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
+        		skeletonPageLoaded = true;
         		Log.d(TAG, "openPageRequestData: "+mOpenPageRequestData);
         		mReadiumJSApi.openBook(mPackage, mViewerSettings, mOpenPageRequestData);
         	}
         }
-        
+
         @Override
         public void onLoadResource(WebView view, String url) {
+			Log.d(TAG, "onLoadResource: " + url);
         	String cleanedUrl = cleanResourceUrl(url);
         	byte[] data = mPackage.getContent(cleanedUrl);
-            if (data.length > 0) {
+            if (data != null && data.length > 0) {
             	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
             	String mimetype = (item != null) ? item.getMediaType() : null;
             	mWebview.loadData(new String(data), mimetype, UTF_8);
@@ -249,29 +257,44 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
+			Log.d(TAG, "shouldOverrideUrlLoading: " + url);
     		return false;
         }
 
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+			Log.d(TAG, "shouldInterceptRequest: " + url);
+			Uri uri = Uri.parse(url);
+            if (uri.getScheme().equals("file")) {
+                String cleanedUrl = cleanResourceUrl(url);
+                Log.d(TAG, url+" => "+cleanedUrl);
+                InputStream data = mPackage.getInputStream(cleanedUrl);
+                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+                if (item != null && item.isHtml()) {
+                    byte[] binary;
+                    try {
+                        binary = new byte[data.available()];
+                        data.read(binary);
+                        data.close();
+                        data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary),
+                                cleanedUrl, "PackageUUID").getBytes());
+                    } catch (IOException e) {
+                        Log.e(TAG, ""+e.getMessage(), e);
+                    }
+                }
+                String mimetype = (item != null) ? item.getMediaType() : null;
+                return new WebResourceResponse(mimetype, UTF_8, data);
+            }
 
-        	String cleanedUrl = cleanResourceUrl(url);
-        	InputStream data = mPackage.getInputStream(cleanedUrl);
-        	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-        	if (item != null && item.isHtml()) {
-            	byte[] binary;
-				try {
-					binary = new byte[data.available()];
-	            	data.read(binary);
-	            	data.close();
-		            data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary), 
-		            		cleanedUrl, "PackageUUID").getBytes());
-				} catch (IOException e) {
-					Log.e(TAG, ""+e.getMessage(), e);
-				}
-        	}
-        	String mimetype = (item != null) ? item.getMediaType() : null;
-        	return new WebResourceResponse(mimetype, UTF_8, data);
+            try {
+                URLConnection c = new URL(url).openConnection();
+                return new WebResourceResponse(null, UTF_8, c.getInputStream());
+            } catch (MalformedURLException e) {
+                Log.e(TAG, ""+e.getMessage(), e);
+            } catch (IOException e) {
+                Log.e(TAG, ""+e.getMessage(), e);
+            }
+            return new WebResourceResponse(null, UTF_8, new ByteArrayInputStream("".getBytes()));
         }
     }
     
@@ -324,6 +347,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		
 		@JavascriptInterface
 		public void onPaginationChanged(String currentPagesInfo) {
+			Log.d(TAG, "onPaginationChanged: "+currentPagesInfo);
 			try {
 				PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
 				List<Page> openPages = paginationInfo.getOpenPages();
@@ -355,6 +379,31 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		public void onReaderInitialized() {
 			Log.d(TAG, "onReaderInitialized");
 		}
+		
+		@JavascriptInterface
+		public void onContentLoaded() {
+			Log.d(TAG, "onContentLoaded");
+		}
+		
+		@JavascriptInterface
+		public void onPageLoaded() {
+			Log.d(TAG, "onPageLoaded");
+		}
+		
+//		@JavascriptInterface
+//		public void onMediaOverlayStatusChanged() {
+//			Log.d(TAG, "onMediaOverlayStatusChanged");
+//		}
+//		
+//		@JavascriptInterface
+//		public void onMediaOverlayTTSSpeak() {
+//			Log.d(TAG, "onMediaOverlayTTSSpeak");
+//		}
+//		
+//		@JavascriptInterface
+//		public void onMediaOverlayTTSStop() {
+//			Log.d(TAG, "onMediaOverlayTTSStop");
+//		}
 		
 		@JavascriptInterface
 		public void getBookmarkData(final String bookmarkData) {

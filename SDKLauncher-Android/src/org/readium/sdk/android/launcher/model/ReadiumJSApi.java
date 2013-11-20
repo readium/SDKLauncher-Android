@@ -70,7 +70,7 @@ public class ReadiumJSApi {
     }
 
     private void loadJS(String jScript) {
-		Log.i(TAG, "loadJS: "+jScript);
+		//Log.i(TAG, "loadJS: "+jScript);
 		mJSLoader.loadJS("javascript:(function(){" + jScript + "})()");
     }
 }

@@ -23,7 +23,9 @@ ReadiumSDK.HostAppFeedback = function() {
 
     ReadiumSDK.on(ReadiumSDK.Events.READER_INITIALIZED, function(){
         ReadiumSDK.reader.on(ReadiumSDK.Events.PAGINATION_CHANGED, this.onPaginationChanged, this);
+        ReadiumSDK.reader.on(ReadiumSDK.Events.PAGE_LOADED, this.onPageLoaded, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.SETTINGS_APPLIED, this.onSettingsApplied, this);
+        ReadiumSDK.reader.on(ReadiumSDK.Events.CONTENT_LOADED, this.onContentLoaded, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.MEDIA_OVERLAY_STATUS_CHANGED, this.onMediaOverlayStatusChanged, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.MEDIA_OVERLAY_TTS_SPEAK, this.onMediaOverlayTTSSpeak, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.MEDIA_OVERLAY_TTS_STOP, this.onMediaOverlayTTSStop, this);
@@ -35,15 +37,29 @@ ReadiumSDK.HostAppFeedback = function() {
     this.onPaginationChanged = function(paginationInfo) {
 
         if (window.LauncherUI) {
-            window.LauncherUI.onPaginationChanged(JSON.stringify(paginationInfo));
+            window.LauncherUI.onPaginationChanged(JSON.stringify(paginationInfo.paginationInfo));
         }
 
+    };
+
+    this.onPageLoaded = function() {
+
+        if(window.LauncherUI) {
+            window.LauncherUI.onPageLoaded();
+        }
     };
 
     this.onSettingsApplied = function() {
 
         if(window.LauncherUI) {
             window.LauncherUI.onSettingsApplied();
+        }
+    };
+
+    this.onContentLoaded = function() {
+
+        if(window.LauncherUI) {
+            window.LauncherUI.onContentLoaded();
         }
     };
 
