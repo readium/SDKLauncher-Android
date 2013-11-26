@@ -4,6 +4,7 @@
         <script src="lib/jquery.sizes.js" type="text/javascript"></script>
         <script src="lib/underscore.min.js" type="text/javascript"></script>
         <script src="lib/backbone.min.js" type="text/javascript"></script>
+        <script src="lib/URI.js" type="text/javascript"></script>
         <script src="js/readium_sdk.js" type="text/javascript"></script>
         <script src="js/helpers.js" type="text/javascript"></script>
         <script src="js/models/style.js" type="text/javascript"></script>
@@ -21,8 +22,8 @@
         <script src="js/models/page_open_request.js" type="text/javascript"></script>
         <script src="js/models/smil_iterator.js" type="text/javascript"></script>
         <script src="lib/epub_cfi.js" type="text/javascript"></script>
-        <script src="js/views/internal_links_support.js" type="text/javascript"></script>
         <script src="js/views/iframe_loader.js" type="text/javascript"></script>
+        <script src="js/views/internal_links_support.js" type="text/javascript"></script>
         <script src="js/views/cfi_navigation_logic.js" type="text/javascript"></script>
         <script src="js/views/reflowable_view.js" type="text/javascript"></script>
         <script src="js/views/one_page_view.js" type="text/javascript"></script>
@@ -53,7 +54,7 @@
                     }
 
                     if(feature === "dom-manipulation") {
-                        // Scripts may make structural changes to the document’s DOM (applies to spine-level scripting only).
+                        // Scripts may make structural changes to the document's DOM (applies to spine-level scripting only).
                         return true;
                     }
                     if(feature === "layout-changes") {

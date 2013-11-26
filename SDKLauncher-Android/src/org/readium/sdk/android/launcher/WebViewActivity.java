@@ -117,7 +117,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
-        		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, true);
+        		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
     			mServer.startServer();
     			return null;
         	}
@@ -163,7 +163,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		}
 	}
 
-	@SuppressLint("SetJavaScriptEnabled")
+	@SuppressLint({ "SetJavaScriptEnabled", "NewApi" })
 	private void initWebView() {
 		mWebview.getSettings().setJavaScriptEnabled(true);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
