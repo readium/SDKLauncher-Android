@@ -385,11 +385,6 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			Log.d(TAG, "onContentLoaded");
 		}
 		
-		@JavascriptInterface
-		public void onPageLoaded() {
-			Log.d(TAG, "onPageLoaded");
-		}
-		
 //		@JavascriptInterface
 //		public void onMediaOverlayStatusChanged() {
 //			Log.d(TAG, "onMediaOverlayStatusChanged");
