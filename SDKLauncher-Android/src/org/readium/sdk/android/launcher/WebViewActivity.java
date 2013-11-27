@@ -435,7 +435,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		public void onMediaOverlayStatusChanged(String status) {
 			Log.d(TAG, "onMediaOverlayStatusChanged:" + status);
 			//this should be real json parsing if there will be more data that needs to be extracted
-			mIsMoPlaying = status.indexOf("\"isPlaying\":true") > -1;
+			
+			if(status.indexOf("isPlaying") > -1){
+				mIsMoPlaying = status.indexOf("\"isPlaying\":true") > -1;
+			}
+			
 			invalidateOptionsMenu();
 		}
 //		
