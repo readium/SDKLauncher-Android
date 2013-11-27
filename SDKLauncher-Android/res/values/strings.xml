@@ -39,5 +39,11 @@
     <string name="fontSize">Font size (in %)</string>
     <string name="columnGap">Column gap</string>
     <string name="syntheticSpread">Synthetic spread</string>
+    
+    <!-- Media Overlay Menu Text -->
+    <string name="menu_mo_previous">Previous</string>
+    <string name="menu_mo_next">Next</string>
+    <string name="menu_mo_play">Play</string>
+    <string name="menu_mo_pause">Pause</string>
 
 </resources>
