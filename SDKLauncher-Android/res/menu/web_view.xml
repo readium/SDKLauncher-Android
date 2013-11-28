@@ -1,6 +1,38 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
+        android:id="@+id/mo_previous"
+        android:orderInCategory="50"
+        android:showAsAction="always"
+        android:icon="@drawable/mo_previous"
+        android:title="@string/menu_mo_previous"
+        android:visible="false" />
+    
+    <item
+        android:id="@+id/mo_play"
+        android:orderInCategory="50"
+        android:showAsAction="always"
+        android:icon="@drawable/mo_play"
+        android:title="@string/menu_mo_play"
+        android:visible="false" />
+    
+    <item
+        android:id="@+id/mo_pause"
+        android:orderInCategory="50"
+        android:showAsAction="always"
+        android:icon="@drawable/mo_pause"
+        android:title="@string/menu_mo_pause"
+        android:visible="false" />
+    
+    <item
+        android:id="@+id/mo_next"
+        android:orderInCategory="50"
+        android:showAsAction="always"
+        android:icon="@drawable/mo_next"
+        android:title="@string/menu_mo_next"
+        android:visible="false" />
+    
+    <item
         android:id="@+id/add_bookmark"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"

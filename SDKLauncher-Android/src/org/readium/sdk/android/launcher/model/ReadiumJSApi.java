@@ -64,7 +64,21 @@ public class ReadiumJSApi {
 	public void openSpineItemElementCfi(String idRef, String elementCfi) {
 		loadJSOnReady("ReadiumSDK.reader.openSpineItemElementCfi(\""+idRef+"\",\""+elementCfi+"\");");
 	}
-
+	
+	public void nextMediaOverlay(){
+		loadJSOnReady("ReadiumSDK.reader.nextMediaOverlay();");
+	}
+	
+	public void previousMediaOverlay(){
+		loadJSOnReady("ReadiumSDK.reader.previousMediaOverlay();");
+	}
+	
+	public void toggleMediaOverlay(){
+		loadJSOnReady("ReadiumSDK.reader.toggleMediaOverlay();");
+	}
+	
+	
+	
     private void loadJSOnReady(String jScript) {
         loadJS("$(document).ready(function () {" + jScript + "});");
     }

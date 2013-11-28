@@ -87,6 +87,9 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
 	private EpubServer mServer;
+	
+	private boolean mIsMoAvailable;
+	private boolean mIsMoPlaying;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -162,6 +165,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			mWebview.onResume();
 		}
 	}
+	
 
 	@SuppressLint({ "SetJavaScriptEnabled", "NewApi" })
 	private void initWebView() {
@@ -185,6 +189,18 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	    case R.id.settings:
 			Log.d(TAG, "Show settings");
 			showSettings();
+			return true;
+	    case R.id.mo_previous:
+	    	mReadiumJSApi.previousMediaOverlay();
+	    	return true;
+		case R.id.mo_play:
+			mReadiumJSApi.toggleMediaOverlay();
+			return true;
+		case R.id.mo_pause:
+			mReadiumJSApi.toggleMediaOverlay();
+			return true;
+		case R.id.mo_next:
+			mReadiumJSApi.nextMediaOverlay();
 			return true;
 	    }
 	    return false;
@@ -219,6 +235,22 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.web_view, menu);
+		
+		MenuItem mo_previous = menu.findItem(R.id.mo_previous);
+		MenuItem mo_next = menu.findItem(R.id.mo_next);
+		MenuItem mo_play = menu.findItem(R.id.mo_play);
+		MenuItem mo_pause = menu.findItem(R.id.mo_pause);
+		
+		//show menu only when its reasonable
+		
+		mo_previous.setVisible(mIsMoAvailable);
+		mo_next.setVisible(mIsMoAvailable);
+		
+		if(mIsMoAvailable){
+			mo_play.setVisible(!mIsMoPlaying);
+			mo_pause.setVisible(mIsMoPlaying);
+		}
+		
 		return true;
 	}
 
@@ -284,6 +316,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                 }
                 String mimetype = (item != null) ? item.getMediaType() : null;
                 return new WebResourceResponse(mimetype, UTF_8, data);
+            } else if(uri.getScheme().equals("http")){
+            	return super.shouldInterceptRequest(view, url);
             }
 
             try {
@@ -385,10 +419,29 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			Log.d(TAG, "onContentLoaded");
 		}
 		
-//		@JavascriptInterface
-//		public void onMediaOverlayStatusChanged() {
-//			Log.d(TAG, "onMediaOverlayStatusChanged");
-//		}
+		@JavascriptInterface
+		public void onPageLoaded() {
+			Log.d(TAG, "onPageLoaded");
+		}
+		
+		@JavascriptInterface
+		public void onIsMediaOverlayAvailable(String available){
+			Log.d(TAG, "onIsMediaOverlayAvailable:" + available);
+			mIsMoAvailable = available.equals("true");
+			invalidateOptionsMenu();
+		}
+		
+		@JavascriptInterface
+		public void onMediaOverlayStatusChanged(String status) {
+			Log.d(TAG, "onMediaOverlayStatusChanged:" + status);
+			//this should be real json parsing if there will be more data that needs to be extracted
+			
+			if(status.indexOf("isPlaying") > -1){
+				mIsMoPlaying = status.indexOf("\"isPlaying\":true") > -1;
+			}
+			
+			invalidateOptionsMenu();
+		}
 //		
 //		@JavascriptInterface
 //		public void onMediaOverlayTTSSpeak() {
