@@ -2,25 +2,21 @@ package org.readium.sdk.android.launcher;
 
 import java.util.Arrays;
 
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.EPub3;
+import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
-
-import org.readium.sdk.android.Container;
-import org.readium.sdk.android.EPub3;
-import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 
 public class BookDataActivity extends Activity {
 
 	private Context context;
-    private Button back;
-    private TextView bookname;
 	private Container container;
 	
     @Override
@@ -29,14 +25,12 @@ public class BookDataActivity extends Activity {
         setContentView(R.layout.book_data);
 
         context = this;
-        back = (Button) findViewById(R.id.backToContainerView);
-        bookname = (TextView) findViewById(R.id.bookname);
         Intent intent = getIntent();
         if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 String value = extras.getString(Constants.BOOK_NAME);
-                bookname.setText(value);
+                getActionBar().setTitle(value);
                 container = ContainerHolder.getInstance().get(extras.getLong(Constants.CONTAINER_ID));
                 if (container == null) {
                 	finish();
@@ -48,8 +42,6 @@ public class BookDataActivity extends Activity {
         initMetadata();
         initPageList();
         initBookmark();
-
-        initListener();
     }
 
     private void initBookmark() {
@@ -102,7 +94,7 @@ public class BookDataActivity extends Activity {
                     long arg3) {
                 Intent intent = new Intent(context, classes[arg2]);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(Constants.BOOK_NAME, bookname.getText());
+                intent.putExtra(Constants.BOOK_NAME, container.getName());
                 intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
                 
                 startActivity(intent);
@@ -125,15 +117,5 @@ public class BookDataActivity extends Activity {
     		// Close book (need to figure out if this is the best place...)
     		EPub3.closeBook(container);
     	}
-    }
-
-    private void initListener() {
-        back.setOnClickListener(new Button.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-            	onBackPressed();
-            }
-        });
     }
 }

@@ -1,18 +1,35 @@
+/*
+ * Page.java
+ * SDKLauncher-Android
+ *
+ * Created by Yonathan Teitelbaum (Mantano) on 2013-07-30.
+ * Copyright (c) 2012-2013 The Readium Foundation and contributors.
+ * 
+ * The Readium SDK is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.readium.sdk.android.launcher.model;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-
 public class PaginationInfo {
 
-	private static final String TAG = "PaginationInfo";
 	private final String pageProgressionDirection;
 	private final boolean isFixedLayout;
 	private final int spineItemCount;

@@ -30,7 +30,7 @@
         </activity>
         <activity
             android:name=".ContainerList"
-            android:label="@string/app_name">
+            android:label="@string/container_list_title">
         </activity>
         <activity
             android:name=".BookDataActivity"
@@ -80,7 +80,8 @@
         </activity>
         <activity
             android:name=".WebViewActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name" 
+            android:configChanges="orientation|screenSize">
         </activity>
     </application>
 
