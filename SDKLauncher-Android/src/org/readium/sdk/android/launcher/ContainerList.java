@@ -68,11 +68,17 @@ public class ContainerList extends Activity {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(Constants.BOOK_NAME, list.get(arg2));
 
-                Container container = EPub3.openBook(Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + "/" + testPath + "/" + list.get(arg2));
-                ContainerHolder.getInstance().put(container.getNativePtr(), container);
-                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
-                startActivity(intent);
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + "/" + testPath + "/" + list.get(arg2);
+                
+                if(EPub3.isEpub3Book(path)) {
+	                Container container = EPub3.openBook(path);
+	                ContainerHolder.getInstance().put(container.getNativePtr(), container);
+	                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
+	                startActivity(intent);
+                } else {
+                	Toast.makeText(context, "Sorry, but only EPUB3 books are accepted for now...", Toast.LENGTH_LONG).show();
+                }
             }
         });
         
