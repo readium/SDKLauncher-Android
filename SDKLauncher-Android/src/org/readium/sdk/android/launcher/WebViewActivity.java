@@ -436,7 +436,15 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		public void onIsMediaOverlayAvailable(String available){
 			Log.d(TAG, "onIsMediaOverlayAvailable:" + available);
 			mIsMoAvailable = available.equals("true");
-			invalidateOptionsMenu();
+            
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    invalidateOptionsMenu();
+                }
+            });
 		}
 		
 		@JavascriptInterface
@@ -447,8 +455,15 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			if(status.indexOf("isPlaying") > -1){
 				mIsMoPlaying = status.indexOf("\"isPlaying\":true") > -1;
 			}
-			
-			invalidateOptionsMenu();
+            
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    invalidateOptionsMenu();
+                }
+            });
 		}
 //		
 //		@JavascriptInterface
