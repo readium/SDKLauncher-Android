@@ -22,6 +22,10 @@
 ReadiumSDK.HostAppFeedback = function() {
 
     ReadiumSDK.on(ReadiumSDK.Events.READER_INITIALIZED, function(){
+
+        window.navigator.epubReadingSystem.name = "Launcher-Android";
+        window.navigator.epubReadingSystem.version = "0.0.1";
+
         ReadiumSDK.reader.on(ReadiumSDK.Events.PAGINATION_CHANGED, this.onPaginationChanged, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.SETTINGS_APPLIED, this.onSettingsApplied, this);
         ReadiumSDK.reader.on(ReadiumSDK.Events.CONTENT_DOCUMENT_LOADED, this.onContentLoaded, this);
