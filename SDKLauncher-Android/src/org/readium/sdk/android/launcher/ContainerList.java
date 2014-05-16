@@ -91,14 +91,10 @@ public class ContainerList extends Activity {
                 String path = Environment.getExternalStorageDirectory().getAbsolutePath()
                         + "/" + testPath + "/" + list.get(arg2);
                 
-                if(EPub3.isEpub3Book(path)) {
-	                Container container = EPub3.openBook(path);
-	                ContainerHolder.getInstance().put(container.getNativePtr(), container);
-	                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
-	                startActivity(intent);
-                } else {
-                	Toast.makeText(context, "Sorry, but only EPUB3 books are accepted for now...", Toast.LENGTH_LONG).show();
-                }
+                Container container = EPub3.openBook(path);
+                ContainerHolder.getInstance().put(container.getNativePtr(), container);
+                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
+                startActivity(intent);
             }
         });
         
