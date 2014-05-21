@@ -341,8 +341,13 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
     }
     
     private String cleanResourceUrl(String url) {
-        String cleanUrl = url.replace(ASSET_PREFIX, "");
-        cleanUrl = (cleanUrl.startsWith(mPackage.getBasePath())) ? cleanUrl.replaceFirst(mPackage.getBasePath(), "") : cleanUrl;
+    	// Get the correct base path
+    	String basePath = mPackage.getBasePath().replaceFirst("file://", "");
+    	// Clean assets prefix
+        String cleanUrl = (url.startsWith(ASSET_PREFIX)) ? url.replaceFirst(ASSET_PREFIX, "") : url.replaceFirst("file://", "");
+        // Clean the package base path if needed
+        cleanUrl = (cleanUrl.startsWith(basePath)) ? cleanUrl.replaceFirst(basePath, "") : cleanUrl;
+        // Clean anything after sharp
         int indexOfSharp = cleanUrl.indexOf('#');
         if (indexOfSharp >= 0) {
             cleanUrl = cleanUrl.substring(0, indexOfSharp);
