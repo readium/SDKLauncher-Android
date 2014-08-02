@@ -35,11 +35,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 import org.readium.sdk.android.Package;
+import org.readium.sdk.android.launcher.Constants;
 
+import android.content.Context;
 import android.util.Log;
 import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 /**
  * This small web server will serve media files such as audio and video.
@@ -54,17 +58,22 @@ public class EpubServer extends NanoHTTPD {
      */
     private static final Map<String, String> MIME_TYPES;
 
+    private Context context;
     private final Package mPackage;
     private final boolean quiet;
+    
+    private String basePath;
     
     static {
     	Map<String, String> tmpMap = new HashMap<String, String>();
     	tmpMap.put("css", "text/css");
     	tmpMap.put("htm", "text/html");
     	tmpMap.put("html", "text/html");
+    	tmpMap.put("xhtml", "application/xhtml+xml");
     	tmpMap.put("xml", "text/xml");
     	tmpMap.put("java", "text/x-java-source, text/java");
     	tmpMap.put("txt", "text/plain");
+    	tmpMap.put("json", "application/json");
     	tmpMap.put("asc", "text/plain");
     	tmpMap.put("gif", "image/gif");
     	tmpMap.put("jpg", "image/jpeg");
@@ -88,10 +97,12 @@ public class EpubServer extends NanoHTTPD {
     	MIME_TYPES = Collections.unmodifiableMap(tmpMap);
     }
 
-    public EpubServer(String host, int port, Package pckg, boolean quiet) {
+    public EpubServer(Context context, String host, int port, Package pckg, boolean quiet) {
         super(host, port);
+        this.context = context;
         this.mPackage = pckg;
         this.quiet = quiet;
+        this.basePath = pckg.getBasePath();
     }
 
     Package getPackage() {
@@ -113,6 +124,49 @@ public class EpubServer extends NanoHTTPD {
 	Response serveFile(String uri, Map<String, String> header, Package pckg) {
 		Response res = null;
 
+		// remove the favicon icon
+		if (uri.contains("favicon")){
+			return null;
+		}
+		
+		// Get MIME type from file name extension, if possible
+		String mime = null;
+		int dot = uri.lastIndexOf('.');
+		if (dot >= 0) {
+			mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
+		}
+		if (mime == null) {
+			mime = NanoHTTPD.MIME_DEFAULT_BINARY;
+		}
+		
+		// Calculate etag
+		String etag = Integer.toHexString((pckg.getUniqueID()
+				+ pckg.getModificationDate() + "" + pckg.getBasePath())
+				.hashCode());
+		
+		
+		if (!uri.contains(basePath) && uri.contains(Constants.ASSET_PREFIX)){
+			// file does not exist in package
+			etag=Integer.toHexString(new Random().nextInt());
+			
+			try{
+				uri=uri.replace(Constants.ASSET_PREFIX, "");
+				InputStream dataStream=context.getAssets().open(uri.replace(Constants.ASSET_PREFIX, ""));
+				res=new Response(Status.OK, mime, dataStream);
+				if (res!=null){
+					res.addHeader("ETag",etag);
+					res.addHeader("Connection","Keep-alive");
+					return res;
+				}
+			}catch(IOException e){
+				Log.v("EpubServer loading viewer error!", e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		
+		// the book contents will be tackle here
+		
+		uri=cleanResourceUrl(uri);
 		final int contentLength = pckg.getArchiveInfoSize(uri);
 		if (contentLength == 0) {
 			res = new Response(Response.Status.NOT_FOUND,
@@ -120,21 +174,7 @@ public class EpubServer extends NanoHTTPD {
 		}
 
 		if (res == null) {
-			// Get MIME type from file name extension, if possible
-			String mime = null;
-			int dot = uri.lastIndexOf('.');
-			if (dot >= 0) {
-				mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
-			}
-			if (mime == null) {
-				mime = NanoHTTPD.MIME_DEFAULT_BINARY;
-			}
-
-			// Calculate etag
-			String etag = Integer.toHexString((pckg.getUniqueID()
-					+ pckg.getModificationDate() + "" + pckg.getBasePath())
-					.hashCode());
-
+			
 			long startFrom = 0;
 			long endAt = -1;
 			String range = header.get("range");
@@ -223,4 +263,16 @@ public class EpubServer extends NanoHTTPD {
 		uri = uri.startsWith("/") ? uri.substring(1) : uri;
 		return serveFile(uri, header, getPackage());
 	}
+	
+	private String cleanResourceUrl(String url) {
+		// Clean assets prefix
+		int startUseOffs = url.lastIndexOf(basePath) + basePath.length();
+		String cleanUrl = url.substring(startUseOffs);
+		// Clean anything after sharp
+		int indexOfSharp = cleanUrl.indexOf('#');
+        if (indexOfSharp >= 0) {
+            cleanUrl = cleanUrl.substring(0, indexOfSharp);
+        }
+        return cleanUrl;
+    }
 }

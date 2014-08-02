@@ -128,7 +128,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
-        		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
+        		//mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
+				mServer = new EpubServer(WebViewActivity.this, EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
     			mServer.startServer();
     			return null;
         	}
@@ -283,17 +284,17 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         	}
         }
 
-        @Override
-        public void onLoadResource(WebView view, String url) {
-			Log.d(TAG, "onLoadResource: " + url);
-        	String cleanedUrl = cleanResourceUrl(url);
-        	byte[] data = mPackage.getContent(cleanedUrl);
-            if (data != null && data.length > 0) {
-            	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-            	String mimetype = (item != null) ? item.getMediaType() : null;
-            	mWebview.loadData(new String(data), mimetype, UTF_8);
-            }
-        }
+//        @Override
+//        public void onLoadResource(WebView view, String url) {
+//			Log.d(TAG, "onLoadResource: " + url);
+//        	String cleanedUrl = cleanResourceUrl(url);
+//        	byte[] data = mPackage.getContent(cleanedUrl);
+//            if (data != null && data.length > 0) {
+//            	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+//            	String mimetype = (item != null) ? item.getMediaType() : null;
+//            	mWebview.loadData(new String(data), mimetype, UTF_8);
+//            }
+//        }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -301,43 +302,43 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
     		return false;
         }
 
-        @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-			Log.d(TAG, "shouldInterceptRequest: " + url);
-			Uri uri = Uri.parse(url);
-            if (uri.getScheme().equals("file")) {
-                String cleanedUrl = cleanResourceUrl(url);
-                Log.d(TAG, url+" => "+cleanedUrl);
-                InputStream data = mPackage.getInputStream(cleanedUrl);
-                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-                if (item != null && item.isHtml()) {
-                    byte[] binary;
-                    try {
-                        binary = new byte[data.available()];
-                        data.read(binary);
-                        data.close();
-                        data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary),
-                                cleanedUrl, "PackageUUID").getBytes());
-                    } catch (IOException e) {
-                        Log.e(TAG, ""+e.getMessage(), e);
-                    }
-                }
-                String mimetype = (item != null) ? item.getMediaType() : null;
-                return new WebResourceResponse(mimetype, UTF_8, data);
-            } else if(uri.getScheme().equals("http")){
-            	return super.shouldInterceptRequest(view, url);
-            }
-
-            try {
-                URLConnection c = new URL(url).openConnection();
-                return new WebResourceResponse(null, UTF_8, c.getInputStream());
-            } catch (MalformedURLException e) {
-                Log.e(TAG, ""+e.getMessage(), e);
-            } catch (IOException e) {
-                Log.e(TAG, ""+e.getMessage(), e);
-            }
-            return new WebResourceResponse(null, UTF_8, new ByteArrayInputStream("".getBytes()));
-        }
+//        @Override
+//        public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+//			Log.d(TAG, "shouldInterceptRequest: " + url);
+//			Uri uri = Uri.parse(url);
+//            if (uri.getScheme().equals("file")) {
+//                String cleanedUrl = cleanResourceUrl(url);
+//                Log.d(TAG, url+" => "+cleanedUrl);
+//                InputStream data = mPackage.getInputStream(cleanedUrl);
+//                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+//                if (item != null && item.isHtml()) {
+//                    byte[] binary;
+//                    try {
+//                        binary = new byte[data.available()];
+//                        data.read(binary);
+//                        data.close();
+//                        data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary),
+//                                cleanedUrl, "PackageUUID").getBytes());
+//                    } catch (IOException e) {
+//                        Log.e(TAG, ""+e.getMessage(), e);
+//                    }
+//                }
+//                String mimetype = (item != null) ? item.getMediaType() : null;
+//                return new WebResourceResponse(mimetype, UTF_8, data);
+//            } else if(uri.getScheme().equals("http")){
+//            	return super.shouldInterceptRequest(view, url);
+//            }
+//
+//            try {
+//                URLConnection c = new URL(url).openConnection();
+//                return new WebResourceResponse(null, UTF_8, c.getInputStream());
+//            } catch (MalformedURLException e) {
+//                Log.e(TAG, ""+e.getMessage(), e);
+//            } catch (IOException e) {
+//                Log.e(TAG, ""+e.getMessage(), e);
+//            }
+//            return new WebResourceResponse(null, UTF_8, new ByteArrayInputStream("".getBytes()));
+//        }
     }
     
     private String cleanResourceUrl(String url) {
