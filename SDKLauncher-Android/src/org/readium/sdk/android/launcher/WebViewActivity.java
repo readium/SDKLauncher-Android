@@ -86,6 +86,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
 	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
+	private static final String READER_DENOTE="readium-shared-js/reader.html";
 	
 	private WebView mWebview;
 	private Container mContainer;
@@ -125,26 +126,31 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 				}
             }
         }
-        new AsyncTask<Void, Void, Void>() {
+        new AsyncTask<Void, Integer, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
         		//mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
 				mServer = new EpubServer(WebViewActivity.this, EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
     			mServer.startServer();
+    			
+    			publishProgress(0);
     			return null;
         	}
-        }.execute();
-
-        // Load the page skeleton
-        mWebview.loadUrl(READER_SKELETON);
-        mViewerSettings = new ViewerSettings(false, 100, 20);
-        mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
 			
-			@Override
-			public void loadJS(String javascript) {
-				mWebview.loadUrl(javascript);
+			protected void onProgressUpdate(Integer... values) {
+				// Load the page skeleton
+		        mWebview.loadUrl(getUrl(READER_SKELETON,Constants.HOST));
+		        mViewerSettings = new ViewerSettings(false, 100, 20);
+		        mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
+					
+					@Override
+					public void loadJS(String javascript) {
+						mWebview.loadUrl(javascript);
+					}
+				});
 			}
-		});
+        }.execute();
+        
 	}
 	
 	@Override
@@ -277,7 +283,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         @Override
         public void onPageFinished(WebView view, String url) {
         	Log.d(TAG, "onPageFinished: "+url);
-        	if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
+        	if (!skeletonPageLoaded && url.contains(READER_DENOTE)) {
         		skeletonPageLoaded = true;
         		Log.d(TAG, "openPageRequestData: "+mOpenPageRequestData);
         		mReadiumJSApi.openBook(mPackage, mViewerSettings, mOpenPageRequestData);
@@ -505,5 +511,15 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	        builder.setNegativeButton(android.R.string.cancel, null);
 	        builder.show();
 		}
+	}
+	
+	private String getUrl(String path,String ipAddr){
+		if (path.startsWith(Constants.FILE_PROC)){
+			return Constants.HTTP_PROC+ipAddr+":"+Constants.PORT+
+					path.replace(Constants.FILE_PROC,"");
+		}else if (path.startsWith("/")){
+			return Constants.HTTP_PROC+ipAddr+":"+Constants.PORT+path;
+		}
+		return "";
 	}
 }
