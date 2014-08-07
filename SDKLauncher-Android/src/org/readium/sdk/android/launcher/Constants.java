@@ -28,4 +28,13 @@ public class Constants {
 	public static final String CONTAINER_ID = "container_id";
 	public static final String OPEN_PAGE_REQUEST_DATA = "openPageRequestData";
 	public static final String BOOK_NAME = "bookname";
+	
+	public static final String ASSET_PREFIX="android_asset/";
+	
+	public static final String FILE_PROC="file://";
+	public static final String HTTP_PROC="http://";
+	public static final String LINEBREAK="\n";
+	public static final String HOST="localhost";
+	public static final int PORT=8080;
+
 }
