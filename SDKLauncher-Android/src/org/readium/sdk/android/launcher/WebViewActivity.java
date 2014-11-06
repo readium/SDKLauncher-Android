@@ -305,7 +305,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 			Log.d(TAG, "shouldInterceptRequest: " + url);
 			Uri uri = Uri.parse(url);
-            if (uri.getScheme().equals("file")) {
+            if (uri.getScheme().equals("file") && url != "undefined" && url != null) {
                 String cleanedUrl = cleanResourceUrl(url);
                 Log.d(TAG, url+" => "+cleanedUrl);
                 InputStream data = mPackage.getInputStream(cleanedUrl);

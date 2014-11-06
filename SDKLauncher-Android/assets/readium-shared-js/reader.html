@@ -46,7 +46,7 @@
                 "use strict";
 
                 ReadiumSDK.reader = new ReadiumSDK.Views.ReaderView({el:"#viewport"});
-                ReadiumSDK.trigger("ReaderInitialized");
+                ReadiumSDK.trigger(ReadiumSDK.Events.READER_INITIALIZED);
 
             });
 
