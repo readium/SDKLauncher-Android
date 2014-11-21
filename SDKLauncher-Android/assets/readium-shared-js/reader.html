@@ -45,7 +45,10 @@
             $(document).ready(function () {
                 "use strict";
 
-                ReadiumSDK.reader = new ReadiumSDK.Views.ReaderView({el:"#viewport"});
+                ReadiumSDK.reader = new ReadiumSDK.Views.ReaderView({
+                    el:"#viewport",
+                    annotationCSSUrl: '/readium_Annotations.css'
+                });
                 ReadiumSDK.trigger(ReadiumSDK.Events.READER_INITIALIZED);
 
             });
