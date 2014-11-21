@@ -122,6 +122,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 
     // Location of payloads in the asset folder
     private static final String PAYLOAD_MATHJAX_ASSET = "reader-payloads/MathJax.js";
+    private static final String PAYLOAD_ANNOTATIONS_CSS_ASSET = "reader-payloads/annotations.css";
 
     private WebView mWebview;
 	private Container mContainer;
@@ -375,6 +376,14 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     } catch (IOException e) {
                         return super.shouldInterceptRequest(view, url);
                     }
+                } else if (cleanedUrl.equals("/readium_Annotations.css")) {
+                    try {
+                        return new WebResourceResponse("text/css", UTF_8
+                                , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
+                    } catch (IOException e) {
+                        return super.shouldInterceptRequest(view, url);
+                    }
+                }
 
                 InputStream data = mPackage.getInputStream(cleanedUrl);
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
