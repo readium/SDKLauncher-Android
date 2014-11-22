@@ -56,6 +56,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -143,6 +144,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		setContentView(R.layout.activity_web_view);
 		
 		mWebview = (WebView) findViewById(R.id.webview);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+				&& 0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE)) {
+			mWebview.setWebContentsDebuggingEnabled(true);
+		}
+		 
 		mPageInfo = (TextView) findViewById(R.id.page_info);
 		initWebView();
 
@@ -360,7 +366,9 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                 String cleanedUrl = cleanResourceUrl(url);
                 Log.d(TAG, url+" => "+cleanedUrl);
 
-                if (cleanedUrl.matches("\\/\\d*\\/readium_epubReadingSystem_inject.js")) {
+                if (cleanedUrl.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
+                	Log.d(TAG, "navigator.epubReadingSystem inject ...");
+                	
                     // Fake script requested, this is immediately invoked after epubReadingSystem hook is in place,
                     // => execute js on the reader.html context to push the global window.navigator.epubReadingSystem into the iframe(s)
                     evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
@@ -369,14 +377,16 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 
                 }
                 // Special handling for payload requests
-                else if (cleanedUrl.equals("/readium_MathJax.js")) {
+                else if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
+                	Log.d(TAG, "MathJax.js inject ...");
                     try {
                         return new WebResourceResponse("text/javascript", UTF_8
                                 , getAssets().open(PAYLOAD_MATHJAX_ASSET));
                     } catch (IOException e) {
                         return super.shouldInterceptRequest(view, url);
                     }
-                } else if (cleanedUrl.equals("/readium_Annotations.css")) {
+                } else if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
+                	Log.d(TAG, "annotations.css inject ...");
                     try {
                         return new WebResourceResponse("text/css", UTF_8
                                 , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
@@ -394,8 +404,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                         data.read(binary);
                         data.close();
                         String htmlText = new String(binary);
-                        String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText,
-                                cleanedUrl, "PackageUUID");
+                        String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
 
                         // Set up the script tags to add to the head
                         String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
@@ -407,6 +416,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                         }
 
                         newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
+                        //Log.d(TAG, "HTML head inject: " + newHtml);
+                        
                         data = new ByteArrayInputStream(newHtml.getBytes());
                     } catch (IOException e) {
                         Log.e(TAG, ""+e.getMessage(), e);
