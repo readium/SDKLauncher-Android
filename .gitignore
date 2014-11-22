@@ -26,3 +26,7 @@ local.properties
 
 # IDEA project files
 .idea
+
+# empty template
+SDKLauncher-Android/assets/readium-shared-js/epubReadingSystem_.js
+SDKLauncher-Android/assets/readium-shared-js/epubReadingSystem_BACKUP.js
