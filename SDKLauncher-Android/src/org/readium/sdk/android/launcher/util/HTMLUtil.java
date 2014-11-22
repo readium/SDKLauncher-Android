@@ -32,6 +32,8 @@ package org.readium.sdk.android.launcher.util;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.net.Uri;
 
@@ -42,6 +44,23 @@ import android.net.Uri;
  * content.
  */
 public class HTMLUtil {
+
+    public static String htmlByInjectingIntoHead(String html, String headHtmToInsert){
+        if (html == null || html.length() == 0
+                || headHtmToInsert == null || headHtmToInsert.length() == 0){
+            return html;
+        }
+
+        String pattern = "<head.*>";
+        Matcher matcher = Pattern.compile(pattern).matcher(html);
+
+        if (matcher.find()) {
+            int headTagEndPos = matcher.end();
+            return new StringBuilder(html).insert(headTagEndPos, headHtmToInsert).toString();
+        } else {
+            return html;
+        }
+    }
 
 	public static String htmlByReplacingMediaURLsInHTML(String html,
 			String relativePath, String packageUUID) {

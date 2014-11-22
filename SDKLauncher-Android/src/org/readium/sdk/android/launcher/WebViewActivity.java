@@ -56,6 +56,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -86,8 +87,45 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
 	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
-	
-	private WebView mWebview;
+
+    // Installs "hook" function so that top-level window (application) can later inject the window.navigator.epubReadingSystem into this HTML document's iframe
+    private static final String INJECT_EPUB_RSO_SCRIPT_1 = "" +
+            "window.readium_set_epubReadingSystem = function (obj) {" +
+            "\nwindow.navigator.epubReadingSystem = obj;" +
+            "\nwindow.readium_set_epubReadingSystem = undefined;" +
+            "\nvar el1 = document.getElementById(\"readium_epubReadingSystem_inject1\");" +
+            "\nif (el1 && el1.parentNode) { el1.parentNode.removeChild(el1); }" +
+            "\nvar el2 = document.getElementById(\"readium_epubReadingSystem_inject2\");" +
+            "\nif (el2 && el2.parentNode) { el2.parentNode.removeChild(el2); }" +
+            "\n};";
+
+    // Iterate top-level iframes, inject global window.navigator.epubReadingSystem if the expected hook function exists ( readium_set_epubReadingSystem() ).
+    private static final String INJECT_EPUB_RSO_SCRIPT_2 = "" +
+            "for (var i = 0; i < window.frames.length; i++) { \n" +
+                "var iframe = window.frames[i]; \n" +
+                "if (iframe.readium_set_epubReadingSystem) { \n" +
+                    "iframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem); \n" +
+                "}\n" +
+            "}\n";
+    // Script tag to inject the "hook" function installer script, added to the head of every epub iframe document
+    private static final String INJECT_HEAD_EPUB_RSO_1 = "" +
+            "<script id=\"readium_epubReadingSystem_inject1\" type=\"text/javascript\">\n" +
+            "//<![CDATA[\n" +
+            INJECT_EPUB_RSO_SCRIPT_1 + "\n" +
+            "//]]>\n" +
+            "</script>";
+    // Script tag that generates an HTTP request to a fake script => triggers push of window.navigator.epubReadingSystem into this HTML document's iframe
+    private static final String INJECT_HEAD_EPUB_RSO_2 = ""+
+            "<script id=\"readium_epubReadingSystem_inject2\" type=\"text/javascript\" " +
+            "src=\"/%d/readium_epubReadingSystem_inject.js\"> </script>";
+    // Script tag to load the mathjax script payload, added to the head of epub iframe documents, only if <math> tags are detected
+    private static final String INJECT_HEAD_MATHJAX = "<script type=\"text/javascript\" src=\"/readium_MathJax.js\"> </script>";
+
+    // Location of payloads in the asset folder
+    private static final String PAYLOAD_MATHJAX_ASSET = "reader-payloads/MathJax.js";
+    private static final String PAYLOAD_ANNOTATIONS_CSS_ASSET = "reader-payloads/annotations.css";
+
+    private WebView mWebview;
 	private Container mContainer;
 	private Package mPackage;
 	private OpenPageRequest mOpenPageRequestData;
@@ -98,6 +136,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	
 	private boolean mIsMoAvailable;
 	private boolean mIsMoPlaying;
+    private int mEpubRsoInjectCounter = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +144,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		setContentView(R.layout.activity_web_view);
 		
 		mWebview = (WebView) findViewById(R.id.webview);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+				&& 0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE)) {
+			mWebview.setWebContentsDebuggingEnabled(true);
+		}
+		 
 		mPageInfo = (TextView) findViewById(R.id.page_info);
 		initWebView();
 
@@ -301,6 +345,19 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
     		return false;
         }
 
+        private void evaluateJavascript(final String script) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        mWebview.evaluateJavascript(script, null);
+                    } else {
+                        mWebview.loadUrl("javascript:" + script);
+                    }
+                }
+            });
+        }
+
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 			Log.d(TAG, "shouldInterceptRequest: " + url);
@@ -308,6 +365,36 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
             if (uri.getScheme().equals("file") && url != "undefined" && url != null) {
                 String cleanedUrl = cleanResourceUrl(url);
                 Log.d(TAG, url+" => "+cleanedUrl);
+
+                if (cleanedUrl.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
+                	Log.d(TAG, "navigator.epubReadingSystem inject ...");
+                	
+                    // Fake script requested, this is immediately invoked after epubReadingSystem hook is in place,
+                    // => execute js on the reader.html context to push the global window.navigator.epubReadingSystem into the iframe(s)
+                    evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
+                    return new WebResourceResponse("text/javascript", UTF_8
+                            , new ByteArrayInputStream("(function(){})()".getBytes()));
+
+                }
+                // Special handling for payload requests
+                else if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
+                	Log.d(TAG, "MathJax.js inject ...");
+                    try {
+                        return new WebResourceResponse("text/javascript", UTF_8
+                                , getAssets().open(PAYLOAD_MATHJAX_ASSET));
+                    } catch (IOException e) {
+                        return super.shouldInterceptRequest(view, url);
+                    }
+                } else if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
+                	Log.d(TAG, "annotations.css inject ...");
+                    try {
+                        return new WebResourceResponse("text/css", UTF_8
+                                , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
+                    } catch (IOException e) {
+                        return super.shouldInterceptRequest(view, url);
+                    }
+                }
+
                 InputStream data = mPackage.getInputStream(cleanedUrl);
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
                 if (item != null && item.isHtml()) {
@@ -316,8 +403,22 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                         binary = new byte[data.available()];
                         data.read(binary);
                         data.close();
-                        data = new ByteArrayInputStream(HTMLUtil.htmlByReplacingMediaURLsInHTML(new String(binary),
-                                cleanedUrl, "PackageUUID").getBytes());
+                        String htmlText = new String(binary);
+                        String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
+
+                        // Set up the script tags to add to the head
+                        String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
+                                // Slightly change fake script src url with an increasing count to prevent caching of the request
+                                + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
+                        // Checks for the existance of MathML => request MathJax payload
+                        if (newHtml.contains("<math")) {
+                            tagsToInjectToHead += INJECT_HEAD_MATHJAX;
+                        }
+
+                        newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
+                        //Log.d(TAG, "HTML head inject: " + newHtml);
+                        
+                        data = new ByteArrayInputStream(newHtml.getBytes());
                     } catch (IOException e) {
                         Log.e(TAG, ""+e.getMessage(), e);
                     }
