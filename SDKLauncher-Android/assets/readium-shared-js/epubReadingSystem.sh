@@ -12,23 +12,19 @@ echo "------"
 # This is a hack! Is there a way to temporarily modify an asset so that it gets included by the Android package builder?
 # This modifies the git-stored original file, so the "dirty" flag is set for the commit hash :(
 TARGET="${pwd}/SDKLauncher-Android/assets/readium-shared-js"
-JS_FILE_BACKUP="${TARGET}/epubReadingSystem_BACKUP.js"
+JS_FILE_EMPTY="${TARGET}/epubReadingSystem_EMPTY.js"
 JS_FILE="${TARGET}/epubReadingSystem.js"
 
 if [ "$#" -eq 0 ]
 then
     echo "No script arguments."
     
-    echo "Restoring ${JS_FILE_BACKUP} to ${JS_FILE}"
-    cp "${JS_FILE_BACKUP}" "${JS_FILE}" && rm "${JS_FILE_BACKUP}"
+    echo "Restoring ${JS_FILE_EMPTY} to ${JS_FILE}"
+    cp "${JS_FILE_EMPTY}" "${JS_FILE}"
     exit
 else
     echo "Script arguments: ${#}"
     echo "Script argument #1: ${1}"
-
-    echo "Backup of ${JS_FILE} to ${JS_FILE_BACKUP}"
-    rm "${JS_FILE_BACKUP}"
-    cp "${JS_FILE}" "${JS_FILE_BACKUP}"
 fi
 
 echo "TARGET:"
