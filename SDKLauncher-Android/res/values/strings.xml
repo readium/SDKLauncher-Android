@@ -45,5 +45,9 @@
     <string name="menu_mo_next">Next</string>
     <string name="menu_mo_play">Play</string>
     <string name="menu_mo_pause">Pause</string>
+    <string name="auto">Auto</string>
+    <string name="single">Single</string>
+    <string name="double_">Double</string>
+    <string name="scrollMode">Scroll Mode</string>
 
 </resources>

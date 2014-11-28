@@ -28,42 +28,91 @@ import org.json.JSONObject;
 
 public class ViewerSettings {
 
-    private final boolean mIsSyntheticSpread;
+    public enum SyntheticSpreadMode {
+        AUTO,
+        DOUBLE,
+        SINGLE
+    }
+
+    public enum ScrollMode {
+        AUTO,
+        DOCUMENT,
+        CONTINUOUS
+    }
+
+    private final SyntheticSpreadMode mSyntheticSpreadMode;
+    private final ScrollMode mScrollMode;
     private final int mFontSize;
     private final int mColumnGap;
-    
-	public ViewerSettings(boolean isSyntheticSpread, int fontSize, int columnGap) {
-		mIsSyntheticSpread = isSyntheticSpread;
+
+	public ViewerSettings(SyntheticSpreadMode syntheticSpreadMode, ScrollMode scrollMode, int fontSize, int columnGap) {
+		mSyntheticSpreadMode = syntheticSpreadMode;
+        mScrollMode = scrollMode;
 		mFontSize = fontSize;
 		mColumnGap = columnGap;
 	}
 
-	public boolean isSyntheticSpread() {
-		return mIsSyntheticSpread;
-	}
+    public SyntheticSpreadMode getSyntheticSpreadMode() {
+        return mSyntheticSpreadMode;
+    }
 
-	public int getFontSize() {
-		return mFontSize;
-	}
+    public ScrollMode getScrollMode() {
+        return mScrollMode;
+    }
 
-	public int getColumnGap() {
-		return mColumnGap;
-	}
+    public int getFontSize() {
+        return mFontSize;
+    }
+
+    public int getColumnGap() {
+        return mColumnGap;
+    }
 	
 	public JSONObject toJSON() throws JSONException {
 		JSONObject json = new JSONObject();
-		json.put("isSyntheticSpread", mIsSyntheticSpread);
+
+        String syntheticSpread = "";
+        switch(mSyntheticSpreadMode){
+            case AUTO:
+                syntheticSpread = "auto";
+                break;
+            case DOUBLE:
+                syntheticSpread = "double";
+                break;
+            case SINGLE:
+                syntheticSpread = "single";
+                break;
+        }
+        json.put("syntheticSpread", syntheticSpread);
+
+        String scroll = "";
+        switch(mScrollMode) {
+
+            case AUTO:
+                scroll = "auto";
+                break;
+            case DOCUMENT:
+                scroll = "scroll-doc";
+                break;
+            case CONTINUOUS:
+                scroll = "scroll-continuous";
+                break;
+        }
+        json.put("scroll", scroll);
+
 		json.put("fontSize", mFontSize);
 		json.put("columnGap", mColumnGap);
 		return json;
 	}
 
-	@Override
-	public String toString() {
-		return "ViewerSettings [isSyntheticSpread=" + mIsSyntheticSpread
-				+ ", fontSize=" + mFontSize + ", columnGap=" + mColumnGap
-				+ "]";
-	}
-	
-	
+    @Override
+    public String toString() {
+        return "ViewerSettings{" +
+                "mSyntheticSpreadMode=" + mSyntheticSpreadMode +
+                ", mScrollMode=" + mScrollMode +
+                ", mFontSize=" + mFontSize +
+                ", mColumnGap=" + mColumnGap +
+                '}';
+    }
+
 }
