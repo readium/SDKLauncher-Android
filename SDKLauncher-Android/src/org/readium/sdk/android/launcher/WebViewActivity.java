@@ -506,15 +506,25 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			Log.d(TAG, "onPaginationChanged: "+currentPagesInfo);
 			try {
 				final PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
-				List<Page> openPages = paginationInfo.getOpenPages();
+				final List<Page> openPages = paginationInfo.getOpenPages();
 				if (!openPages.isEmpty()) {
-					final Page page = openPages.get(0);
+
+					final Page firstVisiblePage = openPages.get(0);
 					runOnUiThread(new Runnable() {
 						public void run() {
+                            if(openPages.size() == 1){
 							mPageInfo.setText(getString(R.string.page_x_of_y,
-									page.getSpineItemPageIndex() + 1,
-									page.getSpineItemPageCount()));
-							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
+                                        firstVisiblePage.getSpineItemPageIndex() + 1,
+                                        firstVisiblePage.getSpineItemPageCount()));
+                            } else {
+                                Page lastVisiblePage = openPages.get(openPages.size() - 1);
+                                mPageInfo.setText(getString(R.string.page_x_dash_y_of_z,
+                                        firstVisiblePage.getSpineItemPageIndex() + 1,
+                                        lastVisiblePage.getSpineItemPageIndex() + 1,
+                                        firstVisiblePage.getSpineItemPageCount()));
+                            }
+
+							SpineItem spineItem = mPackage.getSpineItem(firstVisiblePage.getIdref());
 							boolean isFixedLayout = spineItem.isFixedLayout();
 				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
 				            mWebview.getSettings().setDisplayZoomControls(false);
