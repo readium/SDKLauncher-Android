@@ -170,7 +170,7 @@ public class EpubServer extends NanoHTTPD {
 						newLen = 0;
 					}
 
-					InputStream is = pckg.getInputStream(uri);
+					InputStream is = pckg.getInputStream(uri, true);
 					try {
 						is.skip(startFrom);
 					} catch (IOException e) {
@@ -185,7 +185,7 @@ public class EpubServer extends NanoHTTPD {
 				if (etag.equals(header.get("if-none-match"))) {
 					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 				} else {
-                    InputStream is = pckg.getInputStream(uri);
+                    InputStream is = pckg.getInputStream(uri, false);
 					res = new Response(Response.Status.OK, mime, is);
 				}
 			}
