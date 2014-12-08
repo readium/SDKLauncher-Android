@@ -40,21 +40,29 @@ import org.json.JSONObject;
 
 public class PaginationInfo {
 
-	private final String pageProgressionDirection;
+	private final boolean isRightToLeft;
 	private final boolean isFixedLayout;
 	private final int spineItemCount;
 	private final List<Page> openPages;
-	
-	public PaginationInfo(String pageProgressionDirection,
-			boolean isFixedLayout, int spineItemCount) {
-		this.pageProgressionDirection = pageProgressionDirection;
-		this.isFixedLayout = isFixedLayout;
-		this.spineItemCount = spineItemCount;
-		this.openPages = new ArrayList<Page>();
-	}
+    private final boolean canGoLeft;
+    private final boolean canGoRight;
+    private final boolean canGoPrev;
+    private final boolean canGoNext;
 
-	public String getPageProgressionDirection() {
-		return pageProgressionDirection;
+    public PaginationInfo(boolean isRightToLeft, boolean isFixedLayout, int spineItemCount, boolean canGoLeft, boolean canGoRight, boolean canGoPrev, boolean canGoNext) {
+
+        this.isRightToLeft = isRightToLeft;
+        this.isFixedLayout = isFixedLayout;
+        this.spineItemCount = spineItemCount;
+        this.openPages = new ArrayList<Page>();
+        this.canGoLeft = canGoLeft;
+        this.canGoRight = canGoRight;
+        this.canGoPrev = canGoPrev;
+        this.canGoNext = canGoNext;
+    }
+
+	public boolean isRightToLeft() {
+		return isRightToLeft;
 	}
 
 	public boolean isFixedLayout() {
@@ -68,12 +76,32 @@ public class PaginationInfo {
 	public List<Page> getOpenPages() {
 		return openPages;
 	}
-	
-	public static PaginationInfo fromJson(String jsonString) throws JSONException {
+
+    public boolean canGoLeft() {
+        return canGoLeft;
+    }
+
+    public boolean canGoRight() {
+        return canGoRight;
+    }
+
+    public boolean canGoPrev() {
+        return canGoPrev;
+    }
+
+    public boolean canGoNext() {
+        return canGoNext;
+    }
+
+    public static PaginationInfo fromJson(String jsonString) throws JSONException {
 		JSONObject json = new JSONObject(jsonString);
-		PaginationInfo paginationInfo = new PaginationInfo(json.optString("pageProgressionDirection", "ltr"), 
-				json.optBoolean("isFixedLayout"), 
-				json.optInt("spineItemCount"));
+		PaginationInfo paginationInfo = new PaginationInfo(json.optBoolean("isRightToLeft"),
+				json.optBoolean("isFixedLayout"),
+				json.optInt("spineItemCount"),
+                json.optBoolean("canGoLeft"),
+                json.optBoolean("canGoRight"),
+                json.optBoolean("canGoPrev"),
+                json.optBoolean("canGoNext"));
 		JSONArray openPages = json.getJSONArray("openPages");
 		for (int i = 0; i < openPages.length(); i++) {
 			JSONObject p = openPages.getJSONObject(i);

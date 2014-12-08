@@ -28,6 +28,7 @@
     <string name="metadata_title">Title: %1$s</string>
     <string name="page_list">Page List</string>
     <string name="page_x_of_y">Page %1$d of %2$d</string>
+    <string name="page_x_dash_y_of_z">Page %1$d-%2$d of %3$d</string>
     <string name="spine_items">Spine Items</string>
     <string name="table_of_contents">Table of Contents</string>
     <string name="title_activity_web_view">WebViewActivity</string>

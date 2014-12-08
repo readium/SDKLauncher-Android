@@ -87,10 +87,15 @@ ReadiumSDK.HostAppFeedback = function() {
 
     }, this);
 
-    this.onPaginationChanged = function(paginationInfo) {
+    this.onPaginationChanged = function(pageChangeData) {
 
         if (window.LauncherUI) {
-            window.LauncherUI.onPaginationChanged(JSON.stringify(paginationInfo.paginationInfo));
+            var staticPaginationInfo = pageChangeData.paginationInfo;
+            staticPaginationInfo.canGoLeft = staticPaginationInfo.canGoLeft();
+            staticPaginationInfo.canGoRight = staticPaginationInfo.canGoRight();
+            staticPaginationInfo.canGoNext = staticPaginationInfo.canGoNext();
+            staticPaginationInfo.canGoPrev = staticPaginationInfo.canGoPrev();
+            window.LauncherUI.onPaginationChanged(JSON.stringify(staticPaginationInfo));
 
             if(window.LauncherUI.onIsMediaOverlayAvailable){
                 window.LauncherUI.onIsMediaOverlayAvailable(ReadiumSDK.reader.isMediaOverlayAvailable());

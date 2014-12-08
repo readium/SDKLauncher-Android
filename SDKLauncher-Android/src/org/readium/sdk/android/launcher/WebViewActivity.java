@@ -77,6 +77,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -133,6 +134,10 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
 	private EpubServer mServer;
+
+    private Button mLeftButton;
+    private Button mRightButton;
+
 	
 	private boolean mIsMoAvailable;
 	private boolean mIsMoPlaying;
@@ -148,7 +153,10 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 				&& 0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE)) {
 			mWebview.setWebContentsDebuggingEnabled(true);
 		}
-		 
+
+        mLeftButton = (Button) findViewById(R.id.left);
+        mRightButton = (Button) findViewById(R.id.right);
+
 		mPageInfo = (TextView) findViewById(R.id.page_info);
 		initWebView();
 
@@ -497,19 +505,31 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		public void onPaginationChanged(String currentPagesInfo) {
 			Log.d(TAG, "onPaginationChanged: "+currentPagesInfo);
 			try {
-				PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
-				List<Page> openPages = paginationInfo.getOpenPages();
+				final PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
+				final List<Page> openPages = paginationInfo.getOpenPages();
 				if (!openPages.isEmpty()) {
-					final Page page = openPages.get(0);
+
+					final Page firstVisiblePage = openPages.get(0);
 					runOnUiThread(new Runnable() {
 						public void run() {
+                            if(openPages.size() == 1){
 							mPageInfo.setText(getString(R.string.page_x_of_y,
-									page.getSpineItemPageIndex() + 1,
-									page.getSpineItemPageCount()));
-							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
+                                        firstVisiblePage.getSpineItemPageIndex() + 1,
+                                        firstVisiblePage.getSpineItemPageCount()));
+                            } else {
+                                Page lastVisiblePage = openPages.get(openPages.size() - 1);
+                                mPageInfo.setText(getString(R.string.page_x_dash_y_of_z,
+                                        firstVisiblePage.getSpineItemPageIndex() + 1,
+                                        lastVisiblePage.getSpineItemPageIndex() + 1,
+                                        firstVisiblePage.getSpineItemPageCount()));
+                            }
+
+							SpineItem spineItem = mPackage.getSpineItem(firstVisiblePage.getIdref());
 							boolean isFixedLayout = spineItem.isFixedLayout();
 				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
 				            mWebview.getSettings().setDisplayZoomControls(false);
+                            mLeftButton.setEnabled(paginationInfo.canGoLeft());
+                            mRightButton.setEnabled(paginationInfo.canGoRight());
 						}
 					});
 				}
