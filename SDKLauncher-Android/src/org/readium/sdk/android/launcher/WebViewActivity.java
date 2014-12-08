@@ -180,7 +180,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 
         // Load the page skeleton
         mWebview.loadUrl(READER_SKELETON);
-        mViewerSettings = new ViewerSettings(false, 100, 20);
+        mViewerSettings = new ViewerSettings(ViewerSettings.SyntheticSpreadMode.AUTO, ViewerSettings.ScrollMode.AUTO, 100, 20);
         mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
 			
 			@Override

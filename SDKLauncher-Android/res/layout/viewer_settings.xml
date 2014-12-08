@@ -2,46 +2,149 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp">
-    
-	<TextView android:text="@string/fontSize"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    style="@android:style/TextAppearance.Medium"
-	    android:paddingLeft="8dp"/>
-	<EditText android:hint="@string/fontSize"
-	    android:id="@+id/fontSize"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:inputType="number"/>
-	<TextView android:text="@string/columnGap"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    style="@android:style/TextAppearance.Medium"
-	    android:paddingLeft="8dp"/>
-	<EditText android:hint="@string/columnGap"
-	    android:id="@+id/columnGap"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:inputType="number"/>
-	<CheckBox android:text="@string/syntheticSpread"
-	    android:id="@+id/syntheticSpread"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"/>
-	<LinearLayout 
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:orientation="horizontal" >
-		<Button android:text="@android:string/cancel"
-		    android:id="@+id/cancel"
-		    android:layout_width="0dp"
-		    android:layout_weight="1"
-		    android:layout_height="wrap_content"/>
-		<Button android:text="@android:string/ok"
-		    android:id="@+id/ok"
-		    android:layout_width="0dp"
-		    android:layout_weight="1"
-		    android:layout_height="wrap_content"/>
-	</LinearLayout>
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/scrollView" >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="4dp">
+
+            <TextView android:text="@string/fontSize"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="?android:attr/listSeparatorTextViewStyle"
+                android:paddingLeft="8dp"/>
+
+            <EditText android:hint="@string/fontSize"
+                android:id="@+id/fontSize"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp" />
+
+            <TextView android:text="@string/columnGap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="?android:attr/listSeparatorTextViewStyle"
+                android:paddingLeft="8dp" />
+
+            <EditText android:hint="@string/columnGap"
+                android:id="@+id/columnGap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2">
+
+                    <TextView
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/syntheticSpread"
+                        android:id="@+id/textView"
+                        style="?android:attr/listSeparatorTextViewStyle"
+                        android:ellipsize="end"
+                        android:lines="1" />
+
+                    <RadioGroup
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:id="@+id/spreadSettings">
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/auto"
+                            android:id="@+id/spreadAuto"
+                            android:layout_weight="1"
+                            android:checked="true" />
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/single"
+                            android:id="@+id/spreadSingle"
+                            android:layout_weight="1" />
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/double_"
+                            android:id="@+id/spreadDouble"
+                            android:singleLine="false"
+                            android:layout_weight="1" />
+                    </RadioGroup>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="4dp">
+
+                    <TextView
+                        style="?android:attr/listSeparatorTextViewStyle"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/scrollMode"
+                        android:id="@+id/textView2"
+                        android:ellipsize="end"
+                        android:lines="1" />
+
+                    <RadioGroup
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp"
+                        android:orientation="vertical"
+                        android:id="@+id/scrollSettings">
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Auto"
+                            android:id="@+id/scrollAuto"
+                            android:checked="true"
+                            android:layout_weight="1" />
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Document"
+                            android:id="@+id/scrollDocument"
+                            android:layout_weight="1" />
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Continuous"
+                            android:id="@+id/scrollContinuous"
+                            android:singleLine="false"
+                            android:layout_weight="1" />
+                    </RadioGroup>
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
 </LinearLayout>
