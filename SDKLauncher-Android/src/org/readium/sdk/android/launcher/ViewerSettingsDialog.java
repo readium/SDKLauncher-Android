@@ -31,15 +31,16 @@ package org.readium.sdk.android.launcher;
 
 import org.readium.sdk.android.launcher.model.ViewerSettings;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 
 /**
  * This dialog displays the viewer settings to the user.
@@ -67,55 +68,104 @@ public class ViewerSettingsDialog extends DialogFragment {
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+	public Dialog onCreateDialog(
 			Bundle savedInstanceState) {
-		
-		getDialog().setTitle(R.string.settings);
-		View dialogView = inflater.inflate(R.layout.viewer_settings, container);
-		
-		final CheckBox syntheticSpread = (CheckBox) dialogView.findViewById(R.id.syntheticSpread);
-		syntheticSpread.setChecked(mOriginalSettings.isSyntheticSpread());
-		
-		final EditText fontSizeText = (EditText) dialogView.findViewById(R.id.fontSize);
-		fontSizeText.setText("" + mOriginalSettings.getFontSize());
-		
-		final EditText columnGapText = (EditText) dialogView.findViewById(R.id.columnGap);
-		columnGapText.setText("" + mOriginalSettings.getColumnGap());
-		
-		Button ok = (Button) dialogView.findViewById(R.id.ok);
-		ok.setOnClickListener(new View.OnClickListener() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-			@Override
-			public void onClick(View v) {
-				if (mListener != null) {
-					int fontSize = parseString(fontSizeText.getText().toString(), 100);
-					int columnGap = parseString(columnGapText.getText().toString(), 20);
-					ViewerSettings settings = new ViewerSettings(syntheticSpread.isChecked(), fontSize, columnGap);
-					mListener.onViewerSettingsChange(settings);
-				}
-				dismiss();
-			}
+        LayoutInflater inflater = getActivity().getLayoutInflater();
 
-			private int parseString(String s, int defaultValue) {
-				try {
-					return Integer.parseInt(s);
-				} catch (Exception e) {
-					Log.e(TAG, ""+e.getMessage(), e);
-				}
-				return defaultValue;
-			}
-		});
-		
-		Button cancel = (Button) dialogView.findViewById(R.id.cancel);
-		cancel.setOnClickListener(new View.OnClickListener() {
+        final View dialogView = inflater.inflate(R.layout.viewer_settings, null);
 
-			@Override
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+        final RadioGroup spreadGroup = (RadioGroup) dialogView.findViewById(R.id.spreadSettings);
+        switch (mOriginalSettings.getSyntheticSpreadMode()) {
+            case AUTO:
+                spreadGroup.check(R.id.spreadAuto);
+                break;
+            case DOUBLE:
+                spreadGroup.check(R.id.spreadDouble);
+                break;
+            case SINGLE:
+                spreadGroup.check(R.id.spreadSingle);
+                break;
+        }
 
-		return dialogView;
+        final RadioGroup scrollGroup = (RadioGroup) dialogView.findViewById(R.id.scrollSettings);
+        switch (mOriginalSettings.getScrollMode()) {
+            case AUTO:
+                scrollGroup.check(R.id.scrollAuto);
+                break;
+            case DOCUMENT:
+                scrollGroup.check(R.id.scrollDocument);
+                break;
+            case CONTINUOUS:
+                scrollGroup.check(R.id.scrollContinuous);
+                break;
+        }
+
+        final EditText fontSizeText = (EditText) dialogView.findViewById(R.id.fontSize);
+        fontSizeText.setText("" + mOriginalSettings.getFontSize());
+
+        final EditText columnGapText = (EditText) dialogView.findViewById(R.id.columnGap);
+        columnGapText.setText("" + mOriginalSettings.getColumnGap());
+
+
+        builder.setView(dialogView)
+                .setTitle(R.string.settings)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        if (mListener != null) {
+                            int fontSize = parseString(fontSizeText.getText().toString(), 100);
+                            int columnGap = parseString(columnGapText.getText().toString(), 20);
+
+                            ViewerSettings.SyntheticSpreadMode syntheticSpreadMode = null;
+                            switch (spreadGroup.getCheckedRadioButtonId()) {
+                                case R.id.spreadAuto:
+                                    syntheticSpreadMode = ViewerSettings.SyntheticSpreadMode.AUTO;
+                                    break;
+                                case R.id.spreadSingle:
+                                    syntheticSpreadMode = ViewerSettings.SyntheticSpreadMode.SINGLE;
+                                    break;
+                                case R.id.spreadDouble:
+                                    syntheticSpreadMode = ViewerSettings.SyntheticSpreadMode.DOUBLE;
+                                    break;
+                            }
+
+                            ViewerSettings.ScrollMode scrollMode = null;
+                            switch (scrollGroup.getCheckedRadioButtonId()) {
+                                case R.id.scrollAuto:
+                                    scrollMode = ViewerSettings.ScrollMode.AUTO;
+                                    break;
+                                case R.id.scrollDocument:
+                                    scrollMode = ViewerSettings.ScrollMode.DOCUMENT;
+                                    break;
+                                case R.id.scrollContinuous:
+                                    scrollMode = ViewerSettings.ScrollMode.CONTINUOUS;
+                                    break;
+                            }
+
+                            ViewerSettings settings = new ViewerSettings(syntheticSpreadMode, scrollMode, fontSize, columnGap);
+                            mListener.onViewerSettingsChange(settings);
+                        }
+                        dismiss();
+                    }
+
+                    private int parseString(String s, int defaultValue) {
+                        try {
+                            return Integer.parseInt(s);
+                        } catch (Exception e) {
+                            Log.e(TAG, "" + e.getMessage(), e);
+                        }
+                        return defaultValue;
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                       dismiss();
+                    }
+                });
+
+        return builder.create();
 	}
 
 }

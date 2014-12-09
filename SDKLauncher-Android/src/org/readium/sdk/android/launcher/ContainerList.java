@@ -28,10 +28,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Stack;
 
 import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.Container;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.android.SdkErrorHandler;
 
 import android.app.Activity;
 import android.content.Context;
@@ -44,11 +46,29 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
 /**
  * @author chtian
  * 
  */
-public class ContainerList extends Activity {
+public class ContainerList extends Activity implements SdkErrorHandler {
+	
+	protected abstract class SdkErrorHandlerMessagesCompleted {
+		Intent m_intent = null;
+		public SdkErrorHandlerMessagesCompleted(Intent intent) {
+			m_intent = intent;
+		}
+		public void done() {
+			if (m_intent != null) {
+				once();
+				m_intent = null;
+			}
+		}
+		public abstract void once();
+	}
+	
     private Context context;
     private final String testPath = "epubtest";
 
@@ -79,22 +99,35 @@ public class ContainerList extends Activity {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                     long arg3) {
+            	
+            	String bookName = list.get(arg2);
 
-                Toast.makeText(context, "Select " + list.get(arg2),
-                        Toast.LENGTH_SHORT).show();
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + bookName;
+            	
+                Toast.makeText(context, "Select " + bookName, Toast.LENGTH_SHORT).show();
 
-                Intent intent = new Intent(getApplicationContext(),
-                        BookDataActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(Constants.BOOK_NAME, list.get(arg2));
-
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + "/" + testPath + "/" + list.get(arg2);
+            	m_SdkErrorHandler_Messages = new Stack<String>();
                 
+                EPub3.setSdkErrorHandler(ContainerList.this);
                 Container container = EPub3.openBook(path);
+                EPub3.setSdkErrorHandler(null);
+                
                 ContainerHolder.getInstance().put(container.getNativePtr(), container);
+
+                Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra(Constants.BOOK_NAME, bookName);
                 intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
-                startActivity(intent);
+                
+                SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
+					@Override
+					public void once() {
+		                startActivity(m_intent);
+					}
+                };
+
+                // async!
+                popSdkErrorHandlerMessage(context, callback); 
             }
         });
         
@@ -102,6 +135,87 @@ public class ContainerList extends Activity {
         EPub3.setCachePath(getCacheDir().getAbsolutePath());
     }
 
+    private Stack<String> m_SdkErrorHandler_Messages = null;
+
+    // async!
+    private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback)
+    {
+    	if (m_SdkErrorHandler_Messages != null) {
+    		
+    		if (m_SdkErrorHandler_Messages.size() == 0) {
+    			m_SdkErrorHandler_Messages = null;
+    			callback.done();
+    			return;
+    		}
+    		
+    		String message = m_SdkErrorHandler_Messages.pop(); 
+		
+			AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
+
+			alertBuilder.setTitle("EPUB warning");
+			alertBuilder.setMessage(message);
+
+			alertBuilder.setCancelable(false);
+			
+			alertBuilder.setOnCancelListener(
+				new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						m_SdkErrorHandler_Messages = null;
+						callback.done();
+					}
+				}
+			);
+
+			alertBuilder.setOnDismissListener(
+				new DialogInterface.OnDismissListener() {
+					@Override
+					public void onDismiss(DialogInterface dialog) {
+						popSdkErrorHandlerMessage(ctx, callback);
+					}
+				}
+			);
+			
+			alertBuilder.setPositiveButton("Ignore",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+			    	}
+				);
+			alertBuilder.setNegativeButton("Ignore all",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+		    	}
+			);
+			
+			AlertDialog alert = alertBuilder.create();
+			alert.setCanceledOnTouchOutside(false);
+			
+			alert.show(); //async!
+		}
+    	else {
+    		callback.done();
+    	}
+    }
+    
+	@Override
+	public boolean handleSdkError(String message, boolean isSevereEpubError) {
+	        
+	    System.out.println("SdkErrorHandler: " + message + " (" + (isSevereEpubError ? "warning" : "info") + ")");
+	
+	    if (m_SdkErrorHandler_Messages != null && isSevereEpubError) { 
+	    	m_SdkErrorHandler_Messages.push(message);
+	    }
+	    
+		// never throws an exception
+		return true;
+	}
+	
     // get books in /sdcard/epubtest path
     private List<String> getInnerBooks() {
         List<String> list = new ArrayList<String>();
@@ -132,5 +246,4 @@ public class ContainerList extends Activity {
 		});
         return list;
     }
-
 }
