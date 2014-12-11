@@ -331,7 +331,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         public void onLoadResource(WebView view, String url) {
 			Log.d(TAG, "onLoadResource: " + url);
         	String cleanedUrl = cleanResourceUrl(url);
-        	byte[] data = mPackage.getContent(cleanedUrl);
+        	byte[] data = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
             if (data != null && data.length > 0) {
             	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
             	String mimetype = (item != null) ? item.getMediaType() : null;
@@ -395,33 +395,27 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     }
                 }
 
-                InputStream data = mPackage.getInputStream(cleanedUrl, false);
+                InputStream data = null;
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
                 if (item != null && item.isHtml()) {
                     byte[] binary;
-                    try {
-                        binary = new byte[data.available()];
-                        data.read(binary);
-                        data.close();
-                        String htmlText = new String(binary);
-                        String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
+                    binary = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
+                    String htmlText = new String(binary);
+                    String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
 
-                        // Set up the script tags to add to the head
-                        String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
-                                // Slightly change fake script src url with an increasing count to prevent caching of the request
-                                + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
-                        // Checks for the existance of MathML => request MathJax payload
-                        if (newHtml.contains("<math")) {
-                            tagsToInjectToHead += INJECT_HEAD_MATHJAX;
-                        }
-
-                        newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
-                        //Log.d(TAG, "HTML head inject: " + newHtml);
-                        
-                        data = new ByteArrayInputStream(newHtml.getBytes());
-                    } catch (IOException e) {
-                        Log.e(TAG, ""+e.getMessage(), e);
+                    // Set up the script tags to add to the head
+                    String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
+                            // Slightly change fake script src url with an increasing count to prevent caching of the request
+                            + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
+                    // Checks for the existance of MathML => request MathJax payload
+                    if (newHtml.contains("<math")) {
+                        tagsToInjectToHead += INJECT_HEAD_MATHJAX;
                     }
+
+                    newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
+                    //Log.d(TAG, "HTML head inject: " + newHtml);
+
+                    data = new ByteArrayInputStream(newHtml.getBytes());
                 }
                 String mimetype = (item != null) ? item.getMediaType() : null;
                 return new WebResourceResponse(mimetype, UTF_8, data);
