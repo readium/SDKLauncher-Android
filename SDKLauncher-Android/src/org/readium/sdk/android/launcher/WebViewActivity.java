@@ -395,12 +395,12 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     }
                 }
 
-                InputStream data = null;
+                InputStream data;
+                byte[] resourceData = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
+
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
                 if (item != null && item.isHtml()) {
-                    byte[] binary;
-                    binary = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
-                    String htmlText = new String(binary);
+                    String htmlText = new String(resourceData);
                     String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
 
                     // Set up the script tags to add to the head
@@ -416,7 +416,10 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     //Log.d(TAG, "HTML head inject: " + newHtml);
 
                     data = new ByteArrayInputStream(newHtml.getBytes());
+                } else {
+                    data = new ByteArrayInputStream(resourceData);
                 }
+                
                 String mimetype = (item != null) ? item.getMediaType() : null;
                 return new WebResourceResponse(mimetype, UTF_8, data);
             } else if(uri.getScheme().equals("http")){
