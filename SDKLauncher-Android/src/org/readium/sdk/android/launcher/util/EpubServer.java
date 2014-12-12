@@ -31,6 +31,8 @@ package org.readium.sdk.android.launcher.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -169,15 +171,13 @@ public class EpubServer extends NanoHTTPD {
 					if (newLen < 0) {
 						newLen = 0;
 					}
+					
+					ByteBuffer byteBuffer = pckg.getByteRangeStream(uri, startFrom, newLen);
+					byte[] byteArray = new byte[byteBuffer.capacity()];
+					System.arraycopy(byteBuffer.array(), 0, byteArray, 0, byteArray.length);
+					ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
 
-					InputStream is = pckg.getInputStream(uri, true);
-					try {
-						is.skip(startFrom);
-					} catch (IOException e) {
-						Log.e(TAG, "InputStream.skip("+startFrom+") failed: "+e.getMessage(), e);
-					}
-
-					res = new Response(Response.Status.PARTIAL_CONTENT, mime, is);
+					res = new Response(Response.Status.PARTIAL_CONTENT, mime, byteArrayInputStream);
 					res.addHeader("Content-Range", "bytes " + startFrom + "-"
 							+ endAt + "/" + contentLength);
 				}
@@ -185,7 +185,7 @@ public class EpubServer extends NanoHTTPD {
 				if (etag.equals(header.get("if-none-match"))) {
 					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 				} else {
-                    InputStream is = pckg.getInputStream(uri, false);
+                    InputStream is = pckg.getInputStream(uri);
 					res = new Response(Response.Status.OK, mime, is);
 				}
 			}

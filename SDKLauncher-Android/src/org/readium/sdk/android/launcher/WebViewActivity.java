@@ -395,7 +395,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     }
                 }
 
-                InputStream data = mPackage.getInputStream(cleanedUrl, false);
+                InputStream data = mPackage.getInputStream(cleanedUrl);
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
                 if (item != null && item.isHtml()) {
                     byte[] binary;
