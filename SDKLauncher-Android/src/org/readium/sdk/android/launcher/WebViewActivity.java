@@ -399,7 +399,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                 byte[] resourceData = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
 
                 ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-                if (item != null && item.isHtml()) {
+                if (resourceData != null && item != null && item.isHtml()) {
                     String htmlText = new String(resourceData);
                     String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
 
@@ -416,10 +416,12 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
                     //Log.d(TAG, "HTML head inject: " + newHtml);
 
                     data = new ByteArrayInputStream(newHtml.getBytes());
-                } else {
+                } else if (resourceData != null) {
                     data = new ByteArrayInputStream(resourceData);
+                } else {
+                    data = null;
                 }
-                
+
                 String mimetype = (item != null) ? item.getMediaType() : null;
                 return new WebResourceResponse(mimetype, UTF_8, data);
             } else if(uri.getScheme().equals("http")){
