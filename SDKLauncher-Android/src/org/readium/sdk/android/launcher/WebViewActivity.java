@@ -507,7 +507,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 									page.getSpineItemPageIndex() + 1,
 									page.getSpineItemPageCount()));
 							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
-							boolean isFixedLayout = spineItem.isFixedLayout();
+							boolean isFixedLayout = spineItem.isFixedLayout(mPackage);
 				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
 				            mWebview.getSettings().setDisplayZoomControls(false);
 						}
