@@ -100,13 +100,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
             "\n};";
 
     // Iterate top-level iframes, inject global window.navigator.epubReadingSystem if the expected hook function exists ( readium_set_epubReadingSystem() ).
-    private static final String INJECT_EPUB_RSO_SCRIPT_2 = "" +
-            "for (var i = 0; i < window.frames.length; i++) { \n" +
-                "var iframe = window.frames[i]; \n" +
-                "if (iframe.readium_set_epubReadingSystem) { \n" +
-                    "iframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem); \n" +
-                "}\n" +
-            "}\n";
+    private static final String INJECT_EPUB_RSO_SCRIPT_2  = "var epubRSInject = function(win) { if (win.frames) { for (var i = 0; i < win.frames.length; i++) { var iframe = win.frames[i]; if (iframe.readium_set_epubReadingSystem) { iframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem); } epubRSInject(iframe); } } }; epubRSInject(window);";
+    
     // Script tag to inject the "hook" function installer script, added to the head of every epub iframe document
     private static final String INJECT_HEAD_EPUB_RSO_1 = "" +
             "<script id=\"readium_epubReadingSystem_inject1\" type=\"text/javascript\">\n" +
@@ -506,7 +501,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 									page.getSpineItemPageIndex() + 1,
 									page.getSpineItemPageCount()));
 							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
-							boolean isFixedLayout = spineItem.isFixedLayout();
+							boolean isFixedLayout = spineItem.isFixedLayout(mPackage);
 				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
 				            mWebview.getSettings().setDisplayZoomControls(false);
 						}

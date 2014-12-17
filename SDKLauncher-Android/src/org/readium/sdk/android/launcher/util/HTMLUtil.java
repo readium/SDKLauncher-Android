@@ -51,7 +51,7 @@ public class HTMLUtil {
             return html;
         }
 
-        String pattern = "<head.*>";
+        String pattern = "<head[^>]*>";
         Matcher matcher = Pattern.compile(pattern).matcher(html);
 
         if (matcher.find()) {
