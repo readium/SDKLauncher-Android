@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.readium.sdk.android.Package;
+import org.readium.sdk.android.PackageResource;
 
 import android.util.Log;
 import fi.iki.elonen.NanoHTTPD;
@@ -156,6 +157,7 @@ public class EpubServer extends NanoHTTPD {
 				}
 			}
 
+            PackageResource packageResource = pckg.getResourceAtRelativePath(uri);
 			// Change return code and add Content-Range header when skipping is requested
 			if (range != null && startFrom >= 0) {
 				if (startFrom >= contentLength) {
@@ -171,13 +173,9 @@ public class EpubServer extends NanoHTTPD {
 					if (newLen < 0) {
 						newLen = 0;
 					}
-					
-					ByteBuffer byteBuffer = pckg.getByteRangeStream(uri, startFrom, newLen);
-					byte[] byteArray = new byte[byteBuffer.capacity()];
-					System.arraycopy(byteBuffer.array(), 0, byteArray, 0, byteArray.length);
-					ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
 
-					res = new Response(Response.Status.PARTIAL_CONTENT, mime, byteArrayInputStream);
+                    byte[] data = packageResource.readDataOfLength((int) newLen, (int) startFrom);
+                    res = new Response(Response.Status.PARTIAL_CONTENT, mime, new ByteArrayInputStream(data));
 					res.addHeader("Content-Range", "bytes " + startFrom + "-"
 							+ endAt + "/" + contentLength);
 				}
@@ -185,8 +183,8 @@ public class EpubServer extends NanoHTTPD {
 				if (etag.equals(header.get("if-none-match"))) {
 					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 				} else {
-                    InputStream is = pckg.getInputStream(uri);
-					res = new Response(Response.Status.OK, mime, is);
+                    byte[] data = packageResource.readDataFull();
+					res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
 				}
 			}
 			res.addHeader("ETag", etag);
