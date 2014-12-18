@@ -1048,7 +1048,7 @@ Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
         private void decodeHeader(BufferedReader in, Map<String, String> pre, Map<String, String> parms, Map<String, String> headers)
             throws ResponseException {
         	
-        	headers.put("range","bytes=0-");
+        	//headers.put("range","bytes=0-");
 
             try {
                 // Read the request line
