@@ -50,9 +50,9 @@ import fi.iki.elonen.NanoHTTPD;
  */
 public class EpubServer extends NanoHTTPD {
 
-	private static final String TAG = "EpubServer";
-	public static final String HTTP_HOST = "127.0.0.1";
-	public static final int HTTP_PORT = 8080;
+    private static final String TAG = "EpubServer";
+    public static final String HTTP_HOST = "127.0.0.1";
+    public static final int HTTP_PORT = 8080;
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
      */
@@ -62,35 +62,35 @@ public class EpubServer extends NanoHTTPD {
     private final boolean quiet;
     
     static {
-    	Map<String, String> tmpMap = new HashMap<String, String>();
-    	tmpMap.put("html", "application/xhtml+xml"); // FORCE
-    	tmpMap.put("xhtml", "application/xhtml+xml"); // FORCE
-    	tmpMap.put("xml", "application/xml"); // FORCE
-    	tmpMap.put("htm", "text/html");
-    	tmpMap.put("css", "text/css");
-    	tmpMap.put("java", "text/x-java-source, text/java");
-    	tmpMap.put("txt", "text/plain");
-    	tmpMap.put("asc", "text/plain");
-    	tmpMap.put("gif", "image/gif");
-    	tmpMap.put("jpg", "image/jpeg");
-    	tmpMap.put("jpeg", "image/jpeg");
-    	tmpMap.put("png", "image/png");
-    	tmpMap.put("mp3", "audio/mpeg");
-    	tmpMap.put("m3u", "audio/mpeg-url");
-    	tmpMap.put("mp4", "video/mp4");
-    	tmpMap.put("ogv", "video/ogg");
-    	tmpMap.put("flv", "video/x-flv");
-    	tmpMap.put("mov", "video/quicktime");
-    	tmpMap.put("swf", "application/x-shockwave-flash");
-    	tmpMap.put("js", "application/javascript");
-    	tmpMap.put("pdf", "application/pdf");
-    	tmpMap.put("doc", "application/msword");
-    	tmpMap.put("ogg", "application/x-ogg");
-    	tmpMap.put("zip", "application/octet-stream");
-    	tmpMap.put("exe", "application/octet-stream");
-    	tmpMap.put("class", "application/octet-stream");
-    	tmpMap.put("webm", "video/webm");
-    	MIME_TYPES = Collections.unmodifiableMap(tmpMap);
+        Map<String, String> tmpMap = new HashMap<String, String>();
+        tmpMap.put("html", "application/xhtml+xml"); // FORCE
+        tmpMap.put("xhtml", "application/xhtml+xml"); // FORCE
+        tmpMap.put("xml", "application/xml"); // FORCE
+        tmpMap.put("htm", "text/html");
+        tmpMap.put("css", "text/css");
+        tmpMap.put("java", "text/x-java-source, text/java");
+        tmpMap.put("txt", "text/plain");
+        tmpMap.put("asc", "text/plain");
+        tmpMap.put("gif", "image/gif");
+        tmpMap.put("jpg", "image/jpeg");
+        tmpMap.put("jpeg", "image/jpeg");
+        tmpMap.put("png", "image/png");
+        tmpMap.put("mp3", "audio/mpeg");
+        tmpMap.put("m3u", "audio/mpeg-url");
+        tmpMap.put("mp4", "video/mp4");
+        tmpMap.put("ogv", "video/ogg");
+        tmpMap.put("flv", "video/x-flv");
+        tmpMap.put("mov", "video/quicktime");
+        tmpMap.put("swf", "application/x-shockwave-flash");
+        tmpMap.put("js", "application/javascript");
+        tmpMap.put("pdf", "application/pdf");
+        tmpMap.put("doc", "application/msword");
+        tmpMap.put("ogg", "application/x-ogg");
+        tmpMap.put("zip", "application/octet-stream");
+        tmpMap.put("exe", "application/octet-stream");
+        tmpMap.put("class", "application/octet-stream");
+        tmpMap.put("webm", "video/webm");
+        MIME_TYPES = Collections.unmodifiableMap(tmpMap);
     }
 
     public EpubServer(String host, int port, Package pckg, boolean quiet) {
@@ -102,145 +102,178 @@ public class EpubServer extends NanoHTTPD {
     Package getPackage() {
         return mPackage;
     }
-	
-	public void startServer() {
-		try {
-			start();
-		} catch (IOException e) {
-			Log.e(TAG, ""+e.getMessage());
-		}
-	}
+    
+    public void startServer() {
+        try {
+            start();
+        } catch (IOException e) {
+            Log.e(TAG, ""+e.getMessage());
+        }
+    }
 
     /**
-	 * Serves file from homeDir and its' subdirectories (only). Uses only URI,
-	 * ignores all headers and HTTP parameters.
-	 */
-	Response serveFile(String uri, Map<String, String> header, Package pckg) {
-		Response res = null;
+     * Serves file from homeDir and its' subdirectories (only). Uses only URI,
+     * ignores all headers and HTTP parameters.
+     */
+    Response serveFile(String uri, Map<String, String> header, Package pckg) {
+        Response res = null;
 
-		final int contentLength = pckg.getArchiveInfoSize(uri);
-		if (contentLength == 0) {
-			res = new Response(Response.Status.NOT_FOUND,
-					NanoHTTPD.MIME_PLAINTEXT, "Error 404, file not found.");
-		}
+        final int contentLength = pckg.getArchiveInfoSize(uri);
+        if (contentLength == 0) {
+            res = new Response(Response.Status.NOT_FOUND,
+                    NanoHTTPD.MIME_PLAINTEXT, "Error 404, file not found.");
+        }
 
-		if (res == null) {
-			// Get MIME type from file name extension, if possible
-			String mime = null;
-			int dot = uri.lastIndexOf('.');
-			if (dot >= 0) {
-				mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
-			}
-			if (mime == null) {
-				mime = "application/octet-stream";
-			}
+        if (res == null) {
+            // Get MIME type from file name extension, if possible
+            String mime = null;
+            int dot = uri.lastIndexOf('.');
+            if (dot >= 0) {
+                mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
+            }
+            if (mime == null) {
+                mime = "application/octet-stream";
+            }
 
-			// Calculate etag
-			String etag = Integer.toHexString((pckg.getUniqueID()
-					+ pckg.getModificationDate() + "" + pckg.getBasePath())
-					.hashCode());
+            // Calculate etag
+            String etag = Integer.toHexString((pckg.getUniqueID()
+                    + pckg.getModificationDate() + "" + pckg.getBasePath())
+                    .hashCode());
 
-			long startFrom = 0;
-			long endAt = -1;
-			String range = header.get("range");
-//			Log.d(TAG, "range: "+range);
-			if (range != null) {
-				if (range.startsWith("bytes=")) {
-					range = range.substring("bytes=".length());
-					int minus = range.indexOf('-');
-					try {
-						if (minus > 0) {
-							startFrom = Long.parseLong(range.substring(0, minus));
-						}
-					} catch (NumberFormatException ignored) {
-						Log.e(TAG, "NumberFormatException (RANGE BEGIN): "+ignored.getMessage());
-					}
-					try {
-						if (minus > 0) {
-							endAt = Long.parseLong(range.substring(minus + 1));
-						}
-					} catch (NumberFormatException ignored) {
-						Log.e(TAG, "NumberFormatException (RANGE END): "+ignored.getMessage());
-					}
-				}
-			}
+            long startFrom = 0;
+            long endAt = -1;
+            String range = header.get("range");
+            Log.d(TAG, "HTTP range: "+range);
+            if (range != null) {
+                if (range.startsWith("bytes=")) {
+                    range = range.substring("bytes=".length());
+                    int minus = range.indexOf('-');
+                    try {
+                        if (minus > 0) {
+                            startFrom = Long.parseLong(range.substring(0, minus));
+                        }
+                    } catch (NumberFormatException ignored) {
+                        Log.e(TAG, "NumberFormatException (RANGE BEGIN): "+ignored.getMessage());
+                    }
+                    try {
+                        if (minus > 0) {
+                        	String endStr = range.substring(minus + 1);
+                        	if (endStr != null && endStr.length() > 0)
+                        		endAt = Long.parseLong(endStr);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        Log.e(TAG, "NumberFormatException (RANGE END): "+ignored.getMessage());
+                    }
+                }
+            }
 
-			String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
-			int iHttpPrefix = uri.indexOf(httpPrefix);
-			String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
-			
+            String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
+            int iHttpPrefix = uri.indexOf(httpPrefix);
+            String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
+            
             PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
             
             //TODO: obtain mime-type from manifest item content type!
-			ManifestItem item = pckg.getManifestItem(relativePath);
-			String contentType = item.getMediaType();
-			if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
-					&& contentType != null && contentType.length() > 0)
-			{
-				mime = contentType;
-			}
+            ManifestItem item = pckg.getManifestItem(relativePath);
+            String contentType = item.getMediaType();
+            if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+                    && contentType != null && contentType.length() > 0)
+            {
+                mime = contentType;
+            }
+
+            // get if-range header. If present, it must match etag or else we should ignore the range request
+            String ifRange = header.get("if-range");
+            boolean headerIfRangeMissingOrMatching = (ifRange == null || etag.equals(ifRange));
+
+            String ifNoneMatch = header.get("if-none-match");
+            boolean headerIfNoneMatchPresentAndMatching = ifNoneMatch != null &&
+                (ifNoneMatch.equals("*") || ifNoneMatch.equals(etag));
+
+         // Change return code and add Content-Range header when skipping is requested
             
-			// Change return code and add Content-Range header when skipping is requested
-			if (range != null && startFrom >= 0) {
-				if (startFrom >= contentLength) {
-					res = new Response(Response.Status.RANGE_NOT_SATISFIABLE,
-							NanoHTTPD.MIME_PLAINTEXT, "");
-					res.addHeader("Content-Range", "bytes 0-0/" + contentLength);
-					res.addHeader("ETag", etag);
-				} else {
-					if (endAt < 0) {
-						endAt = contentLength - 1;
-					}
-					long newLen = endAt - startFrom + 1;
-					if (newLen < 0) {
-						newLen = 0;
-					}
+            if (headerIfRangeMissingOrMatching && range != null && startFrom >= 0 && startFrom < contentLength) {
+                // range request that matches current etag
+                // and the startFrom of the range is satisfiable
+                if ( headerIfNoneMatchPresentAndMatching ) {
+                    // range request that matches current etag
+                    // and the startFrom of the range is satisfiable
+                    // would return range from file
+                    // respond with not-modified
+                    res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+                } else {
+                    if (endAt < 0) {
+                        endAt = contentLength - 1;
+                    }
+                    long newLen = endAt - startFrom + 1;
+                    if (newLen < 0) {
+                        newLen = 0;
+                    }
 
                     byte[] data = packageResource.readDataOfLength((int) newLen, (int) startFrom);
                     res = new Response(Response.Status.PARTIAL_CONTENT, mime, new ByteArrayInputStream(data));
-					res.addHeader("Content-Range", "bytes " + startFrom + "-"
-							+ endAt + "/" + contentLength);
-				}
-			} else {
-				if (etag.equals(header.get("if-none-match"))) {
-					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
-				} else {
+                    
+                    res.addHeader("Content-Length", "" + newLen);
+                    res.addHeader("Content-Range", "bytes " + startFrom + "-" + endAt + "/" + contentLength);
+                }
+            } else {
+                if (headerIfRangeMissingOrMatching && range != null && startFrom >= contentLength) {
+                    // return the size of the file
+                    // 4xx responses are not trumped by if-none-match
+                    res = new Response(Response.Status.RANGE_NOT_SATISFIABLE, NanoHTTPD.MIME_PLAINTEXT, "");
+                    res.addHeader("Content-Range", "bytes */" + contentLength);
+                } else if (range == null && headerIfNoneMatchPresentAndMatching) {
+                    // full-file-fetch request
+                    // would return entire file
+                    // respond with not-modified
+                    res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+                } else if (!headerIfRangeMissingOrMatching && headerIfNoneMatchPresentAndMatching) {
+                    // range request that doesn't match current etag
+                    // would return entire (different) file
+                    // respond with not-modified
+                    res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+                } else  {
+                    // supply the file
+
                     byte[] data = packageResource.readDataFull();
-					res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
-				}
-			}
-			res.addHeader("ETag", etag);
-		}
-		// Announce that the file server accepts partial content requests
-		res.addHeader("Accept-Ranges", "bytes");
+                    res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
+                    
+                    res.addHeader("Content-Length", "" + contentLength);
+                }
+            }
 
-		return res;
-	}
+            if (res != null)
+            {
+                res.addHeader("ETag", etag);
+                // Announce that the file server accepts partial content requests
+                res.addHeader("Accept-Ranges", "bytes");
+            }
+        }
+        return res;
+    }
 
-	@Override
-	public Response serve(String uri, Method method,
-			Map<String, String> header, Map<String, String> parms,
-			Map<String, String> files) {
-		if (!quiet) {
-			Log.d(TAG, method + " '" + uri + "' ");
+    @Override
+    public Response serve(IHTTPSession session) {
+        Map<String, String> header = session.getHeaders();
+        Map<String, String> parms = session.getParms();
+        String uri = session.getUri();
 
-			Iterator<String> e = header.keySet().iterator();
-			while (e.hasNext()) {
-				String value = e.next();
-				Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value) + "'");
-			}
-			e = parms.keySet().iterator();
-			while (e.hasNext()) {
-				String value = e.next();
-				Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value) + "'");
-			}
-			e = files.keySet().iterator();
-			while (e.hasNext()) {
-				String value = e.next();
-				Log.d(TAG, "  UPLOADED: '" + value + "' = '" + files.get(value) + "'");
-			}
-		}
-		uri = uri.startsWith("/") ? uri.substring(1) : uri;
-		return serveFile(uri, header, getPackage());
-	}
+        if (!quiet) {
+            Log.d(TAG, session.getMethod() + " '" + uri + "' ");
+
+            Iterator<String> e = header.keySet().iterator();
+            while (e.hasNext()) {
+                String value = e.next();
+                Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value) + "'");
+            }
+            e = parms.keySet().iterator();
+            while (e.hasNext()) {
+                String value = e.next();
+                Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value) + "'");
+            }
+        }
+
+        uri = uri.startsWith("/") ? uri.substring(1) : uri;
+        return serveFile(uri, header, getPackage());
+    }
 }

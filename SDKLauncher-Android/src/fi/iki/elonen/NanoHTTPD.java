@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import android.util.Log;
+
 /**
  * A simple, tiny, nicely embeddable HTTP server in Java
  * <p/>
@@ -684,6 +686,7 @@ public abstract class NanoHTTPD {
         }
 
         private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
+            Log.e("NanoHTTPD", "PENDING: "+ pending);
             if (requestMethod != Method.HEAD && data != null) {
                 int BUFFER_SIZE = 16 * 1024;
                 byte[] buff = new byte[BUFFER_SIZE];
@@ -694,6 +697,7 @@ public abstract class NanoHTTPD {
                     }
                     outputStream.write(buff, 0, read);
                     pending -= read;
+                    Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
                 }
             }
         }
