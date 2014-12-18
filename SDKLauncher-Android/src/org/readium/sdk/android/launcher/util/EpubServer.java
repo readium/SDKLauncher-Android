@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
 
@@ -50,7 +51,7 @@ import fi.iki.elonen.NanoHTTPD;
 public class EpubServer extends NanoHTTPD {
 
 	private static final String TAG = "EpubServer";
-	public static final String HTTP_HOST = "localhost";
+	public static final String HTTP_HOST = "127.0.0.1";
 	public static final int HTTP_PORT = 8080;
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
@@ -62,10 +63,11 @@ public class EpubServer extends NanoHTTPD {
     
     static {
     	Map<String, String> tmpMap = new HashMap<String, String>();
-    	tmpMap.put("css", "text/css");
+    	tmpMap.put("html", "application/xhtml+xml"); // FORCE
+    	tmpMap.put("xhtml", "application/xhtml+xml"); // FORCE
+    	tmpMap.put("xml", "application/xml"); // FORCE
     	tmpMap.put("htm", "text/html");
-    	tmpMap.put("html", "text/html");
-    	tmpMap.put("xml", "text/xml");
+    	tmpMap.put("css", "text/css");
     	tmpMap.put("java", "text/x-java-source, text/java");
     	tmpMap.put("txt", "text/plain");
     	tmpMap.put("asc", "text/plain");
@@ -157,7 +159,21 @@ public class EpubServer extends NanoHTTPD {
 				}
 			}
 
-            PackageResource packageResource = pckg.getResourceAtRelativePath(uri);
+			String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
+			int iHttpPrefix = uri.indexOf(httpPrefix);
+			String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
+			
+            PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
+            
+            //TODO: obtain mime-type from manifest item content type!
+			ManifestItem item = pckg.getManifestItem(relativePath);
+			String contentType = item.getMediaType();
+			if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+					&& contentType != null && contentType.length() > 0)
+			{
+				mime = contentType;
+			}
+            
 			// Change return code and add Content-Range header when skipping is requested
 			if (range != null && startFrom >= 0) {
 				if (startFrom >= contentLength) {

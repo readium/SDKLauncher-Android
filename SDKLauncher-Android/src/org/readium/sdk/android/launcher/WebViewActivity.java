@@ -325,6 +325,9 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         @Override
         public void onLoadResource(WebView view, String url) {
 			Log.d(TAG, "onLoadResource: " + url);
+			if(url.indexOf("http") == 0){
+				return;
+			}
         	String cleanedUrl = cleanResourceUrl(url);
         	byte[] data = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
             if (data != null && data.length > 0) {
