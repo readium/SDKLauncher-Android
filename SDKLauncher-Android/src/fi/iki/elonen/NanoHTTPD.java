@@ -80,7 +80,7 @@ import android.util.Log;
  * See the separate "LICENSE.md" file for the distribution license (Modified BSD licence)
  */
 public abstract class NanoHTTPD {
-	private static final String TAG = "NanoHTTPD";
+    private static final String TAG = "NanoHTTPD";
     /**
      * Common mime type for dynamic content: plain text
      */
@@ -132,7 +132,7 @@ public abstract class NanoHTTPD {
             try {
                 serverSocket.close();
             } catch (IOException e) {
-            	Log.e(TAG, ""+e.getMessage());
+                Log.e(TAG, ""+e.getMessage());
             }
         }
     }
@@ -142,7 +142,7 @@ public abstract class NanoHTTPD {
             try {
                 socket.close();
             } catch (IOException e) {
-            	Log.e(TAG, ""+e.getMessage());
+                Log.e(TAG, ""+e.getMessage());
             }
         }
     }
@@ -152,7 +152,7 @@ public abstract class NanoHTTPD {
             try {
                 closeable.close();
             } catch (IOException e) {
-            	Log.e(TAG, ""+e.getMessage());
+                Log.e(TAG, ""+e.getMessage());
             }
         }
     }
@@ -186,15 +186,15 @@ public abstract class NanoHTTPD {
                                         TempFileManager tempFileManager = tempFileManagerFactory.create();
                                         HTTPSession session = new HTTPSession(tempFileManager, inputStream, outputStream);
                                         while (!finalAccept.isClosed()) {
-                                        	session.execute();
+                                            session.execute();
                                         }
                                     } catch (Exception e) {
                                         // When the socket is closed by the client, we throw our own SocketException
                                         // to break the  "keep alive" loop above.
                                         if (!(e instanceof SocketException && "NanoHttpd Shutdown".equals(e.getMessage()))) {
-                                        	Log.e(TAG, ""+e.getMessage());
+                                            Log.e(TAG, ""+e.getMessage());
                                         } else {
-                                        	Log.e(TAG, ""+e.getMessage(), e);
+                                            Log.e(TAG, ""+e.getMessage(), e);
                                         }
                                     } finally {
                                         safeClose(outputStream);
@@ -205,7 +205,7 @@ public abstract class NanoHTTPD {
                             });
                         }
                     } catch (IOException e) {
-                    	Log.e(TAG, ""+e.getMessage(), e);
+                        Log.e(TAG, ""+e.getMessage(), e);
                     }
                 } while (!myServerSocket.isClosed());
             }
@@ -223,7 +223,7 @@ public abstract class NanoHTTPD {
             safeClose(myServerSocket);
             myThread.join();
         } catch (Exception e) {
-        	Log.e(TAG, ""+e.getMessage(), e);
+            Log.e(TAG, ""+e.getMessage(), e);
         }
     }
 
@@ -294,7 +294,7 @@ public abstract class NanoHTTPD {
         try {
             decoded = URLDecoder.decode(str, "UTF8");
         } catch (UnsupportedEncodingException ignored) {
-        	Log.e(TAG, ""+ignored.getMessage());
+            Log.e(TAG, ""+ignored.getMessage());
         }
         return decoded;
     }
@@ -457,7 +457,7 @@ public abstract class NanoHTTPD {
      * request).</p>
      */
     public static class DefaultTempFileManager implements TempFileManager {
-		private final String tmpdir;
+        private final String tmpdir;
         private final List<TempFile> tempFiles;
 
         public DefaultTempFileManager() {
@@ -478,7 +478,7 @@ public abstract class NanoHTTPD {
                 try {
                     file.delete();
                 } catch (Exception ignored) {
-                	Log.e(TAG, ""+ignored.getMessage());
+                    Log.e(TAG, ""+ignored.getMessage());
                 }
             }
             tempFiles.clear();
@@ -522,7 +522,7 @@ public abstract class NanoHTTPD {
      */
     public static class Response {
         private static final String TAG = "Response";
-		/**
+        /**
          * HTTP status code after processing, e.g. "200 OK", HTTP_OK
          */
         private Status status;
@@ -568,7 +568,7 @@ public abstract class NanoHTTPD {
             try {
                 this.data = txt != null ? new ByteArrayInputStream(txt.getBytes("UTF-8")) : null;
             } catch (java.io.UnsupportedEncodingException uee) {
-            	Log.e(TAG, ""+uee.getMessage(), uee);
+                Log.e(TAG, ""+uee.getMessage(), uee);
             }
         }
 
@@ -631,7 +631,7 @@ public abstract class NanoHTTPD {
                         pending -= read;
                     }
                 } else {
-                	outputStream.write("EOF".getBytes());
+                    outputStream.write("EOF".getBytes());
                 }
                 outputStream.flush();
                 safeClose(data);
@@ -1097,7 +1097,7 @@ public abstract class NanoHTTPD {
                     dest.write(src.slice());
                     path = tempFile.getName();
                 } catch (Exception e) { // Catch exception if any
-                	Log.e(TAG, ""+e.getMessage(), e);
+                    Log.e(TAG, ""+e.getMessage(), e);
                 } finally {
                     safeClose(fileOutputStream);
                 }
@@ -1110,7 +1110,7 @@ public abstract class NanoHTTPD {
                 TempFile tempFile = tempFileManager.createTempFile();
                 return new RandomAccessFile(tempFile.getName(), "rw");
             } catch (Exception e) {
-            	Log.e(TAG, ""+e.getMessage(), e);
+                Log.e(TAG, ""+e.getMessage(), e);
             }
             return null;
         }
