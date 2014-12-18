@@ -646,6 +646,7 @@ public abstract class NanoHTTPD {
                 safeClose(data);
             } catch (IOException ioe) {
                 // Couldn't write? No can do.
+            	Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
             }
         }
 
@@ -689,7 +690,7 @@ Log.e("NanoHTTPD", "CHUNKED!");
         private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
 Log.e("NanoHTTPD", "PENDING: "+ pending);
             if (requestMethod != Method.HEAD && data != null) {
-int BUFFER_SIZE = 512 * 1024;
+int BUFFER_SIZE = 128 * 1024;
                 byte[] buff = new byte[BUFFER_SIZE];
                 while (pending > 0) {
                     int read = data.read(buff, 0, ((pending > BUFFER_SIZE) ? BUFFER_SIZE : pending));
