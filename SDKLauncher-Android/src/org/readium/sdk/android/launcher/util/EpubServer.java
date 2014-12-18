@@ -151,10 +151,16 @@ public class EpubServer extends NanoHTTPD {
 					try {
 						if (minus > 0) {
 							startFrom = Long.parseLong(range.substring(0, minus));
+						}
+					} catch (NumberFormatException ignored) {
+						Log.e(TAG, "NumberFormatException (RANGE BEGIN): "+ignored.getMessage());
+					}
+					try {
+						if (minus > 0) {
 							endAt = Long.parseLong(range.substring(minus + 1));
 						}
 					} catch (NumberFormatException ignored) {
-						Log.e(TAG, "NumberFormatException: "+ignored.getMessage());
+						Log.e(TAG, "NumberFormatException (RANGE END): "+ignored.getMessage());
 					}
 				}
 			}
