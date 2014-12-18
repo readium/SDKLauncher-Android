@@ -328,7 +328,9 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			if(url.indexOf("http") == 0){
 				return;
 			}
+			Log.d(TAG, "onLoadResource URL: " + url);
         	String cleanedUrl = cleanResourceUrl(url);
+			Log.d(TAG, "onLoadResource CLEAN URL: " + cleanedUrl);
         	byte[] data = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
             if (data != null && data.length > 0) {
             	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
@@ -424,9 +426,11 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	                String mimetype = (item != null) ? item.getMediaType() : null;
 	                return new WebResourceResponse(mimetype, UTF_8, data);
 	            } else if(uri.getScheme().equals("http")){
+	                Log.d(TAG, "HTTP: " + url);
 	            	return super.shouldInterceptRequest(view, url);
 	            }
-	
+	            
+	            Log.d(TAG, "NOT HTTP OR FILE: " + url);
 	            try {
 	                URLConnection c = new URL(url).openConnection();
 	                return new WebResourceResponse(null, UTF_8, c.getInputStream());

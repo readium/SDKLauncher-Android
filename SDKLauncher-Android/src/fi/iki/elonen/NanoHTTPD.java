@@ -670,6 +670,7 @@ public abstract class NanoHTTPD {
         }
 
         private void sendAsChunked(OutputStream outputStream, PrintWriter pw) throws IOException {
+Log.e("NanoHTTPD", "CHUNKED!");
             pw.print("Transfer-Encoding: chunked\r\n");
             pw.print("\r\n");
             pw.flush();
@@ -686,9 +687,9 @@ public abstract class NanoHTTPD {
         }
 
         private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
-            Log.e("NanoHTTPD", "PENDING: "+ pending);
+Log.e("NanoHTTPD", "PENDING: "+ pending);
             if (requestMethod != Method.HEAD && data != null) {
-                int BUFFER_SIZE = 16 * 1024;
+int BUFFER_SIZE = 512 * 1024;
                 byte[] buff = new byte[BUFFER_SIZE];
                 while (pending > 0) {
                     int read = data.read(buff, 0, ((pending > BUFFER_SIZE) ? BUFFER_SIZE : pending));
@@ -697,7 +698,7 @@ public abstract class NanoHTTPD {
                     }
                     outputStream.write(buff, 0, read);
                     pending -= read;
-                    Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
+Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
                 }
             }
         }
@@ -1043,6 +1044,9 @@ public abstract class NanoHTTPD {
          */
         private void decodeHeader(BufferedReader in, Map<String, String> pre, Map<String, String> parms, Map<String, String> headers)
             throws ResponseException {
+        	
+        	headers.put("range","bytes=0-");
+
             try {
                 // Read the request line
                 String inLine = in.readLine();

@@ -29,6 +29,8 @@
 
 package org.readium.sdk.android.launcher.util;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
@@ -42,8 +44,10 @@ import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
 
+import android.os.Environment;
 import android.util.Log;
 import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoHTTPD.AsyncRunner;
 
 /**
  * This small web server will serve media files such as audio and video.
@@ -95,6 +99,13 @@ public class EpubServer extends NanoHTTPD {
 
     public EpubServer(String host, int port, Package pckg, boolean quiet) {
         super(host, port);
+        this.setAsyncRunner(new AsyncRunner() {
+	        @Override
+	        public void exec(Runnable code) {
+	        	//SYNC!
+	            code.run();
+	        }
+        });
         this.mPackage = pckg;
         this.quiet = quiet;
     }
@@ -113,16 +124,38 @@ public class EpubServer extends NanoHTTPD {
 
     private final Object criticalSectionSynchronizedLock = new Object();
 
-    /**
-     * Serves file from homeDir and its' subdirectories (only). Uses only URI,
-     * ignores all headers and HTTP parameters.
-     */
-    Response serveFile(String uri, Map<String, String> header, Package pckg) {
-        synchronized (criticalSectionSynchronizedLock) {
+    @Override
+    public Response serve(IHTTPSession session) {
+        Map<String, String> header = session.getHeaders();
+        Map<String, String> parms = session.getParms();
+        String uri = session.getUri();
+
+        if (!quiet) {
+            Log.d(TAG, session.getMethod() + " '" + uri + "' ");
+
+            Iterator<String> e = header.keySet().iterator();
+            while (e.hasNext()) {
+                String value = e.next();
+                Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value) + "'");
+            }
+            e = parms.keySet().iterator();
+            while (e.hasNext()) {
+                String value = e.next();
+                Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value) + "'");
+            }
+        }
+
+        uri = uri.startsWith("/") ? uri.substring(1) : uri;
+        
+        Package pckg = getPackage();
 
         Response res = null;
 
-        final int contentLength = pckg.getArchiveInfoSize(uri);
+        int contentLength = -1;
+        synchronized (criticalSectionSynchronizedLock) {
+        	contentLength = pckg.getArchiveInfoSize(uri);
+        }
+        
         if (contentLength == 0) {
             res = new Response(Response.Status.NOT_FOUND,
                     NanoHTTPD.MIME_PLAINTEXT, "Error 404, file not found.");
@@ -216,10 +249,26 @@ public class EpubServer extends NanoHTTPD {
                     if (newLen < 0) {
                         newLen = 0;
                     }
+                    
+                    byte[] data = null;
+                    synchronized (criticalSectionSynchronizedLock) {
+	                    PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
+	                    
+	                    data = packageResource.readDataOfLength((int) newLen, (int) startFrom);
+	                    
+	                    int updatedContentLength = packageResource.getContentLength();
+	                    if (updatedContentLength != contentLength) {
+	                    	Log.e(TAG, "UPDATED CONTENT LENGTH! " + updatedContentLength + "<--" + contentLength);
+	                    }
+                    }
 
-                    PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
-                    byte[] data = packageResource.readDataOfLength((int) newLen, (int) startFrom);
-                    res = new Response(Response.Status.PARTIAL_CONTENT, mime, new ByteArrayInputStream(data));
+                    if (newLen != data.length) {
+                        Log.e(TAG, "RANGE LENGTH! " + newLen + " != " + data.length);
+                    }
+                    
+                    InputStream is = new ByteArrayInputStream(data);
+                    
+                    res = new Response(Response.Status.PARTIAL_CONTENT, mime, is);
                     
                     res.addHeader("Content-Length", "" + newLen);
                     res.addHeader("Content-Range", "bytes " + startFrom + "-" + endAt + "/" + contentLength);
@@ -257,11 +306,22 @@ public class EpubServer extends NanoHTTPD {
                 } else  {
                     // supply the file
 
-                    PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
-                    byte[] data = packageResource.readDataFull();
+                    byte[] data = null;
+                    synchronized (criticalSectionSynchronizedLock) {
+		                PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
+		                
+		                data = packageResource.readDataFull();
+		
+		                int updatedContentLength = packageResource.getContentLength();
+		                if (updatedContentLength != contentLength) {
+		                	Log.e(TAG, "UPDATED CONTENT LENGTH! " + updatedContentLength + "<--" + contentLength);
+		                }
+                    }
+
                     if (contentLength != data.length) {
                         Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != " + data.length);
                     }
+                    
                     res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
                     
                     res.addHeader("Content-Length", "" + contentLength);
@@ -279,31 +339,5 @@ public class EpubServer extends NanoHTTPD {
             }
         }
         return res;
-        }
-    }
-
-    @Override
-    public Response serve(IHTTPSession session) {
-        Map<String, String> header = session.getHeaders();
-        Map<String, String> parms = session.getParms();
-        String uri = session.getUri();
-
-        if (!quiet) {
-            Log.d(TAG, session.getMethod() + " '" + uri + "' ");
-
-            Iterator<String> e = header.keySet().iterator();
-            while (e.hasNext()) {
-                String value = e.next();
-                Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value) + "'");
-            }
-            e = parms.keySet().iterator();
-            while (e.hasNext()) {
-                String value = e.next();
-                Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value) + "'");
-            }
-        }
-
-        uri = uri.startsWith("/") ? uri.substring(1) : uri;
-        return serveFile(uri, header, getPackage());
     }
 }
