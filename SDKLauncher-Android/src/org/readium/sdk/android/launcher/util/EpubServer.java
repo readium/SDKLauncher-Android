@@ -173,7 +173,6 @@ public class EpubServer extends NanoHTTPD {
             
             PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
             
-            //TODO: obtain mime-type from manifest item content type!
             ManifestItem item = pckg.getManifestItem(relativePath);
             String contentType = item.getMediaType();
             if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
