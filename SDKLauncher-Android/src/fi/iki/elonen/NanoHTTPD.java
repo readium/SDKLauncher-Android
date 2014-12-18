@@ -643,10 +643,12 @@ public abstract class NanoHTTPD {
                     sendAsFixedLength(outputStream, pending);
                 }
                 outputStream.flush();
-                safeClose(data);
+                
             } catch (IOException ioe) {
                 // Couldn't write? No can do.
             	Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
+            } finally {
+            	safeClose(data);
             }
         }
 
