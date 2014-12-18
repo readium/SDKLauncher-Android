@@ -116,6 +116,8 @@ public class EpubServer extends NanoHTTPD {
      * ignores all headers and HTTP parameters.
      */
     Response serveFile(String uri, Map<String, String> header, Package pckg) {
+        synchronized (this) {
+
         Response res = null;
 
         final int contentLength = pckg.getArchiveInfoSize(uri);
@@ -139,8 +141,6 @@ public class EpubServer extends NanoHTTPD {
             int iHttpPrefix = uri.indexOf(httpPrefix);
             String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
             
-            PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
-            
             ManifestItem item = pckg.getManifestItem(relativePath);
             String contentType = item.getMediaType();
             if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
@@ -157,7 +157,10 @@ public class EpubServer extends NanoHTTPD {
             long startFrom = 0;
             long endAt = -1;
             String range = header.get("range");
-            Log.d(TAG, "HTTP range: "+range);
+            
+            if (!quiet)
+            	Log.d(TAG, ">>>>> HTTP range: "+range);
+            
             if (range != null) {
                 if (range.startsWith("bytes=")) {
                     range = range.substring("bytes=".length());
@@ -189,7 +192,7 @@ public class EpubServer extends NanoHTTPD {
             boolean headerIfNoneMatchPresentAndMatching = ifNoneMatch != null &&
                 (ifNoneMatch.equals("*") || ifNoneMatch.equals(etag));
 
-         // Change return code and add Content-Range header when skipping is requested
+            // Change return code and add Content-Range header when skipping is requested
             
             if (headerIfRangeMissingOrMatching && range != null && startFrom >= 0 && startFrom < contentLength) {
                 // range request that matches current etag
@@ -201,7 +204,8 @@ public class EpubServer extends NanoHTTPD {
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
                     
-                    Log.e(TAG, "NOT_MODIFIED #1");
+                    if (!quiet)
+                    	Log.d(TAG, "NOT_MODIFIED #1");
                 } else {
                     if (endAt < 0) {
                         endAt = contentLength - 1;
@@ -211,13 +215,15 @@ public class EpubServer extends NanoHTTPD {
                         newLen = 0;
                     }
 
+                    PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
                     byte[] data = packageResource.readDataOfLength((int) newLen, (int) startFrom);
                     res = new Response(Response.Status.PARTIAL_CONTENT, mime, new ByteArrayInputStream(data));
                     
                     res.addHeader("Content-Length", "" + newLen);
                     res.addHeader("Content-Range", "bytes " + startFrom + "-" + endAt + "/" + contentLength);
-                    
-                    Log.e(TAG, "PARTIAL_CONTENT: " + startFrom + "-" + endAt + " / " + contentLength + " (" + newLen + ")");
+
+                    if (!quiet)
+                    	Log.d(TAG, "PARTIAL_CONTENT: " + startFrom + "-" + endAt + " / " + contentLength + " (" + newLen + ")");
                 }
             } else {
                 if (headerIfRangeMissingOrMatching && range != null && startFrom >= contentLength) {
@@ -225,8 +231,9 @@ public class EpubServer extends NanoHTTPD {
                     // 4xx responses are not trumped by if-none-match
                     res = new Response(Response.Status.RANGE_NOT_SATISFIABLE, NanoHTTPD.MIME_PLAINTEXT, "");
                     res.addHeader("Content-Range", "bytes */" + contentLength);
-                    
-                    Log.e(TAG, "RANGE_NOT_SATISFIABLE: " + contentLength);
+
+                    if (!quiet)
+                    	Log.d(TAG, "RANGE_NOT_SATISFIABLE: " + contentLength);
                     
                 } else if (range == null && headerIfNoneMatchPresentAndMatching) {
                     // full-file-fetch request
@@ -234,7 +241,8 @@ public class EpubServer extends NanoHTTPD {
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 
-                    Log.e(TAG, "NOT_MODIFIED #2");
+                    if (!quiet)
+                    	Log.d(TAG, "NOT_MODIFIED #2");
                     
                 } else if (!headerIfRangeMissingOrMatching && headerIfNoneMatchPresentAndMatching) {
                     // range request that doesn't match current etag
@@ -242,10 +250,12 @@ public class EpubServer extends NanoHTTPD {
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
 
-                    Log.e(TAG, "NOT_MODIFIED #3");
+                    if (!quiet)
+                    	Log.d(TAG, "NOT_MODIFIED #3");
                 } else  {
                     // supply the file
 
+                    PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
                     byte[] data = packageResource.readDataFull();
                     if (contentLength != data.length) {
                         Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != " + data.length);
@@ -254,7 +264,8 @@ public class EpubServer extends NanoHTTPD {
                     
                     res.addHeader("Content-Length", "" + contentLength);
 
-                    Log.e(TAG, "OK (FULL): " + contentLength);
+                    if (!quiet)
+                    	Log.d(TAG, "OK (FULL): " + contentLength);
                 }
             }
 
@@ -266,6 +277,7 @@ public class EpubServer extends NanoHTTPD {
             }
         }
         return res;
+        }
     }
 
     @Override
