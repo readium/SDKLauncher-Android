@@ -99,13 +99,13 @@ public class EpubServer extends NanoHTTPD {
 
     public EpubServer(String host, int port, Package pckg, boolean quiet) {
         super(host, port);
-        this.setAsyncRunner(new AsyncRunner() {
-	        @Override
-	        public void exec(Runnable code) {
-	        	//SYNC!
-	            code.run();
-	        }
-        });
+//        this.setAsyncRunner(new AsyncRunner() {
+//	        @Override
+//	        public void exec(Runnable code) {
+//	        	//SYNC!
+//	            code.run();
+//	        }
+//        });
         this.mPackage = pckg;
         this.quiet = quiet;
     }
@@ -265,7 +265,10 @@ public class EpubServer extends NanoHTTPD {
                     if (newLen != data.length) {
                         Log.e(TAG, "RANGE LENGTH! " + newLen + " != " + data.length);
                     }
-                    
+
+//	                byte[] data_ = new byte[data.length];
+//	                System.arraycopy(data,0,data_,0,data.length);
+
                     InputStream is = new ByteArrayInputStream(data);
                     
                     res = new Response(Response.Status.PARTIAL_CONTENT, mime, is);
@@ -311,7 +314,7 @@ public class EpubServer extends NanoHTTPD {
 		                PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
 		                
 		                data = packageResource.readDataFull();
-		
+		                
 		                int updatedContentLength = packageResource.getContentLength();
 		                if (updatedContentLength != contentLength) {
 		                	Log.e(TAG, "UPDATED CONTENT LENGTH! " + updatedContentLength + "<--" + contentLength);
@@ -321,7 +324,10 @@ public class EpubServer extends NanoHTTPD {
                     if (contentLength != data.length) {
                         Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != " + data.length);
                     }
-                    
+
+//	                byte[] data_ = new byte[data.length];
+//	                System.arraycopy(data,0,data_,0,data.length);
+
                     res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
                     
                     res.addHeader("Content-Length", "" + contentLength);
