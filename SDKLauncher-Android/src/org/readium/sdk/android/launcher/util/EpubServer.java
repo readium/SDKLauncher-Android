@@ -111,12 +111,14 @@ public class EpubServer extends NanoHTTPD {
         }
     }
 
+    private final Object criticalSectionSynchronizedLock = new Object();
+
     /**
      * Serves file from homeDir and its' subdirectories (only). Uses only URI,
      * ignores all headers and HTTP parameters.
      */
     Response serveFile(String uri, Map<String, String> header, Package pckg) {
-        synchronized (this) {
+        synchronized (criticalSectionSynchronizedLock) {
 
         Response res = null;
 
