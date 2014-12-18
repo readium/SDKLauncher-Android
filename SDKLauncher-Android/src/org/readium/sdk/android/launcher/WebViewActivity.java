@@ -359,81 +359,84 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 			Log.d(TAG, "shouldInterceptRequest: " + url);
-			Uri uri = Uri.parse(url);
-            if (uri.getScheme().equals("file") && url != "undefined" && url != null) {
-                String cleanedUrl = cleanResourceUrl(url);
-                Log.d(TAG, url+" => "+cleanedUrl);
-
-                if (cleanedUrl.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
-                	Log.d(TAG, "navigator.epubReadingSystem inject ...");
-                	
-                    // Fake script requested, this is immediately invoked after epubReadingSystem hook is in place,
-                    // => execute js on the reader.html context to push the global window.navigator.epubReadingSystem into the iframe(s)
-                    evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
-                    return new WebResourceResponse("text/javascript", UTF_8
-                            , new ByteArrayInputStream("(function(){})()".getBytes()));
-
-                }
-                // Special handling for payload requests
-                else if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
-                	Log.d(TAG, "MathJax.js inject ...");
-                    try {
-                        return new WebResourceResponse("text/javascript", UTF_8
-                                , getAssets().open(PAYLOAD_MATHJAX_ASSET));
-                    } catch (IOException e) {
-                        return super.shouldInterceptRequest(view, url);
-                    }
-                } else if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
-                	Log.d(TAG, "annotations.css inject ...");
-                    try {
-                        return new WebResourceResponse("text/css", UTF_8
-                                , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
-                    } catch (IOException e) {
-                        return super.shouldInterceptRequest(view, url);
-                    }
-                }
-
-                InputStream data;
-                byte[] resourceData = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
-
-                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-                if (resourceData != null && item != null && item.isHtml()) {
-                    String htmlText = new String(resourceData);
-                    String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
-
-                    // Set up the script tags to add to the head
-                    String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
-                            // Slightly change fake script src url with an increasing count to prevent caching of the request
-                            + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
-                    // Checks for the existance of MathML => request MathJax payload
-                    if (newHtml.contains("<math")) {
-                        tagsToInjectToHead += INJECT_HEAD_MATHJAX;
-                    }
-
-                    newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
-                    //Log.d(TAG, "HTML head inject: " + newHtml);
-
-                    data = new ByteArrayInputStream(newHtml.getBytes());
-                } else if (resourceData != null) {
-                    data = new ByteArrayInputStream(resourceData);
-                } else {
-                    data = null;
-                }
-
-                String mimetype = (item != null) ? item.getMediaType() : null;
-                return new WebResourceResponse(mimetype, UTF_8, data);
-            } else if(uri.getScheme().equals("http")){
-            	return super.shouldInterceptRequest(view, url);
-            }
-
-            try {
-                URLConnection c = new URL(url).openConnection();
-                return new WebResourceResponse(null, UTF_8, c.getInputStream());
-            } catch (MalformedURLException e) {
-                Log.e(TAG, ""+e.getMessage(), e);
-            } catch (IOException e) {
-                Log.e(TAG, ""+e.getMessage(), e);
-            }
+			if (url != null && url != "undefined") {
+				Uri uri = Uri.parse(url);
+	            if (uri.getScheme().equals("file")) {
+	                String cleanedUrl = cleanResourceUrl(url);
+	                Log.d(TAG, url+" => "+cleanedUrl);
+	
+	                if (cleanedUrl.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
+	                	Log.d(TAG, "navigator.epubReadingSystem inject ...");
+	                	
+	                    // Fake script requested, this is immediately invoked after epubReadingSystem hook is in place,
+	                    // => execute js on the reader.html context to push the global window.navigator.epubReadingSystem into the iframe(s)
+	                    evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
+	                    return new WebResourceResponse("text/javascript", UTF_8
+	                            , new ByteArrayInputStream("(function(){})()".getBytes()));
+	
+	                }
+	                // Special handling for payload requests
+	                else if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
+	                	Log.d(TAG, "MathJax.js inject ...");
+	                    try {
+	                        return new WebResourceResponse("text/javascript", UTF_8
+	                                , getAssets().open(PAYLOAD_MATHJAX_ASSET));
+	                    } catch (IOException e) {
+	                        return super.shouldInterceptRequest(view, url);
+	                    }
+	                } else if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
+	                	Log.d(TAG, "annotations.css inject ...");
+	                    try {
+	                        return new WebResourceResponse("text/css", UTF_8
+	                                , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
+	                    } catch (IOException e) {
+	                        return super.shouldInterceptRequest(view, url);
+	                    }
+	                }
+	
+	                InputStream data;
+	                byte[] resourceData = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
+	
+	                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+	                if (resourceData != null && item != null && item.isHtml()) {
+	                    String htmlText = new String(resourceData);
+	                    String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
+	
+	                    // Set up the script tags to add to the head
+	                    String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
+	                            // Slightly change fake script src url with an increasing count to prevent caching of the request
+	                            + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
+	                    // Checks for the existance of MathML => request MathJax payload
+	                    if (newHtml.contains("<math")) {
+	                        tagsToInjectToHead += INJECT_HEAD_MATHJAX;
+	                    }
+	
+	                    newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
+	                    //Log.d(TAG, "HTML head inject: " + newHtml);
+	
+	                    data = new ByteArrayInputStream(newHtml.getBytes());
+	                } else if (resourceData != null) {
+	                    data = new ByteArrayInputStream(resourceData);
+	                } else {
+	                    data = null;
+	                }
+	
+	                String mimetype = (item != null) ? item.getMediaType() : null;
+	                return new WebResourceResponse(mimetype, UTF_8, data);
+	            } else if(uri.getScheme().equals("http")){
+	            	return super.shouldInterceptRequest(view, url);
+	            }
+	
+	            try {
+	                URLConnection c = new URL(url).openConnection();
+	                return new WebResourceResponse(null, UTF_8, c.getInputStream());
+	            } catch (MalformedURLException e) {
+	                Log.e(TAG, ""+e.getMessage(), e);
+	            } catch (IOException e) {
+	                Log.e(TAG, ""+e.getMessage(), e);
+	            }
+			}
+			
             return new WebResourceResponse(null, UTF_8, new ByteArrayInputStream("".getBytes()));
         }
     }

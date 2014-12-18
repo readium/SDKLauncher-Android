@@ -132,7 +132,7 @@ public class EpubServer extends NanoHTTPD {
 				mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
 			}
 			if (mime == null) {
-				mime = NanoHTTPD.MIME_DEFAULT_BINARY;
+				mime = "application/octet-stream";
 			}
 
 			// Calculate etag
