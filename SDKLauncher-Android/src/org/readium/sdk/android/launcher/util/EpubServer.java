@@ -135,9 +135,23 @@ public class EpubServer extends NanoHTTPD {
                 mime = "application/octet-stream";
             }
 
+            String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
+            int iHttpPrefix = uri.indexOf(httpPrefix);
+            String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
+            
+            PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
+            
+            ManifestItem item = pckg.getManifestItem(relativePath);
+            String contentType = item.getMediaType();
+            if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+                    && contentType != null && contentType.length() > 0)
+            {
+                mime = contentType;
+            }
+
             // Calculate etag
             String etag = Integer.toHexString((pckg.getUniqueID()
-                    + pckg.getModificationDate() + "" + pckg.getBasePath())
+                    + pckg.getModificationDate() + "" + pckg.getBasePath() + "" + relativePath)
                     .hashCode());
 
             long startFrom = 0;
@@ -167,20 +181,6 @@ public class EpubServer extends NanoHTTPD {
                 }
             }
 
-            String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
-            int iHttpPrefix = uri.indexOf(httpPrefix);
-            String relativePath = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
-            
-            PackageResource packageResource = pckg.getResourceAtRelativePath(relativePath);
-            
-            ManifestItem item = pckg.getManifestItem(relativePath);
-            String contentType = item.getMediaType();
-            if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
-                    && contentType != null && contentType.length() > 0)
-            {
-                mime = contentType;
-            }
-
             // get if-range header. If present, it must match etag or else we should ignore the range request
             String ifRange = header.get("if-range");
             boolean headerIfRangeMissingOrMatching = (ifRange == null || etag.equals(ifRange));
@@ -200,6 +200,8 @@ public class EpubServer extends NanoHTTPD {
                     // would return range from file
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+                    
+                    Log.e(TAG, "NOT_MODIFIED #1");
                 } else {
                     if (endAt < 0) {
                         endAt = contentLength - 1;
@@ -214,6 +216,8 @@ public class EpubServer extends NanoHTTPD {
                     
                     res.addHeader("Content-Length", "" + newLen);
                     res.addHeader("Content-Range", "bytes " + startFrom + "-" + endAt + "/" + contentLength);
+                    
+                    Log.e(TAG, "PARTIAL_CONTENT: " + startFrom + "-" + endAt + " / " + contentLength + " (" + newLen + ")");
                 }
             } else {
                 if (headerIfRangeMissingOrMatching && range != null && startFrom >= contentLength) {
@@ -221,23 +225,36 @@ public class EpubServer extends NanoHTTPD {
                     // 4xx responses are not trumped by if-none-match
                     res = new Response(Response.Status.RANGE_NOT_SATISFIABLE, NanoHTTPD.MIME_PLAINTEXT, "");
                     res.addHeader("Content-Range", "bytes */" + contentLength);
+                    
+                    Log.e(TAG, "RANGE_NOT_SATISFIABLE: " + contentLength);
+                    
                 } else if (range == null && headerIfNoneMatchPresentAndMatching) {
                     // full-file-fetch request
                     // would return entire file
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+
+                    Log.e(TAG, "NOT_MODIFIED #2");
+                    
                 } else if (!headerIfRangeMissingOrMatching && headerIfNoneMatchPresentAndMatching) {
                     // range request that doesn't match current etag
                     // would return entire (different) file
                     // respond with not-modified
                     res = new Response(Response.Status.NOT_MODIFIED, mime, "");
+
+                    Log.e(TAG, "NOT_MODIFIED #3");
                 } else  {
                     // supply the file
 
                     byte[] data = packageResource.readDataFull();
+                    if (contentLength != data.length) {
+                        Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != " + data.length);
+                    }
                     res = new Response(Response.Status.OK, mime, new ByteArrayInputStream(data));
                     
                     res.addHeader("Content-Length", "" + contentLength);
+
+                    Log.e(TAG, "OK (FULL): " + contentLength);
                 }
             }
 
