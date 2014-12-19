@@ -32,9 +32,10 @@ package org.readium.sdk.android.launcher;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import org.json.JSONException;
@@ -50,6 +51,7 @@ import org.readium.sdk.android.launcher.model.PaginationInfo;
 import org.readium.sdk.android.launcher.model.ReadiumJSApi;
 import org.readium.sdk.android.launcher.model.ViewerSettings;
 import org.readium.sdk.android.launcher.util.EpubServer;
+import org.readium.sdk.android.launcher.util.EpubServer.DataPreProcessor;
 import org.readium.sdk.android.launcher.util.HTMLUtil;
 
 import android.annotation.SuppressLint;
@@ -59,8 +61,6 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -73,6 +73,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
@@ -82,45 +83,111 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-public class WebViewActivity extends FragmentActivity implements ViewerSettingsDialog.OnViewerSettingsChange {
+public class WebViewActivity extends FragmentActivity implements
+		ViewerSettingsDialog.OnViewerSettingsChange {
 
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
 	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
 
-    // Installs "hook" function so that top-level window (application) can later inject the window.navigator.epubReadingSystem into this HTML document's iframe
-    private static final String INJECT_EPUB_RSO_SCRIPT_1 = "" +
-            "window.readium_set_epubReadingSystem = function (obj) {" +
-            "\nwindow.navigator.epubReadingSystem = obj;" +
-            "\nwindow.readium_set_epubReadingSystem = undefined;" +
-            "\nvar el1 = document.getElementById(\"readium_epubReadingSystem_inject1\");" +
-            "\nif (el1 && el1.parentNode) { el1.parentNode.removeChild(el1); }" +
-            "\nvar el2 = document.getElementById(\"readium_epubReadingSystem_inject2\");" +
-            "\nif (el2 && el2.parentNode) { el2.parentNode.removeChild(el2); }" +
-            "\n};";
+	// Installs "hook" function so that top-level window (application) can later
+	// inject the window.navigator.epubReadingSystem into this HTML document's
+	// iframe
+	private static final String INJECT_EPUB_RSO_SCRIPT_1 = ""
+			+ "window.readium_set_epubReadingSystem = function (obj) {"
+			+ "\nwindow.navigator.epubReadingSystem = obj;"
+			+ "\nwindow.readium_set_epubReadingSystem = undefined;"
+			+ "\nvar el1 = document.getElementById(\"readium_epubReadingSystem_inject1\");"
+			+ "\nif (el1 && el1.parentNode) { el1.parentNode.removeChild(el1); }"
+			+ "\nvar el2 = document.getElementById(\"readium_epubReadingSystem_inject2\");"
+			+ "\nif (el2 && el2.parentNode) { el2.parentNode.removeChild(el2); }"
+			+ "\n};";
 
-    // Iterate top-level iframes, inject global window.navigator.epubReadingSystem if the expected hook function exists ( readium_set_epubReadingSystem() ).
-    private static final String INJECT_EPUB_RSO_SCRIPT_2  = "var epubRSInject = function(win) { if (win.frames) { for (var i = 0; i < win.frames.length; i++) { var iframe = win.frames[i]; if (iframe.readium_set_epubReadingSystem) { iframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem); } epubRSInject(iframe); } } }; epubRSInject(window);";
-    
-    // Script tag to inject the "hook" function installer script, added to the head of every epub iframe document
-    private static final String INJECT_HEAD_EPUB_RSO_1 = "" +
-            "<script id=\"readium_epubReadingSystem_inject1\" type=\"text/javascript\">\n" +
-            "//<![CDATA[\n" +
-            INJECT_EPUB_RSO_SCRIPT_1 + "\n" +
-            "//]]>\n" +
-            "</script>";
-    // Script tag that generates an HTTP request to a fake script => triggers push of window.navigator.epubReadingSystem into this HTML document's iframe
-    private static final String INJECT_HEAD_EPUB_RSO_2 = ""+
-            "<script id=\"readium_epubReadingSystem_inject2\" type=\"text/javascript\" " +
-            "src=\"/%d/readium_epubReadingSystem_inject.js\"> </script>";
-    // Script tag to load the mathjax script payload, added to the head of epub iframe documents, only if <math> tags are detected
-    private static final String INJECT_HEAD_MATHJAX = "<script type=\"text/javascript\" src=\"/readium_MathJax.js\"> </script>";
+	// Iterate top-level iframes, inject global
+	// window.navigator.epubReadingSystem if the expected hook function exists (
+	// readium_set_epubReadingSystem() ).
+	private static final String INJECT_EPUB_RSO_SCRIPT_2 = ""
+			+ "var epubRSInject =\nfunction(win) {"
+			+ "\nvar ret = '';"
+			+ "\nret += win.location.href;"
+			+ "\nret += ' ---- ';"
+			+
+			// "\nret += JSON.stringify(win.navigator.epubReadingSystem);" +
+			// "\nret += ' ---- ';" +
+			"\nif (win.frames)"
+			+ "\n{"
+			+ "\nfor (var i = 0; i < win.frames.length; i++)"
+			+ "\n{"
+			+ "\nvar iframe = win.frames[i];"
+			+ "\nret += ' IFRAME ';"
+			+ "\nif (iframe.readium_set_epubReadingSystem)"
+			+ "\n{"
+			+ "\nret += ' EPBRS ';"
+			+ "\niframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem);"
+			+ "\n}" + "\nret += epubRSInject(iframe);" + "\n}" + "\n}"
+			+ "\nreturn ret;" + "\n};" + "\nepubRSInject(window);";
 
-    // Location of payloads in the asset folder
-    private static final String PAYLOAD_MATHJAX_ASSET = "reader-payloads/MathJax.js";
-    private static final String PAYLOAD_ANNOTATIONS_CSS_ASSET = "reader-payloads/annotations.css";
+	// Script tag to inject the "hook" function installer script, added to the
+	// head of every epub iframe document
+	private static final String INJECT_HEAD_EPUB_RSO_1 = ""
+			+ "<script id=\"readium_epubReadingSystem_inject1\" type=\"text/javascript\">\n"
+			+ "//<![CDATA[\n" + INJECT_EPUB_RSO_SCRIPT_1 + "\n" + "//]]>\n"
+			+ "</script>";
+	// Script tag that generates an HTTP request to a fake script => triggers
+	// push of window.navigator.epubReadingSystem into this HTML document's
+	// iframe
+	private static final String INJECT_HEAD_EPUB_RSO_2 = ""
+			+ "<script id=\"readium_epubReadingSystem_inject2\" type=\"text/javascript\" "
+			+ "src=\"/%d/readium_epubReadingSystem_inject.js\"> </script>";
+	// Script tag to load the mathjax script payload, added to the head of epub
+	// iframe documents, only if <math> tags are detected
+	private static final String INJECT_HEAD_MATHJAX = "<script type=\"text/javascript\" src=\"/readium_MathJax.js\"> </script>";
 
-    private WebView mWebview;
+	// Location of payloads in the asset folder
+	private static final String PAYLOAD_MATHJAX_ASSET = "reader-payloads/MathJax.js";
+	private static final String PAYLOAD_ANNOTATIONS_CSS_ASSET = "reader-payloads/annotations.css";
+
+	private final DataPreProcessor dataPreProcessor = new DataPreProcessor() {
+
+		@Override
+		public byte[] handle(byte[] data, String mime, String uriPath,
+				ManifestItem item) {
+			if (mime == null
+					|| (mime != "text/html" && mime != "application/xhtml+xml")) {
+				return null;
+			}
+
+			Log.d(TAG, "PRE-PROCESSED HTML: " + uriPath);
+
+			String htmlText = new String(data, Charset.forName("UTF-8"));
+
+			// String uuid = mPackage.getUrlSafeUniqueID();
+			String newHtml = htmlText; // HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText,
+										// cleanedUrl, uuid);
+										// //"PackageUUID"
+
+			// Set up the script tags to add to the head
+			String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
+			// Slightly change fake script src url with an
+			// increasing count to prevent caching of the
+			// request
+					+ String.format(INJECT_HEAD_EPUB_RSO_2,
+							++mEpubRsoInjectCounter);
+			// Checks for the existance of MathML => request
+			// MathJax payload
+			if (newHtml.contains("<math") || newHtml.contains("<m:math")) {
+				tagsToInjectToHead += INJECT_HEAD_MATHJAX;
+			}
+
+			newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml,
+					tagsToInjectToHead);
+			// Log.d(TAG, "HTML head inject: " + newHtml);
+
+			return newHtml.getBytes();
+		}
+	};
+
+	private WebView mWebview;
 	private Container mContainer;
 	private Package mPackage;
 	private OpenPageRequest mOpenPageRequestData;
@@ -128,75 +195,91 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
 	private EpubServer mServer;
-	
+
 	private boolean mIsMoAvailable;
 	private boolean mIsMoPlaying;
-    private int mEpubRsoInjectCounter = 0;
+	private int mEpubRsoInjectCounter = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_web_view);
-		
+
 		mWebview = (WebView) findViewById(R.id.webview);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
 				&& 0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE)) {
-			mWebview.setWebContentsDebuggingEnabled(true);
+			WebView.setWebContentsDebuggingEnabled(true);
 		}
-		 
+
 		mPageInfo = (TextView) findViewById(R.id.page_info);
 		initWebView();
 
-        Intent intent = getIntent();
-        if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
-            Bundle extras = intent.getExtras();
-            if (extras != null) {
-                mContainer = ContainerHolder.getInstance().get(extras.getLong(Constants.CONTAINER_ID));
-                if (mContainer == null) {
-                	finish();
-                	return;
-                }
-                mPackage = mContainer.getDefaultPackage();
-                try {
-					mOpenPageRequestData = OpenPageRequest.fromJSON(extras.getString(Constants.OPEN_PAGE_REQUEST_DATA));
-				} catch (JSONException e) {
-					Log.e(TAG, "Constants.OPEN_PAGE_REQUEST_DATA must be a valid JSON object: "+e.getMessage(), e);
+		Intent intent = getIntent();
+		if (intent.getFlags() == Intent.FLAG_ACTIVITY_NEW_TASK) {
+			Bundle extras = intent.getExtras();
+			if (extras != null) {
+				mContainer = ContainerHolder.getInstance().get(
+						extras.getLong(Constants.CONTAINER_ID));
+				if (mContainer == null) {
+					finish();
+					return;
 				}
-            }
-        }
-        new AsyncTask<Void, Void, Void>() {
-			@Override
-			protected Void doInBackground(Void... params) {
-        		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT, mPackage, false);
-    			mServer.startServer();
-    			return null;
-        	}
-        }.execute();
+				mPackage = mContainer.getDefaultPackage();
 
-        // Load the page skeleton
-        mWebview.loadUrl(READER_SKELETON);
-        mViewerSettings = new ViewerSettings(ViewerSettings.SyntheticSpreadMode.AUTO, ViewerSettings.ScrollMode.AUTO, 100, 20);
-        mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
-			
+				String rootUrl = "http://" + EpubServer.HTTP_HOST
+						+ ":" + EpubServer.HTTP_PORT + "/";
+				mPackage.setRootUrls(rootUrl, null);
+
+				try {
+					mOpenPageRequestData = OpenPageRequest.fromJSON(extras
+							.getString(Constants.OPEN_PAGE_REQUEST_DATA));
+				} catch (JSONException e) {
+					Log.e(TAG,
+							"Constants.OPEN_PAGE_REQUEST_DATA must be a valid JSON object: "
+									+ e.getMessage(), e);
+				}
+			}
+		}
+
+		// No need, EpubServer already launchers its own thread
+		// new AsyncTask<Void, Void, Void>() {
+		// @Override
+		// protected Void doInBackground(Void... params) {
+		// //xxx
+		// return null;
+		// }
+		// }.execute();
+
+		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT,
+				mPackage, false, dataPreProcessor);
+		mServer.startServer();
+
+		// Load the page skeleton
+		mWebview.loadUrl(READER_SKELETON);
+		mViewerSettings = new ViewerSettings(
+				ViewerSettings.SyntheticSpreadMode.AUTO,
+				ViewerSettings.ScrollMode.AUTO, 100, 20);
+
+		mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
 			@Override
 			public void loadJS(String javascript) {
 				mWebview.loadUrl(javascript);
 			}
 		});
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		mServer.stop();
-        mWebview.loadUrl(READER_SKELETON);
+		mWebview.loadUrl(READER_SKELETON);
 		((ViewGroup) mWebview.getParent()).removeView(mWebview);
 		mWebview.removeAllViews();
 		mWebview.clearCache(true);
 		mWebview.clearHistory();
 		mWebview.destroy();
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -204,7 +287,7 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			mWebview.onPause();
 		}
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -212,7 +295,6 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			mWebview.onResume();
 		}
 	}
-	
 
 	@SuppressLint({ "SetJavaScriptEnabled", "NewApi" })
 	private void initWebView() {
@@ -227,19 +309,19 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	}
 
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-	    int itemId = item.getItemId();
-	    switch (itemId) {
-	    case R.id.add_bookmark:
+		int itemId = item.getItemId();
+		switch (itemId) {
+		case R.id.add_bookmark:
 			Log.d(TAG, "Add a bookmark");
 			mReadiumJSApi.bookmarkCurrentPage();
 			return true;
-	    case R.id.settings:
+		case R.id.settings:
 			Log.d(TAG, "Show settings");
 			showSettings();
 			return true;
-	    case R.id.mo_previous:
-	    	mReadiumJSApi.previousMediaOverlay();
-	    	return true;
+		case R.id.mo_previous:
+			mReadiumJSApi.previousMediaOverlay();
+			return true;
 		case R.id.mo_play:
 			mReadiumJSApi.toggleMediaOverlay();
 			return true;
@@ -249,8 +331,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 		case R.id.mo_next:
 			mReadiumJSApi.nextMediaOverlay();
 			return true;
-	    }
-	    return false;
+		}
+		return false;
 	}
 
 	public void onClick(View v) {
@@ -260,12 +342,12 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			mReadiumJSApi.openPageRight();
 		}
 	}
-	
+
 	private void showSettings() {
 		FragmentManager fm = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fm.beginTransaction();
 		DialogFragment dialog = new ViewerSettingsDialog(this, mViewerSettings);
-        dialog.show(fm, "dialog");
+		dialog.show(fm, "dialog");
 		fragmentTransaction.commit();
 	}
 
@@ -282,183 +364,277 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.web_view, menu);
-		
+
 		MenuItem mo_previous = menu.findItem(R.id.mo_previous);
 		MenuItem mo_next = menu.findItem(R.id.mo_next);
 		MenuItem mo_play = menu.findItem(R.id.mo_play);
 		MenuItem mo_pause = menu.findItem(R.id.mo_pause);
-		
-		//show menu only when its reasonable
-		
+
+		// show menu only when its reasonable
+
 		mo_previous.setVisible(mIsMoAvailable);
 		mo_next.setVisible(mIsMoAvailable);
-		
-		if(mIsMoAvailable){
+
+		if (mIsMoAvailable) {
 			mo_play.setVisible(!mIsMoPlaying);
 			mo_pause.setVisible(mIsMoPlaying);
 		}
-		
+
 		return true;
 	}
 
-    public final class EpubWebViewClient extends WebViewClient {
+	public final class EpubWebViewClient extends WebViewClient {
 
-        private static final String HTTP = "http";
+		private static final String HTTP = "http";
 		private static final String UTF_8 = "utf-8";
-        private boolean skeletonPageLoaded = false;
+		private boolean skeletonPageLoaded = false;
 
 		@Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        	Log.d(TAG, "onPageStarted: "+url);
-        }
+		public void onPageStarted(WebView view, String url, Bitmap favicon) {
+			Log.d(TAG, "onPageStarted: " + url);
+		}
 
-        @Override
-        public void onPageFinished(WebView view, String url) {
-        	Log.d(TAG, "onPageFinished: "+url);
-        	if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
-        		skeletonPageLoaded = true;
-        		Log.d(TAG, "openPageRequestData: "+mOpenPageRequestData);
-        		mReadiumJSApi.openBook(mPackage, mViewerSettings, mOpenPageRequestData);
-        	}
-        }
+		@Override
+		public void onPageFinished(WebView view, String url) {
+			Log.d(TAG, "onPageFinished: " + url);
+			if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
+				skeletonPageLoaded = true;
+				Log.d(TAG, "openPageRequestData: " + mOpenPageRequestData);
+				mReadiumJSApi.openBook(mPackage, mViewerSettings,
+						mOpenPageRequestData);
+			}
+		}
 
-        @Override
-        public void onLoadResource(WebView view, String url) {
+		@Override
+		public void onLoadResource(WebView view, String url) {
 			Log.d(TAG, "onLoadResource: " + url);
-			if(url.indexOf("http") == 0){
-				return;
-			}
-			Log.d(TAG, "onLoadResource URL: " + url);
-        	String cleanedUrl = cleanResourceUrl(url);
-			Log.d(TAG, "onLoadResource CLEAN URL: " + cleanedUrl);
-        	byte[] data = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
-            if (data != null && data.length > 0) {
-            	ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-            	String mimetype = (item != null) ? item.getMediaType() : null;
-            	mWebview.loadData(new String(data), mimetype, UTF_8);
-            }
-        }
+		}
 
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+		@Override
+		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			Log.d(TAG, "shouldOverrideUrlLoading: " + url);
-    		return false;
-        }
+			return false;
+		}
 
-        private void evaluateJavascript(final String script) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        mWebview.evaluateJavascript(script, null);
-                    } else {
-                        mWebview.loadUrl("javascript:" + script);
-                    }
-                }
-            });
-        }
+		public class SyncronizeObj {
 
-        @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-			Log.d(TAG, "shouldInterceptRequest: " + url);
-			if (url != null && url != "undefined") {
-				Uri uri = Uri.parse(url);
-	            if (uri.getScheme().equals("file")) {
-	                String cleanedUrl = cleanResourceUrl(url);
-	                Log.d(TAG, url+" => "+cleanedUrl);
-	
-	                if (cleanedUrl.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
-	                	Log.d(TAG, "navigator.epubReadingSystem inject ...");
-	                	
-	                    // Fake script requested, this is immediately invoked after epubReadingSystem hook is in place,
-	                    // => execute js on the reader.html context to push the global window.navigator.epubReadingSystem into the iframe(s)
-	                    evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
-	                    return new WebResourceResponse("text/javascript", UTF_8
-	                            , new ByteArrayInputStream("(function(){})()".getBytes()));
-	
-	                }
-	                // Special handling for payload requests
-	                else if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
-	                	Log.d(TAG, "MathJax.js inject ...");
-	                    try {
-	                        return new WebResourceResponse("text/javascript", UTF_8
-	                                , getAssets().open(PAYLOAD_MATHJAX_ASSET));
-	                    } catch (IOException e) {
-	                        return super.shouldInterceptRequest(view, url);
-	                    }
-	                } else if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
-	                	Log.d(TAG, "annotations.css inject ...");
-	                    try {
-	                        return new WebResourceResponse("text/css", UTF_8
-	                                , getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET));
-	                    } catch (IOException e) {
-	                        return super.shouldInterceptRequest(view, url);
-	                    }
-	                }
-	
-	                InputStream data;
-	                byte[] resourceData = mPackage.getResourceAtRelativePath(cleanedUrl).readDataFull();
-	
-	                ManifestItem item = mPackage.getManifestItem(cleanedUrl);
-	                if (resourceData != null && item != null && item.isHtml()) {
-	                    String htmlText = new String(resourceData);
-	                    String newHtml = HTMLUtil.htmlByReplacingMediaURLsInHTML(htmlText, cleanedUrl, "PackageUUID");
-	
-	                    // Set up the script tags to add to the head
-	                    String tagsToInjectToHead = INJECT_HEAD_EPUB_RSO_1
-	                            // Slightly change fake script src url with an increasing count to prevent caching of the request
-	                            + String.format(INJECT_HEAD_EPUB_RSO_2, ++mEpubRsoInjectCounter);
-	                    // Checks for the existance of MathML => request MathJax payload
-	                    if (newHtml.contains("<math")) {
-	                        tagsToInjectToHead += INJECT_HEAD_MATHJAX;
-	                    }
-	
-	                    newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml, tagsToInjectToHead);
-	                    //Log.d(TAG, "HTML head inject: " + newHtml);
-	
-	                    data = new ByteArrayInputStream(newHtml.getBytes());
-	                } else if (resourceData != null) {
-	                    data = new ByteArrayInputStream(resourceData);
-	                } else {
-	                    data = null;
-	                }
-	
-	                String mimetype = (item != null) ? item.getMediaType() : null;
-	                return new WebResourceResponse(mimetype, UTF_8, data);
-	            } else if(uri.getScheme().equals("http")){
-	                Log.d(TAG, "HTTP: " + url);
-	            	return super.shouldInterceptRequest(view, url);
-	            }
-	            
-	            Log.d(TAG, "NOT HTTP OR FILE: " + url);
-	            try {
-	                URLConnection c = new URL(url).openConnection();
-	                return new WebResourceResponse(null, UTF_8, c.getInputStream());
-	            } catch (MalformedURLException e) {
-	                Log.e(TAG, ""+e.getMessage(), e);
-	            } catch (IOException e) {
-	                Log.e(TAG, ""+e.getMessage(), e);
-	            }
+			public void doWait() {
+				doWait(0);
 			}
-			
-            return new WebResourceResponse(null, UTF_8, new ByteArrayInputStream("".getBytes()));
-        }
-    }
-    
-    private String cleanResourceUrl(String url) {
-    	// Get the correct base path
-    	String basePath = mPackage.getBasePath().replaceFirst("file://", "");
-    	// Clean assets prefix
-        String cleanUrl = (url.startsWith(ASSET_PREFIX)) ? url.replaceFirst(ASSET_PREFIX, "") : url.replaceFirst("file://", "");
-        // Clean the package base path if needed
-        cleanUrl = (cleanUrl.startsWith(basePath)) ? cleanUrl.replaceFirst(basePath, "") : cleanUrl;
-        // Clean anything after sharp
-        int indexOfSharp = cleanUrl.indexOf('#');
-        if (indexOfSharp >= 0) {
-            cleanUrl = cleanUrl.substring(0, indexOfSharp);
-        }
-        return cleanUrl;
-    }
+
+			public void doWait(long l) {
+				synchronized (this) {
+					try {
+						this.wait(l);
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+
+			public void doNotify() {
+				synchronized (this) {
+					this.notify();
+				}
+			}
+		}
+
+		private final SyncronizeObj syncObj = new SyncronizeObj();
+
+		private void evaluateJavascript(final String script) {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+
+					Log.d(TAG, "WebView evaluateJavascript: " + script + "");
+
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+						mWebview.evaluateJavascript(script,
+								new ValueCallback<String>() {
+									@Override
+									public void onReceiveValue(String str) {
+										Log.d(TAG,
+												"WebView evaluateJavascript RETURN: "
+														+ str);
+										syncObj.doNotify();
+									}
+								});
+					} else {
+						mWebview.loadUrl("javascript:" + script);
+						syncObj.doNotify();
+					}
+				}
+			});
+		}
+
+		@Override
+		public WebResourceResponse shouldInterceptRequest(WebView view,
+				String url) {
+			Log.d(TAG, "shouldInterceptRequest: " + url);
+
+			if (url != null && url != "undefined") {
+
+				String localHttpUrlPrefix = "http://" + EpubServer.HTTP_HOST
+						+ ":" + EpubServer.HTTP_PORT;
+				boolean isLocalHttp = url.startsWith(localHttpUrlPrefix);
+
+				// Uri uri = Uri.parse(url);
+				// uri.getScheme()
+
+				if (url.startsWith("http") && !isLocalHttp) {
+					Log.d(TAG, "HTTP (NOT LOCAL): " + url);
+					return super.shouldInterceptRequest(view, url);
+				}
+
+				String cleanedUrl = cleanResourceUrl(url, false);
+				Log.d(TAG, url + " => " + cleanedUrl);
+
+				if (cleanedUrl
+						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
+					Log.d(TAG, "navigator.epubReadingSystem inject ...");
+
+					// Fake script requested, this is immediately invoked after
+					// epubReadingSystem hook is in place,
+					// => execute js on the reader.html context to push the
+					// global window.navigator.epubReadingSystem into the
+					// iframe(s)
+
+					evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
+					syncObj.doWait(1000);
+
+					return new WebResourceResponse("text/javascript", UTF_8,
+							new ByteArrayInputStream(
+									"(function(){})()".getBytes()));
+				}
+
+				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
+					Log.d(TAG, "MathJax.js inject ...");
+
+					InputStream is = null;
+					try {
+						is = getAssets().open(PAYLOAD_MATHJAX_ASSET);
+					} catch (IOException e) {
+						Log.d(TAG, "MathJax.js asset fail!");
+						return new WebResourceResponse(null, UTF_8,
+								new ByteArrayInputStream("".getBytes()));
+					}
+
+					return new WebResourceResponse("text/javascript", UTF_8, is);
+				}
+
+				if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
+					Log.d(TAG, "annotations.css inject ...");
+
+					InputStream is = null;
+					try {
+						is = getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET);
+					} catch (IOException e) {
+						Log.d(TAG, "annotations.css asset fail!");
+						return new WebResourceResponse(null, UTF_8,
+								new ByteArrayInputStream("".getBytes()));
+					}
+
+					return new WebResourceResponse("text/css", UTF_8, is);
+				}
+
+				String mime = null;
+				int dot = cleanedUrl.lastIndexOf('.');
+				if (dot >= 0) {
+					mime = EpubServer.MIME_TYPES.get(cleanedUrl.substring(
+							dot + 1).toLowerCase());
+				}
+				if (mime == null) {
+					mime = "application/octet-stream";
+				}
+
+				ManifestItem item = mPackage.getManifestItem(cleanedUrl);
+				String contentType = item != null ? item.getMediaType() : null;
+				if (mime != "application/xhtml+xml"
+						&& mime != "application/xml" // FORCE
+						&& contentType != null && contentType.length() > 0) {
+					mime = contentType;
+				}
+
+				if (url.startsWith("file:")) {
+					if (item == null) {
+						Log.d(TAG, "NO MANIFEST ITEM ... " + url);
+						return super.shouldInterceptRequest(view, url);
+					}
+
+					String cleanedUrlWithQueryFragment = cleanResourceUrl(url,
+							true);
+					String httpUrl = "http://" + EpubServer.HTTP_HOST + ":"
+							+ EpubServer.HTTP_PORT + "/"
+							+ cleanedUrlWithQueryFragment;
+					Log.d(TAG, "FILE to HTTP REDIRECT: " + httpUrl);
+
+					try {
+						URLConnection c = new URL(httpUrl).openConnection();
+						((HttpURLConnection) c).setUseCaches(false);
+						if (mime == "application/xhtml+xml"
+								|| mime == "text/html") {
+							((HttpURLConnection) c).setRequestProperty(
+									"Accept-Ranges", "none");
+						}
+						InputStream is = c.getInputStream();
+						return new WebResourceResponse(mime, null, is);
+					} catch (Exception ex) {
+						Log.d(TAG,
+								"FAIL: " + httpUrl + " -- " + ex.getMessage(),
+								ex);
+					}
+				}
+
+				Log.d(TAG, "RESOURCE FETCH ... " + url);
+				return super.shouldInterceptRequest(view, url);
+			}
+
+			Log.d(TAG, "NULL URL RESPONSE: " + url);
+			return new WebResourceResponse(null, UTF_8,
+					new ByteArrayInputStream("".getBytes()));
+		}
+	}
+
+	private String cleanResourceUrl(String url, boolean preserveQueryFragment) {
+
+		String cleanUrl = null;
+
+		String httpUrl = "http://" + EpubServer.HTTP_HOST + ":"
+				+ EpubServer.HTTP_PORT;
+		if (url.startsWith(httpUrl)) {
+			cleanUrl = url.replaceFirst(httpUrl, "");
+		} else {
+			cleanUrl = (url.startsWith(ASSET_PREFIX)) ? url.replaceFirst(
+					ASSET_PREFIX, "") : url.replaceFirst("file://", "");
+		}
+
+		String basePath = mPackage.getBasePath();
+		if (basePath.charAt(0) != '/') {
+			basePath = '/' + basePath;
+		}
+		if (cleanUrl.charAt(0) != '/') {
+			cleanUrl = '/' + cleanUrl;
+		}
+		cleanUrl = (cleanUrl.startsWith(basePath)) ? cleanUrl.replaceFirst(
+				basePath, "") : cleanUrl;
+
+		if (cleanUrl.charAt(0) == '/') {
+			cleanUrl = cleanUrl.substring(1);
+		}
+
+		if (!preserveQueryFragment) {
+			int indexOfQ = cleanUrl.indexOf('?');
+			if (indexOfQ >= 0) {
+				cleanUrl = cleanUrl.substring(0, indexOfQ);
+			}
+
+			int indexOfSharp = cleanUrl.indexOf('#');
+			if (indexOfSharp >= 0) {
+				cleanUrl = cleanUrl.substring(0, indexOfSharp);
+			}
+		}
+
+		return cleanUrl;
+	}
 
 	public class EpubWebChromeClient extends WebChromeClient implements
 			MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
@@ -468,7 +644,8 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			super.onShowCustomView(view, callback);
 			if (view instanceof FrameLayout) {
 				FrameLayout frame = (FrameLayout) view;
-				Log.d(TAG, "frame.getFocusedChild(): " + frame.getFocusedChild());
+				Log.d(TAG,
+						"frame.getFocusedChild(): " + frame.getFocusedChild());
 				if (frame.getFocusedChild() instanceof VideoView) {
 					VideoView video = (VideoView) frame.getFocusedChild();
 					// frame.removeView(video);
@@ -494,14 +671,15 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 			return false;
 		}
 	}
-    
+
 	public class EpubInterface {
-		
+
 		@JavascriptInterface
 		public void onPaginationChanged(String currentPagesInfo) {
-			Log.d(TAG, "onPaginationChanged: "+currentPagesInfo);
+			Log.d(TAG, "onPaginationChanged: " + currentPagesInfo);
 			try {
-				PaginationInfo paginationInfo = PaginationInfo.fromJson(currentPagesInfo);
+				PaginationInfo paginationInfo = PaginationInfo
+						.fromJson(currentPagesInfo);
 				List<Page> openPages = paginationInfo.getOpenPages();
 				if (!openPages.isEmpty()) {
 					final Page page = openPages.get(0);
@@ -510,109 +688,117 @@ public class WebViewActivity extends FragmentActivity implements ViewerSettingsD
 							mPageInfo.setText(getString(R.string.page_x_of_y,
 									page.getSpineItemPageIndex() + 1,
 									page.getSpineItemPageCount()));
-							SpineItem spineItem = mPackage.getSpineItem(page.getIdref());
-							boolean isFixedLayout = spineItem.isFixedLayout(mPackage);
-				            mWebview.getSettings().setBuiltInZoomControls(isFixedLayout);
-				            mWebview.getSettings().setDisplayZoomControls(false);
+							SpineItem spineItem = mPackage.getSpineItem(page
+									.getIdref());
+							boolean isFixedLayout = spineItem
+									.isFixedLayout(mPackage);
+							mWebview.getSettings().setBuiltInZoomControls(
+									isFixedLayout);
+							mWebview.getSettings()
+									.setDisplayZoomControls(false);
 						}
 					});
 				}
 			} catch (JSONException e) {
-				Log.e(TAG, ""+e.getMessage(), e);
+				Log.e(TAG, "" + e.getMessage(), e);
 			}
 		}
-		
+
 		@JavascriptInterface
 		public void onSettingsApplied() {
 			Log.d(TAG, "onSettingsApplied");
 		}
-		
+
 		@JavascriptInterface
 		public void onReaderInitialized() {
 			Log.d(TAG, "onReaderInitialized");
 		}
-		
+
 		@JavascriptInterface
 		public void onContentLoaded() {
 			Log.d(TAG, "onContentLoaded");
 		}
-		
+
 		@JavascriptInterface
 		public void onPageLoaded() {
 			Log.d(TAG, "onPageLoaded");
 		}
-		
+
 		@JavascriptInterface
-		public void onIsMediaOverlayAvailable(String available){
+		public void onIsMediaOverlayAvailable(String available) {
 			Log.d(TAG, "onIsMediaOverlayAvailable:" + available);
 			mIsMoAvailable = available.equals("true");
-            
-            runOnUiThread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    invalidateOptionsMenu();
-                }
-            });
+
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					invalidateOptionsMenu();
+				}
+			});
 		}
-		
+
 		@JavascriptInterface
 		public void onMediaOverlayStatusChanged(String status) {
 			Log.d(TAG, "onMediaOverlayStatusChanged:" + status);
-			//this should be real json parsing if there will be more data that needs to be extracted
-			
-			if(status.indexOf("isPlaying") > -1){
+			// this should be real json parsing if there will be more data that
+			// needs to be extracted
+
+			if (status.indexOf("isPlaying") > -1) {
 				mIsMoPlaying = status.indexOf("\"isPlaying\":true") > -1;
 			}
-            
-            runOnUiThread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    invalidateOptionsMenu();
-                }
-            });
-		}
-//		
-//		@JavascriptInterface
-//		public void onMediaOverlayTTSSpeak() {
-//			Log.d(TAG, "onMediaOverlayTTSSpeak");
-//		}
-//		
-//		@JavascriptInterface
-//		public void onMediaOverlayTTSStop() {
-//			Log.d(TAG, "onMediaOverlayTTSStop");
-//		}
-		
-		@JavascriptInterface
-		public void getBookmarkData(final String bookmarkData) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(WebViewActivity.this).
-					setTitle(R.string.add_bookmark);
-	        
-	        final EditText editText = new EditText(WebViewActivity.this);
-	        editText.setId(android.R.id.edit);
-	        editText.setHint(R.string.title);
-	        builder.setView(editText);
-	        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				
+
+			runOnUiThread(new Runnable() {
 				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					if (which == DialogInterface.BUTTON_POSITIVE) {
-						String title = editText.getText().toString();
-						try {
-							JSONObject bookmarkJson = new JSONObject(bookmarkData);
-							BookmarkDatabase.getInstance().addBookmark(mContainer.getName(), title,
-									bookmarkJson.getString("idref"), bookmarkJson.getString("contentCFI"));
-						} catch (JSONException e) {
-							Log.e(TAG, ""+e.getMessage(), e);
-						}
-					}
+				public void run() {
+					invalidateOptionsMenu();
 				}
 			});
-	        builder.setNegativeButton(android.R.string.cancel, null);
-	        builder.show();
+		}
+
+		//
+		// @JavascriptInterface
+		// public void onMediaOverlayTTSSpeak() {
+		// Log.d(TAG, "onMediaOverlayTTSSpeak");
+		// }
+		//
+		// @JavascriptInterface
+		// public void onMediaOverlayTTSStop() {
+		// Log.d(TAG, "onMediaOverlayTTSStop");
+		// }
+
+		@JavascriptInterface
+		public void getBookmarkData(final String bookmarkData) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(
+					WebViewActivity.this).setTitle(R.string.add_bookmark);
+
+			final EditText editText = new EditText(WebViewActivity.this);
+			editText.setId(android.R.id.edit);
+			editText.setHint(R.string.title);
+			builder.setView(editText);
+			builder.setPositiveButton(android.R.string.ok,
+					new DialogInterface.OnClickListener() {
+
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							if (which == DialogInterface.BUTTON_POSITIVE) {
+								String title = editText.getText().toString();
+								try {
+									JSONObject bookmarkJson = new JSONObject(
+											bookmarkData);
+									BookmarkDatabase.getInstance().addBookmark(
+											mContainer.getName(),
+											title,
+											bookmarkJson.getString("idref"),
+											bookmarkJson
+													.getString("contentCFI"));
+								} catch (JSONException e) {
+									Log.e(TAG, "" + e.getMessage(), e);
+								}
+							}
+						}
+					});
+			builder.setNegativeButton(android.R.string.cancel, null);
+			builder.show();
 		}
 	}
 }
