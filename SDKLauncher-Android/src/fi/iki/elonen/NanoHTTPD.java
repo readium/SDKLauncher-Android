@@ -646,7 +646,8 @@ public abstract class NanoHTTPD {
                 
             } catch (IOException ioe) {
                 // Couldn't write? No can do.
-            	Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
+// Occurs regularly (connection reset by peer, broken pipe)
+//Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
             } finally {
             	safeClose(data);
             }
