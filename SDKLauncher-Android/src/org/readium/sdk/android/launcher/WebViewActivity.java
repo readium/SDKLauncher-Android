@@ -86,6 +86,8 @@ import android.widget.VideoView;
 public class WebViewActivity extends FragmentActivity implements
 		ViewerSettingsDialog.OnViewerSettingsChange {
 
+	private final boolean quiet = true;
+
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
 	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
@@ -157,7 +159,8 @@ public class WebViewActivity extends FragmentActivity implements
 				return null;
 			}
 
-			Log.d(TAG, "PRE-PROCESSED HTML: " + uriPath);
+			if (!quiet)
+				Log.d(TAG, "PRE-PROCESSED HTML: " + uriPath);
 
 			String htmlText = new String(data, Charset.forName("UTF-8"));
 
@@ -181,6 +184,7 @@ public class WebViewActivity extends FragmentActivity implements
 
 			newHtml = HTMLUtil.htmlByInjectingIntoHead(newHtml,
 					tagsToInjectToHead);
+
 			// Log.d(TAG, "HTML head inject: " + newHtml);
 
 			return newHtml.getBytes();
@@ -226,8 +230,8 @@ public class WebViewActivity extends FragmentActivity implements
 				}
 				mPackage = mContainer.getDefaultPackage();
 
-				String rootUrl = "http://" + EpubServer.HTTP_HOST
-						+ ":" + EpubServer.HTTP_PORT + "/";
+				String rootUrl = "http://" + EpubServer.HTTP_HOST + ":"
+						+ EpubServer.HTTP_PORT + "/";
 				mPackage.setRootUrls(rootUrl, null);
 
 				try {
@@ -251,7 +255,7 @@ public class WebViewActivity extends FragmentActivity implements
 		// }.execute();
 
 		mServer = new EpubServer(EpubServer.HTTP_HOST, EpubServer.HTTP_PORT,
-				mPackage, false, dataPreProcessor);
+				mPackage, quiet, dataPreProcessor);
 		mServer.startServer();
 
 		// Load the page skeleton
@@ -312,11 +316,13 @@ public class WebViewActivity extends FragmentActivity implements
 		int itemId = item.getItemId();
 		switch (itemId) {
 		case R.id.add_bookmark:
-			Log.d(TAG, "Add a bookmark");
+			if (!quiet)
+				Log.d(TAG, "Add a bookmark");
 			mReadiumJSApi.bookmarkCurrentPage();
 			return true;
 		case R.id.settings:
-			Log.d(TAG, "Show settings");
+			if (!quiet)
+				Log.d(TAG, "Show settings");
 			showSettings();
 			return true;
 		case R.id.mo_previous:
@@ -391,15 +397,21 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@Override
 		public void onPageStarted(WebView view, String url, Bitmap favicon) {
-			Log.d(TAG, "onPageStarted: " + url);
+			if (!quiet)
+				Log.d(TAG, "onPageStarted: " + url);
 		}
 
 		@Override
 		public void onPageFinished(WebView view, String url) {
-			Log.d(TAG, "onPageFinished: " + url);
+			if (!quiet)
+				Log.d(TAG, "onPageFinished: " + url);
+
 			if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
 				skeletonPageLoaded = true;
-				Log.d(TAG, "openPageRequestData: " + mOpenPageRequestData);
+
+				if (!quiet)
+					Log.d(TAG, "openPageRequestData: " + mOpenPageRequestData);
+
 				mReadiumJSApi.openBook(mPackage, mViewerSettings,
 						mOpenPageRequestData);
 			}
@@ -407,12 +419,14 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@Override
 		public void onLoadResource(WebView view, String url) {
-			Log.d(TAG, "onLoadResource: " + url);
+			if (!quiet)
+				Log.d(TAG, "onLoadResource: " + url);
 		}
 
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
-			Log.d(TAG, "shouldOverrideUrlLoading: " + url);
+			if (!quiet)
+				Log.d(TAG, "shouldOverrideUrlLoading: " + url);
 			return false;
 		}
 
@@ -445,16 +459,18 @@ public class WebViewActivity extends FragmentActivity implements
 				@Override
 				public void run() {
 
-					Log.d(TAG, "WebView evaluateJavascript: " + script + "");
+					if (!quiet)
+						Log.d(TAG, "WebView evaluateJavascript: " + script + "");
 
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 						mWebview.evaluateJavascript(script,
 								new ValueCallback<String>() {
 									@Override
 									public void onReceiveValue(String str) {
-										Log.d(TAG,
-												"WebView evaluateJavascript RETURN: "
-														+ str);
+										if (!quiet)
+											Log.d(TAG,
+													"WebView evaluateJavascript RETURN: "
+															+ str);
 										syncObj.doNotify();
 									}
 								});
@@ -469,7 +485,8 @@ public class WebViewActivity extends FragmentActivity implements
 		@Override
 		public WebResourceResponse shouldInterceptRequest(WebView view,
 				String url) {
-			Log.d(TAG, "shouldInterceptRequest: " + url);
+			if (!quiet)
+				Log.d(TAG, "shouldInterceptRequest: " + url);
 
 			if (url != null && url != "undefined") {
 
@@ -481,16 +498,19 @@ public class WebViewActivity extends FragmentActivity implements
 				// uri.getScheme()
 
 				if (url.startsWith("http") && !isLocalHttp) {
-					Log.d(TAG, "HTTP (NOT LOCAL): " + url);
+					if (!quiet)
+						Log.d(TAG, "HTTP (NOT LOCAL): " + url);
 					return super.shouldInterceptRequest(view, url);
 				}
 
 				String cleanedUrl = cleanResourceUrl(url, false);
-				Log.d(TAG, url + " => " + cleanedUrl);
+				if (!quiet)
+					Log.d(TAG, url + " => " + cleanedUrl);
 
 				if (cleanedUrl
 						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
-					Log.d(TAG, "navigator.epubReadingSystem inject ...");
+					if (!quiet)
+						Log.d(TAG, "navigator.epubReadingSystem inject ...");
 
 					// Fake script requested, this is immediately invoked after
 					// epubReadingSystem hook is in place,
@@ -507,13 +527,16 @@ public class WebViewActivity extends FragmentActivity implements
 				}
 
 				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
-					Log.d(TAG, "MathJax.js inject ...");
+					if (!quiet)
+						Log.d(TAG, "MathJax.js inject ...");
 
 					InputStream is = null;
 					try {
 						is = getAssets().open(PAYLOAD_MATHJAX_ASSET);
 					} catch (IOException e) {
-						Log.d(TAG, "MathJax.js asset fail!");
+
+						Log.e(TAG, "MathJax.js asset fail!");
+
 						return new WebResourceResponse(null, UTF_8,
 								new ByteArrayInputStream("".getBytes()));
 					}
@@ -522,13 +545,16 @@ public class WebViewActivity extends FragmentActivity implements
 				}
 
 				if (cleanedUrl.matches("\\/?readium_Annotations.css")) {
-					Log.d(TAG, "annotations.css inject ...");
+					if (!quiet)
+						Log.d(TAG, "annotations.css inject ...");
 
 					InputStream is = null;
 					try {
 						is = getAssets().open(PAYLOAD_ANNOTATIONS_CSS_ASSET);
 					} catch (IOException e) {
-						Log.d(TAG, "annotations.css asset fail!");
+
+						Log.e(TAG, "annotations.css asset fail!");
+
 						return new WebResourceResponse(null, UTF_8,
 								new ByteArrayInputStream("".getBytes()));
 					}
@@ -556,7 +582,7 @@ public class WebViewActivity extends FragmentActivity implements
 
 				if (url.startsWith("file:")) {
 					if (item == null) {
-						Log.d(TAG, "NO MANIFEST ITEM ... " + url);
+						Log.e(TAG, "NO MANIFEST ITEM ... " + url);
 						return super.shouldInterceptRequest(view, url);
 					}
 
@@ -565,7 +591,7 @@ public class WebViewActivity extends FragmentActivity implements
 					String httpUrl = "http://" + EpubServer.HTTP_HOST + ":"
 							+ EpubServer.HTTP_PORT + "/"
 							+ cleanedUrlWithQueryFragment;
-					Log.d(TAG, "FILE to HTTP REDIRECT: " + httpUrl);
+					Log.e(TAG, "FILE to HTTP REDIRECT: " + httpUrl);
 
 					try {
 						URLConnection c = new URL(httpUrl).openConnection();
@@ -578,17 +604,17 @@ public class WebViewActivity extends FragmentActivity implements
 						InputStream is = c.getInputStream();
 						return new WebResourceResponse(mime, null, is);
 					} catch (Exception ex) {
-						Log.d(TAG,
+						Log.e(TAG,
 								"FAIL: " + httpUrl + " -- " + ex.getMessage(),
 								ex);
 					}
 				}
-
-				Log.d(TAG, "RESOURCE FETCH ... " + url);
+				if (!quiet)
+					Log.d(TAG, "RESOURCE FETCH ... " + url);
 				return super.shouldInterceptRequest(view, url);
 			}
 
-			Log.d(TAG, "NULL URL RESPONSE: " + url);
+			Log.e(TAG, "NULL URL RESPONSE: " + url);
 			return new WebResourceResponse(null, UTF_8,
 					new ByteArrayInputStream("".getBytes()));
 		}
@@ -640,12 +666,15 @@ public class WebViewActivity extends FragmentActivity implements
 			MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
 		@Override
 		public void onShowCustomView(View view, CustomViewCallback callback) {
-			Log.d(TAG, "here in on ShowCustomView: " + view);
+			if (!quiet)
+				Log.d(TAG, "here in on ShowCustomView: " + view);
 			super.onShowCustomView(view, callback);
 			if (view instanceof FrameLayout) {
 				FrameLayout frame = (FrameLayout) view;
-				Log.d(TAG,
-						"frame.getFocusedChild(): " + frame.getFocusedChild());
+				if (!quiet)
+					Log.d(TAG,
+							"frame.getFocusedChild(): "
+									+ frame.getFocusedChild());
 				if (frame.getFocusedChild() instanceof VideoView) {
 					VideoView video = (VideoView) frame.getFocusedChild();
 					// frame.removeView(video);
@@ -658,7 +687,8 @@ public class WebViewActivity extends FragmentActivity implements
 		}
 
 		public void onCompletion(MediaPlayer mp) {
-			Log.d(TAG, "Video completed");
+			if (!quiet)
+				Log.d(TAG, "Video completed");
 
 			// a.setContentView(R.layout.main);
 			// WebView wb = (WebView) a.findViewById(R.id.webview);
@@ -667,7 +697,8 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@Override
 		public boolean onError(MediaPlayer mp, int what, int extra) {
-			Log.d(TAG, "MediaPlayer onError: " + what + ", " + extra);
+
+			Log.e(TAG, "MediaPlayer onError: " + what + ", " + extra);
 			return false;
 		}
 	}
@@ -676,7 +707,8 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@JavascriptInterface
 		public void onPaginationChanged(String currentPagesInfo) {
-			Log.d(TAG, "onPaginationChanged: " + currentPagesInfo);
+			if (!quiet)
+				Log.d(TAG, "onPaginationChanged: " + currentPagesInfo);
 			try {
 				PaginationInfo paginationInfo = PaginationInfo
 						.fromJson(currentPagesInfo);
@@ -706,27 +738,32 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@JavascriptInterface
 		public void onSettingsApplied() {
-			Log.d(TAG, "onSettingsApplied");
+			if (!quiet)
+				Log.d(TAG, "onSettingsApplied");
 		}
 
 		@JavascriptInterface
 		public void onReaderInitialized() {
-			Log.d(TAG, "onReaderInitialized");
+			if (!quiet)
+				Log.d(TAG, "onReaderInitialized");
 		}
 
 		@JavascriptInterface
 		public void onContentLoaded() {
-			Log.d(TAG, "onContentLoaded");
+			if (!quiet)
+				Log.d(TAG, "onContentLoaded");
 		}
 
 		@JavascriptInterface
 		public void onPageLoaded() {
-			Log.d(TAG, "onPageLoaded");
+			if (!quiet)
+				Log.d(TAG, "onPageLoaded");
 		}
 
 		@JavascriptInterface
 		public void onIsMediaOverlayAvailable(String available) {
-			Log.d(TAG, "onIsMediaOverlayAvailable:" + available);
+			if (!quiet)
+				Log.d(TAG, "onIsMediaOverlayAvailable:" + available);
 			mIsMoAvailable = available.equals("true");
 
 			runOnUiThread(new Runnable() {
@@ -739,7 +776,8 @@ public class WebViewActivity extends FragmentActivity implements
 
 		@JavascriptInterface
 		public void onMediaOverlayStatusChanged(String status) {
-			Log.d(TAG, "onMediaOverlayStatusChanged:" + status);
+			if (!quiet)
+				Log.d(TAG, "onMediaOverlayStatusChanged:" + status);
 			// this should be real json parsing if there will be more data that
 			// needs to be extracted
 
