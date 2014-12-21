@@ -536,6 +536,29 @@ public abstract class NanoHTTPD {
      * HTTP response. Return one of these from serve().
      */
     public static class Response {
+    	
+    	public static class NanoInputStream implements Closeable {
+    		
+    		protected final InputStream inputStream;
+    		
+    		public NanoInputStream(InputStream is) {
+    			inputStream = is;
+    		}
+
+			@Override
+			public void close() throws IOException {
+				inputStream.close();
+			}
+
+			public int available() throws IOException {
+				return inputStream.available();
+			}
+
+			public int read(byte[] b, int len) throws IOException {
+				return inputStream.read(b, 0, len);
+			}
+    	}
+    	
         /**
          * HTTP status code after processing, e.g. "200 OK", HTTP_OK
          */
@@ -547,7 +570,7 @@ public abstract class NanoHTTPD {
         /**
          * Data of the response, may be null.
          */
-        private InputStream data;
+        private NanoInputStream data;
         /**
          * Headers for the HTTP response. Use addHeader() to add lines.
          */
@@ -571,7 +594,7 @@ public abstract class NanoHTTPD {
         /**
          * Basic constructor.
          */
-        public Response(IStatus status, String mimeType, InputStream data) {
+        public Response(IStatus status, String mimeType, NanoInputStream data) {
             this.status = status;
             this.mimeType = mimeType;
             this.data = data;
@@ -584,7 +607,7 @@ public abstract class NanoHTTPD {
             this.status = status;
             this.mimeType = mimeType;
             try {
-                this.data = txt != null ? new ByteArrayInputStream(txt.getBytes("UTF-8")) : null;
+                this.data = txt != null ? new NanoInputStream(new ByteArrayInputStream(txt.getBytes("UTF-8"))) : null;
             } catch (java.io.UnsupportedEncodingException uee) {
                 uee.printStackTrace();
             }
@@ -647,10 +670,11 @@ public abstract class NanoHTTPD {
             } catch (IOException ioe) {
                 // Couldn't write? No can do.
 // Occurs regularly (connection reset by peer, broken pipe)
-//Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
+Log.e("NanoHTTPD", "send IOException! " + ioe.getMessage(), ioe);
             } finally {
             	safeClose(data);
             }
+Log.e("NanoHTTPD", "send safeClose DONE");
         }
 
         protected void sendContentLengthHeaderIfNotAlreadyPresent(PrintWriter pw, Map<String, String> header, int size) {
@@ -674,7 +698,7 @@ public abstract class NanoHTTPD {
         }
 
         private void sendAsChunked(OutputStream outputStream, PrintWriter pw) throws IOException {
-//Log.e("NanoHTTPD", "CHUNKED!");
+Log.e("NanoHTTPD", "CHUNKED!");
             pw.print("Transfer-Encoding: chunked\r\n");
             pw.print("\r\n");
             pw.flush();
@@ -682,7 +706,7 @@ public abstract class NanoHTTPD {
             byte[] CRLF = "\r\n".getBytes();
             byte[] buff = new byte[BUFFER_SIZE];
             int read;
-            while ((read = data.read(buff)) > 0) {
+            while ((read = data.read(buff, BUFFER_SIZE)) > 0) {
                 outputStream.write(String.format("%x\r\n", read).getBytes());
                 outputStream.write(buff, 0, read);
                 outputStream.write(CRLF);
@@ -691,18 +715,18 @@ public abstract class NanoHTTPD {
         }
 
         private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
-//Log.e("NanoHTTPD", "PENDING: "+ pending);
+Log.e("NanoHTTPD", "PENDING: "+ pending);
             if (requestMethod != Method.HEAD && data != null) {
-            	int BUFFER_SIZE = 128 * 1024;
+            	int BUFFER_SIZE = 60 * 1024;
                 byte[] buff = new byte[BUFFER_SIZE];
                 while (pending > 0) {
-                    int read = data.read(buff, 0, ((pending > BUFFER_SIZE) ? BUFFER_SIZE : pending));
+                    int read = data.read(buff, ((pending > BUFFER_SIZE) ? BUFFER_SIZE : pending));
                     if (read <= 0) {
                         break;
                     }
                     outputStream.write(buff, 0, read);
                     pending -= read;
-//Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
+Log.e("NanoHTTPD", "READ: "+ read + " / " + pending);
                 }
             }
         }
@@ -722,14 +746,14 @@ public abstract class NanoHTTPD {
         public void setMimeType(String mimeType) {
             this.mimeType = mimeType;
         }
-
-        public InputStream getData() {
-            return data;
-        }
-
-        public void setData(InputStream data) {
-            this.data = data;
-        }
+//
+//        public InputStream getData() {
+//            return data;
+//        }
+//
+//        public void setData(InputStream data) {
+//            this.data = data;
+//        }
 
         public Method getRequestMethod() {
             return requestMethod;
@@ -1048,7 +1072,7 @@ public abstract class NanoHTTPD {
          */
         private void decodeHeader(BufferedReader in, Map<String, String> pre, Map<String, String> parms, Map<String, String> headers)
             throws ResponseException {
-        	
+// use this to force byte-range requests. beware: HTML pre-processing will not work (epubReadingSystem, MathJax injections, etc.)
 //headers.put("range","bytes=0-");
 
             try {

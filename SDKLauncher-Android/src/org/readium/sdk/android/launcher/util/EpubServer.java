@@ -40,6 +40,7 @@ import java.util.Map;
 import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
+import org.readium.sdk.android.util.ResourceInputStream;
 
 import android.util.Log;
 import fi.iki.elonen.NanoHTTPD;
@@ -50,9 +51,10 @@ import fi.iki.elonen.NanoHTTPD;
 public class EpubServer extends NanoHTTPD {
 
 	public interface DataPreProcessor {
-		byte[] handle(byte[] data, String mime, String uriPath, ManifestItem item);
+		byte[] handle(byte[] data, String mime, String uriPath,
+				ManifestItem item);
 	}
-	
+
 	private static final String TAG = "EpubServer";
 	public static final String HTTP_HOST = "127.0.0.1";
 	public static final int HTTP_PORT = 8080;
@@ -63,7 +65,7 @@ public class EpubServer extends NanoHTTPD {
 
 	private final Package mPackage;
 	private final boolean quiet;
-	
+
 	private final DataPreProcessor dataPreProcessor;
 
 	static {
@@ -98,7 +100,8 @@ public class EpubServer extends NanoHTTPD {
 		MIME_TYPES = Collections.unmodifiableMap(tmpMap);
 	}
 
-	public EpubServer(String host, int port, Package pckg, boolean quiet, DataPreProcessor dataPreProcessor) {
+	public EpubServer(String host, int port, Package pckg, boolean quiet,
+			DataPreProcessor dataPreProcessor) {
 		super(host, port);
 		// this.setAsyncRunner(new AsyncRunner() {
 		// @Override
@@ -125,6 +128,58 @@ public class EpubServer extends NanoHTTPD {
 	}
 
 	private final Object criticalSectionSynchronizedLock = new Object();
+
+	public class ByteStreamInput extends Response.NanoInputStream {
+
+		private final Object criticalSectionSynchronizedLock;
+
+		private final int requestedOffset;
+		private final int requestedLength;
+
+		public ByteStreamInput(ResourceInputStream is, int offset, int length,
+				Object lock) {
+			super(is);
+			requestedOffset = offset;
+			requestedLength = length;
+			criticalSectionSynchronizedLock = lock;
+		}
+
+		@Override
+		public void close() throws IOException {
+			synchronized (criticalSectionSynchronizedLock) {
+				super.close();
+			}
+		}
+
+		private int alreadyRead = 0;
+
+		public int available() throws IOException {
+			int available;
+			synchronized (criticalSectionSynchronizedLock) {
+				available = super.available();
+			}
+			int remaining = requestedLength - alreadyRead;
+			return available < remaining ? available : remaining;
+		}
+
+		public int read(byte[] b, int len) throws IOException {
+			ResourceInputStream ris = (ResourceInputStream) inputStream;
+			int read = 0;
+			byte[] bytes = null;
+			synchronized (criticalSectionSynchronizedLock) {
+				// int read = super.read(b, len);
+
+				bytes = ris.getRangeBytes(requestedOffset + alreadyRead, len);
+				read = bytes.length;
+			}
+
+			if (read > 0) {
+				System.arraycopy(bytes, 0, b, 0, len < read ? len : read);
+			}
+			alreadyRead += read;
+			return read;
+		}
+	}
 
 	@Override
 	public Response serve(IHTTPSession session) {
@@ -179,7 +234,7 @@ public class EpubServer extends NanoHTTPD {
 		}
 
 		if (res == null) {
-			
+
 			String mime = null;
 			int dot = uri.lastIndexOf('.');
 			if (dot >= 0) {
@@ -270,13 +325,17 @@ public class EpubServer extends NanoHTTPD {
 						newLen = 0;
 					}
 
-					byte[] data = null;
+					// byte[] data = null;
+					ResourceInputStream is = null;
 					synchronized (criticalSectionSynchronizedLock) {
 						PackageResource packageResource = pckg
 								.getResourceAtRelativePath(uri);
 
-						data = packageResource.readDataOfLength((int) newLen,
-								(int) startFrom);
+						is = (ResourceInputStream) packageResource
+								.getInputStream(true);
+
+						// data = packageResource.readDataOfLength((int) newLen,
+						// (int) startFrom);
 
 						int updatedContentLength = packageResource
 								.getContentLength();
@@ -287,18 +346,22 @@ public class EpubServer extends NanoHTTPD {
 						}
 					}
 
-					if (newLen != data.length) {
-						Log.e(TAG, "RANGE LENGTH! " + newLen + " != "
-								+ data.length);
-					}
+					// if (newLen != data.length) {
+					// Log.e(TAG, "RANGE LENGTH! " + newLen + " != "
+					// + data.length);
+					// }
 
 					// byte[] data_ = new byte[data.length];
 					// System.arraycopy(data,0,data_,0,data.length);
-					
-					InputStream is = new ByteArrayInputStream(data);
+
+					// InputStream is = new ByteArrayInputStream(data);
+
+					ByteStreamInput bis = new ByteStreamInput(is,
+							(int) startFrom, (int) newLen,
+							criticalSectionSynchronizedLock);
 
 					res = new Response(Response.Status.PARTIAL_CONTENT, mime,
-							is);
+							bis);
 
 					res.addHeader("Content-Length", "" + newLen);
 					res.addHeader("Content-Range", "bytes " + startFrom + "-"
@@ -361,19 +424,22 @@ public class EpubServer extends NanoHTTPD {
 					if (contentLength != data.length) {
 						Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != "
 								+ data.length);
+						contentLength = data.length;
 					}
 
 					// byte[] data_ = new byte[data.length];
 					// System.arraycopy(data,0,data_,0,data.length);
-					
-					byte[] data_ = dataPreProcessor.handle(data, mime, uri, item);
+
+					byte[] data_ = dataPreProcessor.handle(data, mime, uri,
+							item);
 					if (data_ != null) {
 						data = data_;
 						contentLength = data.length;
 					}
 
 					res = new Response(Response.Status.OK, mime,
-							new ByteArrayInputStream(data));
+							new Response.NanoInputStream(
+									new ByteArrayInputStream(data)));
 
 					res.addHeader("Content-Length", "" + contentLength);
 
