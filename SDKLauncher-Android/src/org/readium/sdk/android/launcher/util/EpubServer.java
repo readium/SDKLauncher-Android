@@ -165,17 +165,18 @@ public class EpubServer extends NanoHTTPD {
 		public int read(byte[] b, int len) throws IOException {
 			ResourceInputStream ris = (ResourceInputStream) inputStream;
 			int read = 0;
-			byte[] bytes = null;
+			//byte[] bytes = null;
 			synchronized (criticalSectionSynchronizedLock) {
 				// int read = super.read(b, len);
 
-				bytes = ris.getRangeBytes(requestedOffset + alreadyRead, len);
-				read = bytes.length;
+				//bytes = ris.getRangeBytes(requestedOffset + alreadyRead, len);
+				read = (int)ris.getRangeBytesX(requestedOffset + alreadyRead, (long)len, b);
+				//read = bytes.length;
 			}
 
-			if (read > 0) {
-				System.arraycopy(bytes, 0, b, 0, len < read ? len : read);
-			}
+			// if (read > 0) {
+			// System.arraycopy(bytes, 0, b, 0, len < read ? len : read);
+			// }
 			alreadyRead += read;
 			return read;
 		}
