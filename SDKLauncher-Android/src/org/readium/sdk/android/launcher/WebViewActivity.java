@@ -86,7 +86,7 @@ import android.widget.VideoView;
 public class WebViewActivity extends FragmentActivity implements
 		ViewerSettingsDialog.OnViewerSettingsChange {
 
-	private final boolean quiet = true;
+	private final boolean quiet = false;
 
 	private static final String TAG = "WebViewActivity";
 	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
