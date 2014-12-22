@@ -425,7 +425,7 @@ public class EpubServer extends NanoHTTPD {
 							data = packageResource.readDataFull();
 						} else {
 							is = (ResourceInputStream) packageResource
-									.getInputStream(true);
+									.getInputStream(false);
 						}
 
 						int updatedContentLength = packageResource
