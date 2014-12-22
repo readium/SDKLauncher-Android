@@ -165,13 +165,19 @@ public class EpubServer extends NanoHTTPD {
 		public int read(byte[] b, int len) throws IOException {
 			ResourceInputStream ris = (ResourceInputStream) inputStream;
 			int read = 0;
-			//byte[] bytes = null;
+			// byte[] bytes = null;
 			synchronized (criticalSectionSynchronizedLock) {
 				// int read = super.read(b, len);
 
-				//bytes = ris.getRangeBytes(requestedOffset + alreadyRead, len);
-				read = (int)ris.getRangeBytesX(requestedOffset + alreadyRead, (long)len, b);
-				//read = bytes.length;
+				if (requestedOffset >= 0) {
+					// bytes = ris.getRangeBytes(requestedOffset + alreadyRead,
+					// len);
+					read = (int) ris.getRangeBytesX(requestedOffset
+							+ alreadyRead, (long) len, b);
+					// read = bytes.length;
+				} else {
+					read = (int) ris.readX((long) len, b);
+				}
 			}
 
 			// if (read > 0) {
@@ -406,12 +412,21 @@ public class EpubServer extends NanoHTTPD {
 				} else {
 					// supply the file
 
+					boolean isHTML = mime == "text/html"
+							|| mime == "application/xhtml+xml";
+
 					byte[] data = null;
+					ResourceInputStream is = null;
 					synchronized (criticalSectionSynchronizedLock) {
 						PackageResource packageResource = pckg
 								.getResourceAtRelativePath(uri);
 
-						data = packageResource.readDataFull();
+						if (isHTML) {
+							data = packageResource.readDataFull();
+						} else {
+							is = (ResourceInputStream) packageResource
+									.getInputStream(true);
+						}
 
 						int updatedContentLength = packageResource
 								.getContentLength();
@@ -422,30 +437,40 @@ public class EpubServer extends NanoHTTPD {
 						}
 					}
 
-					if (contentLength != data.length) {
-						Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != "
-								+ data.length);
-						contentLength = data.length;
+					if (isHTML) {
+						if (contentLength != data.length) {
+							Log.e(TAG, "CONTENT LENGTH! " + contentLength
+									+ " != " + data.length);
+							contentLength = data.length;
+						}
+
+						// byte[] data_ = new byte[data.length];
+						// System.arraycopy(data,0,data_,0,data.length);
+
+						byte[] data_ = dataPreProcessor.handle(data, mime, uri,
+								item);
+						if (data_ != null) {
+							data = data_;
+							contentLength = data.length;
+						}
+
+						res = new Response(Response.Status.OK, mime,
+								new Response.NanoInputStream(
+										new ByteArrayInputStream(data)));
+
+					} else {
+						ByteStreamInput bis = new ByteStreamInput(is, -1,
+								(int) contentLength,
+								criticalSectionSynchronizedLock);
+
+						res = new Response(Response.Status.OK, mime, bis);
 					}
-
-					// byte[] data_ = new byte[data.length];
-					// System.arraycopy(data,0,data_,0,data.length);
-
-					byte[] data_ = dataPreProcessor.handle(data, mime, uri,
-							item);
-					if (data_ != null) {
-						data = data_;
-						contentLength = data.length;
-					}
-
-					res = new Response(Response.Status.OK, mime,
-							new Response.NanoInputStream(
-									new ByteArrayInputStream(data)));
 
 					res.addHeader("Content-Length", "" + contentLength);
 
 					if (!quiet)
-						Log.d(TAG, "OK (FULL): " + contentLength);
+						Log.d(TAG, "OK (FULL): " + contentLength
+								+ (isHTML ? " [HTML] " : " [OTHER] ") + mime);
 				}
 			}
 
