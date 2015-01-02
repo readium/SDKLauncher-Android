@@ -24,14 +24,9 @@ local.properties
 .classpath
 #.project
 
-<<<<<<< HEAD
-# MacOS
-.DS_Store
-=======
 # IDEA project files
 .idea
 
 SDKLauncher-Android/assets/readium-shared-js/epubReadingSystem_.js
 SDKLauncher-Android/.settings/org.eclipse.core.resources.prefs
 SDKLauncher-Android/lint.xml
->>>>>>> release/0.16
