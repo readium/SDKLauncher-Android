@@ -62,7 +62,7 @@ public class EpubServer implements HttpServerRequestCallback {
 
 
 
-	 public interface DataPreProcessor {
+    public interface DataPreProcessor {
 		byte[] handle(byte[] data, String mime, String uriPath,
 				ManifestItem item);
 	}
@@ -113,22 +113,22 @@ public class EpubServer implements HttpServerRequestCallback {
 	}
 
 
-	 AsyncHttpServer mHttpServer;
-	 AsyncServer mAsyncServer;
-	 String mHostName;
-	 int mPortNumber;
+    AsyncHttpServer mHttpServer;
+    AsyncServer mAsyncServer;
+    String mHostName;
+    int mPortNumber;
 	public EpubServer(String host, int port, Package pckg, boolean quiet,
 			DataPreProcessor dataPreProcessor) {
 
 		this.mHostName = host;
-		  this.mPortNumber = port;
+        this.mPortNumber = port;
 		this.mPackage = pckg;
 		this.quiet = quiet;
 		this.dataPreProcessor = dataPreProcessor;
-		  this.mHttpServer = new AsyncHttpServer();
-		  this.mAsyncServer = new AsyncServer();
+        this.mHttpServer = new AsyncHttpServer();
+        this.mAsyncServer = new AsyncServer();
 
-		  mHttpServer.get(".*", this);
+        mHttpServer.get(".*", this);
 	}
 
 
@@ -138,30 +138,30 @@ public class EpubServer implements HttpServerRequestCallback {
 
 	public void startServer() {
 		try {
-				mAsyncServer.listen(InetAddress.getByName(mHostName), mPortNumber, mHttpServer.getListenCallback());
+            mAsyncServer.listen(InetAddress.getByName(mHostName), mPortNumber, mHttpServer.getListenCallback());
 		} catch (UnknownHostException e) {
 			Log.e(TAG, "" + e.getMessage());
 		}
 	}
 
-	 public void stop(){
-		  mHttpServer.stop();
-		  mAsyncServer.stop();
-	 }
+    public void stop(){
+        mHttpServer.stop();
+        mAsyncServer.stop();
+    }
 
 	private final Object criticalSectionSynchronizedLock = new Object();
 
 	public class ByteStreamInput extends InputStream {
-		  protected final ResourceInputStream ris;
+        protected final ResourceInputStream ris;
 		private final Object criticalSectionSynchronizedLock;
 
 		private long requestedOffset = 0;
-		  private long alreadyRead = 0;
-		  private boolean isRange;
+        private long alreadyRead = 0;
+        private boolean isRange;
 
-		  public ByteStreamInput(ResourceInputStream is,boolean isRange,
+        public ByteStreamInput(ResourceInputStream is,boolean isRange,
 				Object lock) {
-				this.isRange = isRange;
+            this.isRange = isRange;
 			ris = is;
 			criticalSectionSynchronizedLock = lock;
 		}
@@ -173,14 +173,14 @@ public class EpubServer implements HttpServerRequestCallback {
 			}
 		}
 
-		  @Override
-		  public int read() throws IOException {
-				byte[] buffer = new byte[1];
-				if (read(buffer) == 1) {
-					 return buffer[0];
-				}
-				return -1;
-		  }
+        @Override
+        public int read() throws IOException {
+            byte[] buffer = new byte[1];
+            if (read(buffer) == 1) {
+                return buffer[0];
+            }
+            return -1;
+        }
 
 		public int available() throws IOException {
 			int available;
@@ -188,30 +188,30 @@ public class EpubServer implements HttpServerRequestCallback {
 				available = ris.available();
 			}
 			long remaining = available - alreadyRead;
-				if (remaining < 0) {
-					 remaining = 0;
-				}
-				return (int) remaining;
+            if (remaining < 0) {
+                remaining = 0;
+            }
+            return (int) remaining;
 		}
 
-		  @Override
-		  public long skip(long byteCount) throws IOException {
-				requestedOffset = alreadyRead + byteCount;
-				return byteCount;
-		  }
+        @Override
+        public long skip(long byteCount) throws IOException {
+            requestedOffset = alreadyRead + byteCount;
+            return byteCount;
+        }
 
-		  @Override
-		  public synchronized void reset() throws IOException {
-				requestedOffset = 0;
-				alreadyRead = 0;
-		  }
+        @Override
+        public synchronized void reset() throws IOException {
+            requestedOffset = 0;
+            alreadyRead = 0;
+        }
 
-		  @Override
+        @Override
 		public int read(byte[] b, int offset, int len) throws IOException {
-				if (offset != 0) {
-					 throw new IOException("Offset parameter can only be zero");
-				}
-				int read;
+            if (offset != 0) {
+                throw new IOException("Offset parameter can only be zero");
+            }
+            int read;
 
 			synchronized (criticalSectionSynchronizedLock) {
 
@@ -226,9 +226,9 @@ public class EpubServer implements HttpServerRequestCallback {
 			}
 
 			alreadyRead += read;
-				if(read == 0){
-					 read = -1;
-				}
+            if(read == 0){
+                read = -1;
+            }
 			return read;
 		}
 	}
@@ -236,7 +236,7 @@ public class EpubServer implements HttpServerRequestCallback {
 	@Override
 	public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
 
-		  String uri = request.getPath();
+        String uri = request.getPath();
 
 //		if (!quiet) {
 //			Log.d(TAG, session.getMethod() + " '" + uri + "' ");
@@ -255,104 +255,104 @@ public class EpubServer implements HttpServerRequestCallback {
 //			}
 //		}
 
-		  String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
-		  int iHttpPrefix = uri.indexOf(httpPrefix);
-		  uri = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
-		  uri = uri.startsWith("/") ? uri.substring(1) : uri;
+        String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
+        int iHttpPrefix = uri.indexOf(httpPrefix);
+        uri = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
+        uri = uri.startsWith("/") ? uri.substring(1) : uri;
 
-		  int indexOfQ = uri.indexOf('?');
-		  if (indexOfQ >= 0) {
-				uri = uri.substring(0, indexOfQ);
-		  }
+        int indexOfQ = uri.indexOf('?');
+        if (indexOfQ >= 0) {
+            uri = uri.substring(0, indexOfQ);
+        }
 
-		  int indexOfSharp = uri.indexOf('#');
-		  if (indexOfSharp >= 0) {
-				uri = uri.substring(0, indexOfSharp);
-		  }
+        int indexOfSharp = uri.indexOf('#');
+        if (indexOfSharp >= 0) {
+            uri = uri.substring(0, indexOfSharp);
+        }
 
-		  Package pckg = getPackage();
+        Package pckg = getPackage();
 
-		  int contentLength = -1;
-		  synchronized (criticalSectionSynchronizedLock) {
-				contentLength = pckg.getArchiveInfoSize(uri);
-		  }
+        int contentLength = -1;
+        synchronized (criticalSectionSynchronizedLock) {
+            contentLength = pckg.getArchiveInfoSize(uri);
+        }
 
-		  if (contentLength <= 0) {
-				response.code(404);
-				response.send("Error 404, file not found.");
-				return;
-		  }
+        if (contentLength <= 0) {
+            response.code(404);
+            response.send("Error 404, file not found.");
+            return;
+        }
 
-		  String mime = null;
-		  int dot = uri.lastIndexOf('.');
-		  if (dot >= 0) {
-				mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
-		  }
-		  if (mime == null) {
-				mime = "application/octet-stream";
-		  }
+        String mime = null;
+        int dot = uri.lastIndexOf('.');
+        if (dot >= 0) {
+            mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
+        }
+        if (mime == null) {
+            mime = "application/octet-stream";
+        }
 
-		  ManifestItem item = pckg.getManifestItem(uri);
-		  String contentType = item != null ? item.getMediaType() : null;
-		  if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
-					 && contentType != null && contentType.length() > 0) {
-				mime = contentType;
-		  }
+        ManifestItem item = pckg.getManifestItem(uri);
+        String contentType = item != null ? item.getMediaType() : null;
+        if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+                && contentType != null && contentType.length() > 0) {
+            mime = contentType;
+        }
 
-		  PackageResource packageResource = pckg
-					 .getResourceAtRelativePath(uri);
+        PackageResource packageResource = pckg
+                .getResourceAtRelativePath(uri);
 
-		  boolean isHTML = mime == "text/html"
-					 || mime == "application/xhtml+xml";
-		  if(isHTML){
-				byte[] data = packageResource.readDataFull();
-				if (contentLength != data.length) {
-					 Log.e(TAG, "CONTENT LENGTH! " + contentLength
-								+ " != " + data.length);
-					 contentLength = data.length;
-				}
+        boolean isHTML = mime == "text/html"
+                || mime == "application/xhtml+xml";
+        if(isHTML){
+            byte[] data = packageResource.readDataFull();
+            if (contentLength != data.length) {
+                Log.e(TAG, "CONTENT LENGTH! " + contentLength
+                        + " != " + data.length);
+                contentLength = data.length;
+            }
 
-				// byte[] data_ = new byte[data.length];
-				// System.arraycopy(data,0,data_,0,data.length);
+            // byte[] data_ = new byte[data.length];
+            // System.arraycopy(data,0,data_,0,data.length);
 
-				byte[] data_ = dataPreProcessor.handle(data, mime, uri,
-						  item);
-				if (data_ != null) {
-					 data = data_;
-					 contentLength = data.length;
-				}
+            byte[] data_ = dataPreProcessor.handle(data, mime, uri,
+                    item);
+            if (data_ != null) {
+                data = data_;
+                contentLength = data.length;
+            }
 
-				response.setContentType(mime);
-				response.sendStream(new ByteArrayInputStream(data), data.length);
+            response.setContentType(mime);
+            response.sendStream(new ByteArrayInputStream(data), data.length);
 
-		  }else{
-				boolean isRange = true;//= request.getHeaders().get("range") != null;
+        }else{
+            boolean isRange = true;//= request.getHeaders().get("range") != null;
 
-				ResourceInputStream is = null;
-				synchronized (criticalSectionSynchronizedLock) {
-					 is = (ResourceInputStream) packageResource
-								.getInputStream(isRange);
+            ResourceInputStream is = null;
+            synchronized (criticalSectionSynchronizedLock) {
+                is = (ResourceInputStream) packageResource
+                        .getInputStream(isRange);
 
-					 int updatedContentLength = packageResource
-								.getContentLength();
-					 if (updatedContentLength != contentLength) {
-						  Log.e(TAG, "UPDATED CONTENT LENGTH! "
-									 + updatedContentLength + "<--"
-									 + contentLength);
-					 }
-				}
+                int updatedContentLength = packageResource
+                        .getContentLength();
+                if (updatedContentLength != contentLength) {
+                    Log.e(TAG, "UPDATED CONTENT LENGTH! "
+                            + updatedContentLength + "<--"
+                            + contentLength);
+                }
+            }
 
-				ByteStreamInput bis = new ByteStreamInput(is, isRange,
-						  criticalSectionSynchronizedLock);
-				try {
-					 response.sendStream(bis, bis.available());
-				} catch (IOException e) {
-					 response.code(500);
-					 response.end();
-					 Log.e(TAG, e.toString());
-				}
+            ByteStreamInput bis = new ByteStreamInput(is, isRange,
+                    criticalSectionSynchronizedLock);
+            try {
+                response.sendStream(bis, bis.available());
+            } catch (IOException e) {
+                response.code(500);
+                response.end();
+                Log.e(TAG, e.toString());
+            }
 
-		  }
+        }
 
 
 	}
