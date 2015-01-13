@@ -45,13 +45,22 @@ import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
 import org.readium.sdk.android.util.ResourceInputStream;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.koushikdutta.async.AsyncServer;
+import com.koushikdutta.async.Util;
+import com.koushikdutta.async.callback.CompletedCallback;
+import com.koushikdutta.async.http.AsyncHttpHead;
 import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
+import com.koushikdutta.async.http.server.AsyncHttpServerRequestImpl;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
+import com.koushikdutta.async.http.server.AsyncHttpServerResponseImpl;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
+import com.koushikdutta.async.http.server.MalformedRangeException;
+import com.koushikdutta.async.http.server.StreamSkipException;
+import com.koushikdutta.async.util.StreamUtility;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -68,7 +77,7 @@ public class EpubServer implements HttpServerRequestCallback {
 	}
 
 	private static final String TAG = "EpubServer";
-	public static final String HTTP_HOST = "127.0.0.1";
+	public static final String HTTP_HOST = "0.0.0.0";
 	public static final int HTTP_PORT = 8080;
 	/**
 	 * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
@@ -211,6 +220,9 @@ public class EpubServer implements HttpServerRequestCallback {
             if (offset != 0) {
                 throw new IOException("Offset parameter can only be zero");
             }
+            if(len == 0){
+                return -1;
+            }
             int read;
 
 			synchronized (criticalSectionSynchronizedLock) {
@@ -345,7 +357,9 @@ public class EpubServer implements HttpServerRequestCallback {
             ByteStreamInput bis = new ByteStreamInput(is, isRange,
                     criticalSectionSynchronizedLock);
             try {
-                response.sendStream(bis, bis.available());
+
+                //response.sendStream(bis, bis.available());
+                sendStream(request,response,bis,bis.available());
             } catch (IOException e) {
                 response.code(500);
                 response.end();
@@ -356,4 +370,63 @@ public class EpubServer implements HttpServerRequestCallback {
 
 
 	}
+
+    public void sendStream(final AsyncHttpServerRequest request,final AsyncHttpServerResponse response, final InputStream inputStream, long totalLength) {
+        long start = 0;
+        long end = totalLength - 1;
+
+        String range = request.getHeaders().get("Range");
+        if (range != null) {
+            String[] parts = range.split("=");
+            if (parts.length != 2 || !"bytes".equals(parts[0])) {
+                // Requested range not satisfiable
+                response.code(416);
+                response.end();
+                return;
+            }
+
+            parts = parts[1].split("-");
+            try {
+                if (parts.length > 2)
+                    throw new MalformedRangeException();
+                if (!TextUtils.isEmpty(parts[0]))
+                    start = Long.parseLong(parts[0]);
+                if (parts.length == 2 && !TextUtils.isEmpty(parts[1]))
+                    end = Long.parseLong(parts[1]);
+                else
+                    end = totalLength - 1;
+
+                response.code(206);
+                response.getHeaders().set("Content-Range", String.format("bytes %d-%d/%d", start, end, totalLength));
+            }
+            catch (Exception e) {
+                response.code(416);
+                response.end();
+                return;
+            }
+        }
+        try {
+            if (start != inputStream.skip(start))
+                throw new StreamSkipException("skip failed to skip requested amount");
+            long mContentLength = end - start + 1;
+            response.getHeaders().set("Content-Length", String.valueOf(mContentLength));
+            response.getHeaders().set("Accept-Ranges", "bytes");
+            if (request.getMethod().equals(AsyncHttpHead.METHOD)) {
+                response.writeHead();
+                response.end();
+                return;
+            }
+            Util.pump(inputStream, mContentLength, response, new CompletedCallback() {
+                @Override
+                public void onCompleted(Exception ex) {
+                    StreamUtility.closeQuietly(inputStream);
+                    response.end();
+                }
+            });
+        }
+        catch (Exception e) {
+            response.code(500);
+            response.end();
+        }
+    }
 }
