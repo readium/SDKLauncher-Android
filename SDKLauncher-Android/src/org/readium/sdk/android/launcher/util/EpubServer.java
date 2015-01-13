@@ -30,8 +30,11 @@
 package org.readium.sdk.android.launcher.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,12 +46,21 @@ import org.readium.sdk.android.PackageResource;
 import org.readium.sdk.android.util.ResourceInputStream;
 
 import android.util.Log;
+
+import com.koushikdutta.async.AsyncServer;
+import com.koushikdutta.async.http.server.AsyncHttpServer;
+import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
+import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
+import com.koushikdutta.async.http.server.HttpServerRequestCallback;
+
 import fi.iki.elonen.NanoHTTPD;
 
 /**
  * This small web server will serve media files such as audio and video.
  */
-public class EpubServer extends NanoHTTPD {
+public class EpubServer implements HttpServerRequestCallback {
+
+
 
 	public interface DataPreProcessor {
 		byte[] handle(byte[] data, String mime, String uriPath,
@@ -100,20 +112,25 @@ public class EpubServer extends NanoHTTPD {
 		MIME_TYPES = Collections.unmodifiableMap(tmpMap);
 	}
 
+
+	AsyncHttpServer mHttpServer;
+	AsyncServer mAsyncServer;
+	String mHostName;
+	int mPortNumber;
 	public EpubServer(String host, int port, Package pckg, boolean quiet,
 			DataPreProcessor dataPreProcessor) {
-		super(host, port);
-		// this.setAsyncRunner(new AsyncRunner() {
-		// @Override
-		// public void exec(Runnable code) {
-		// //SYNC!
-		// code.run();
-		// }
-		// });
+
+		this.mHostName = host;
+		this.mPortNumber = port;
 		this.mPackage = pckg;
 		this.quiet = quiet;
 		this.dataPreProcessor = dataPreProcessor;
+		this.mHttpServer = new AsyncHttpServer();
+		this.mAsyncServer = new AsyncServer();
+
+		mHttpServer.get(".*", this);
 	}
+
 
 	Package getPackage() {
 		return mPackage;
@@ -121,95 +138,122 @@ public class EpubServer extends NanoHTTPD {
 
 	public void startServer() {
 		try {
-			start();
-		} catch (IOException e) {
+			mAsyncServer.listen(InetAddress.getByName(mHostName), mPortNumber, mHttpServer.getListenCallback());
+		} catch (UnknownHostException e) {
 			Log.e(TAG, "" + e.getMessage());
 		}
 	}
 
+	public void stop(){
+		mHttpServer.stop();
+		mAsyncServer.stop();
+	}
+
 	private final Object criticalSectionSynchronizedLock = new Object();
 
-	public class ByteStreamInput extends Response.NanoInputStream {
-
+	public class ByteStreamInput extends InputStream {
+		protected final ResourceInputStream ris;
 		private final Object criticalSectionSynchronizedLock;
 
-		private final int requestedOffset;
-		private final int requestedLength;
+		private long requestedOffset = 0;
+		private long alreadyRead = 0;
+		private boolean isRange;
 
-		public ByteStreamInput(ResourceInputStream is, int offset, int length,
+		public ByteStreamInput(ResourceInputStream is,boolean isRange,
 				Object lock) {
-			super(is);
-			requestedOffset = offset;
-			requestedLength = length;
+			this.isRange = isRange;
+			ris = is;
 			criticalSectionSynchronizedLock = lock;
 		}
 
 		@Override
 		public void close() throws IOException {
 			synchronized (criticalSectionSynchronizedLock) {
-				super.close();
+				ris.close();
 			}
 		}
 
-		private int alreadyRead = 0;
+		@Override
+		public int read() throws IOException {
+			byte[] buffer = new byte[1];
+			if (read(buffer) == 1) {
+				return buffer[0];
+			}
+			return -1;
+		}
 
 		public int available() throws IOException {
 			int available;
 			synchronized (criticalSectionSynchronizedLock) {
-				available = super.available();
+				available = ris.available();
 			}
-			int remaining = requestedLength - alreadyRead;
-			return available < remaining ? available : remaining;
+			long remaining = available - alreadyRead;
+			if (remaining < 0) {
+				remaining = 0;
+			}
+			return (int) remaining;
 		}
 
-		public int read(byte[] b, int len) throws IOException {
-			ResourceInputStream ris = (ResourceInputStream) inputStream;
-			int read = 0;
-			// byte[] bytes = null;
-			synchronized (criticalSectionSynchronizedLock) {
-				// int read = super.read(b, len);
+		@Override
+		public long skip(long byteCount) throws IOException {
+			requestedOffset = alreadyRead + byteCount;
+			return byteCount;
+		}
 
-				if (requestedOffset >= 0) {
-					// bytes = ris.getRangeBytes(requestedOffset + alreadyRead,
-					// len);
+		@Override
+		public synchronized void reset() throws IOException {
+			requestedOffset = 0;
+			alreadyRead = 0;
+		}
+
+		@Override
+		public int read(byte[] b, int offset, int len) throws IOException {
+			if (offset != 0) {
+				throw new IOException("Offset parameter can only be zero");
+			}
+			int read;
+
+			synchronized (criticalSectionSynchronizedLock) {
+
+				if (isRange) {
+
 					read = (int) ris.getRangeBytesX(requestedOffset
 							+ alreadyRead, (long) len, b);
-					// read = bytes.length;
+
 				} else {
 					read = (int) ris.readX((long) len, b);
 				}
 			}
 
-			// if (read > 0) {
-			// System.arraycopy(bytes, 0, b, 0, len < read ? len : read);
-			// }
 			alreadyRead += read;
+			if(read == 0){
+				read = -1;
+			}
 			return read;
 		}
 	}
 
 	@Override
-	public Response serve(IHTTPSession session) {
-		Map<String, String> header = session.getHeaders();
-		Map<String, String> parms = session.getParms();
-		String uri = session.getUri();
+	public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
 
-		if (!quiet) {
-			Log.d(TAG, session.getMethod() + " '" + uri + "' ");
+		String uri = request.getPath();
 
-			Iterator<String> e = header.keySet().iterator();
-			while (e.hasNext()) {
-				String value = e.next();
-				Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value)
-						+ "'");
-			}
-			e = parms.keySet().iterator();
-			while (e.hasNext()) {
-				String value = e.next();
-				Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value)
-						+ "'");
-			}
-		}
+//		if (!quiet) {
+//			Log.d(TAG, session.getMethod() + " '" + uri + "' ");
+//
+//			Iterator<String> e = header.keySet().iterator();
+//			while (e.hasNext()) {
+//				String value = e.next();
+//				Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value)
+//						+ "'");
+//			}
+//			e = parms.keySet().iterator();
+//			while (e.hasNext()) {
+//				String value = e.next();
+//				Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value)
+//						+ "'");
+//			}
+//		}
 
 		String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
 		int iHttpPrefix = uri.indexOf(httpPrefix);
@@ -228,259 +272,88 @@ public class EpubServer extends NanoHTTPD {
 
 		Package pckg = getPackage();
 
-		Response res = null;
-
 		int contentLength = -1;
 		synchronized (criticalSectionSynchronizedLock) {
 			contentLength = pckg.getArchiveInfoSize(uri);
 		}
 
-		if (contentLength == 0) {
-			res = new Response(Response.Status.NOT_FOUND,
-					NanoHTTPD.MIME_PLAINTEXT, "Error 404, file not found.");
+		if (contentLength <= 0) {
+			response.code(404);
+			response.send("Error 404, file not found.");
+			return;
 		}
 
-		if (res == null) {
-
-			String mime = null;
-			int dot = uri.lastIndexOf('.');
-			if (dot >= 0) {
-				mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
-			}
-			if (mime == null) {
-				mime = "application/octet-stream";
-			}
-
-			ManifestItem item = pckg.getManifestItem(uri);
-			String contentType = item != null ? item.getMediaType() : null;
-			if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
-					&& contentType != null && contentType.length() > 0) {
-				mime = contentType;
-			}
-
-			// Calculate etag
-			String etag = Integer
-					.toHexString((pckg.getUniqueID()
-							+ pckg.getModificationDate() + ""
-							+ pckg.getBasePath() + "" + uri).hashCode());
-
-			long startFrom = 0;
-			long endAt = -1;
-			String range = header.get("range");
-
-			if (!quiet)
-				Log.d(TAG, ">>>>> HTTP range: " + range);
-
-			if (range != null) {
-				if (range.startsWith("bytes=")) {
-					range = range.substring("bytes=".length());
-					int minus = range.indexOf('-');
-					try {
-						if (minus > 0) {
-							startFrom = Long.parseLong(range
-									.substring(0, minus));
-						}
-					} catch (NumberFormatException ignored) {
-						Log.e(TAG, "NumberFormatException (RANGE BEGIN): "
-								+ ignored.getMessage());
-					}
-					try {
-						if (minus > 0) {
-							String endStr = range.substring(minus + 1);
-							if (endStr != null && endStr.length() > 0)
-								endAt = Long.parseLong(endStr);
-						}
-					} catch (NumberFormatException ignored) {
-						Log.e(TAG, "NumberFormatException (RANGE END): "
-								+ ignored.getMessage());
-					}
-				}
-			}
-
-			// get if-range header. If present, it must match etag or else we
-			// should ignore the range request
-			String ifRange = header.get("if-range");
-			boolean headerIfRangeMissingOrMatching = (ifRange == null || etag
-					.equals(ifRange));
-
-			String ifNoneMatch = header.get("if-none-match");
-			boolean headerIfNoneMatchPresentAndMatching = ifNoneMatch != null
-					&& (ifNoneMatch.equals("*") || ifNoneMatch.equals(etag));
-
-			// Change return code and add Content-Range header when skipping is
-			// requested
-
-			if (headerIfRangeMissingOrMatching && range != null
-					&& startFrom >= 0 && startFrom < contentLength) {
-				// range request that matches current etag
-				// and the startFrom of the range is satisfiable
-				if (headerIfNoneMatchPresentAndMatching) {
-					// range request that matches current etag
-					// and the startFrom of the range is satisfiable
-					// would return range from file
-					// respond with not-modified
-					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
-
-					if (!quiet)
-						Log.d(TAG, "NOT_MODIFIED #1");
-				} else {
-					if (endAt < 0) {
-						endAt = contentLength - 1;
-					}
-					long newLen = endAt - startFrom + 1;
-					if (newLen < 0) {
-						newLen = 0;
-					}
-
-					// byte[] data = null;
-					ResourceInputStream is = null;
-					synchronized (criticalSectionSynchronizedLock) {
-						PackageResource packageResource = pckg
-								.getResourceAtRelativePath(uri);
-
-						is = (ResourceInputStream) packageResource
-								.getInputStream(true);
-
-						// data = packageResource.readDataOfLength((int) newLen,
-						// (int) startFrom);
-
-						int updatedContentLength = packageResource
-								.getContentLength();
-						if (updatedContentLength != contentLength) {
-							Log.e(TAG, "UPDATED CONTENT LENGTH! "
-									+ updatedContentLength + "<--"
-									+ contentLength);
-						}
-					}
-
-					// if (newLen != data.length) {
-					// Log.e(TAG, "RANGE LENGTH! " + newLen + " != "
-					// + data.length);
-					// }
-
-					// byte[] data_ = new byte[data.length];
-					// System.arraycopy(data,0,data_,0,data.length);
-
-					// InputStream is = new ByteArrayInputStream(data);
-
-					ByteStreamInput bis = new ByteStreamInput(is,
-							(int) startFrom, (int) newLen,
-							criticalSectionSynchronizedLock);
-
-					res = new Response(Response.Status.PARTIAL_CONTENT, mime,
-							bis);
-
-					res.addHeader("Content-Length", "" + newLen);
-					res.addHeader("Content-Range", "bytes " + startFrom + "-"
-							+ endAt + "/" + contentLength);
-
-					if (!quiet)
-						Log.d(TAG, "PARTIAL_CONTENT: " + startFrom + "-"
-								+ endAt + " / " + contentLength + " (" + newLen
-								+ ")");
-				}
-			} else {
-				if (headerIfRangeMissingOrMatching && range != null
-						&& startFrom >= contentLength) {
-					// return the size of the file
-					// 4xx responses are not trumped by if-none-match
-					res = new Response(Response.Status.RANGE_NOT_SATISFIABLE,
-							NanoHTTPD.MIME_PLAINTEXT, "");
-					res.addHeader("Content-Range", "bytes */" + contentLength);
-
-					if (!quiet)
-						Log.d(TAG, "RANGE_NOT_SATISFIABLE: " + contentLength);
-
-				} else if (range == null && headerIfNoneMatchPresentAndMatching) {
-					// full-file-fetch request
-					// would return entire file
-					// respond with not-modified
-					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
-
-					if (!quiet)
-						Log.d(TAG, "NOT_MODIFIED #2");
-
-				} else if (!headerIfRangeMissingOrMatching
-						&& headerIfNoneMatchPresentAndMatching) {
-					// range request that doesn't match current etag
-					// would return entire (different) file
-					// respond with not-modified
-					res = new Response(Response.Status.NOT_MODIFIED, mime, "");
-
-					if (!quiet)
-						Log.d(TAG, "NOT_MODIFIED #3");
-				} else {
-					// supply the file
-
-					boolean isHTML = mime == "text/html"
-							|| mime == "application/xhtml+xml";
-
-					byte[] data = null;
-					ResourceInputStream is = null;
-					synchronized (criticalSectionSynchronizedLock) {
-						PackageResource packageResource = pckg
-								.getResourceAtRelativePath(uri);
-
-						if (isHTML) {
-							data = packageResource.readDataFull();
-						} else {
-							is = (ResourceInputStream) packageResource
-									.getInputStream(false);
-						}
-
-						int updatedContentLength = packageResource
-								.getContentLength();
-						if (updatedContentLength != contentLength) {
-							Log.e(TAG, "UPDATED CONTENT LENGTH! "
-									+ updatedContentLength + "<--"
-									+ contentLength);
-						}
-					}
-
-					if (isHTML) {
-						if (contentLength != data.length) {
-							Log.e(TAG, "CONTENT LENGTH! " + contentLength
-									+ " != " + data.length);
-							contentLength = data.length;
-						}
-
-						// byte[] data_ = new byte[data.length];
-						// System.arraycopy(data,0,data_,0,data.length);
-
-						byte[] data_ = dataPreProcessor.handle(data, mime, uri,
-								item);
-						if (data_ != null) {
-							data = data_;
-							contentLength = data.length;
-						}
-
-						res = new Response(Response.Status.OK, mime,
-								new Response.NanoInputStream(
-										new ByteArrayInputStream(data)));
-
-					} else {
-						ByteStreamInput bis = new ByteStreamInput(is, -1,
-								(int) contentLength,
-								criticalSectionSynchronizedLock);
-
-						res = new Response(Response.Status.OK, mime, bis);
-					}
-
-					res.addHeader("Content-Length", "" + contentLength);
-
-					if (!quiet)
-						Log.d(TAG, "OK (FULL): " + contentLength
-								+ (isHTML ? " [HTML] " : " [OTHER] ") + mime);
-				}
-			}
-
-			if (res != null) {
-				res.addHeader("ETag", etag);
-				// Announce that the file server accepts partial content
-				// requests
-				res.addHeader("Accept-Ranges", "bytes");
-			}
+		String mime = null;
+		int dot = uri.lastIndexOf('.');
+		if (dot >= 0) {
+			mime = MIME_TYPES.get(uri.substring(dot + 1).toLowerCase());
 		}
-		return res;
+		if (mime == null) {
+			mime = "application/octet-stream";
+		}
+
+		ManifestItem item = pckg.getManifestItem(uri);
+		String contentType = item != null ? item.getMediaType() : null;
+		if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+				&& contentType != null && contentType.length() > 0) {
+			mime = contentType;
+		}
+
+		PackageResource packageResource = pckg
+				.getResourceAtRelativePath(uri);
+
+		boolean isHTML = mime == "text/html"
+				|| mime == "application/xhtml+xml";
+		if(isHTML){
+			byte[] data = packageResource.readDataFull();
+			if (contentLength != data.length) {
+				Log.e(TAG, "CONTENT LENGTH! " + contentLength
+						+ " != " + data.length);
+				contentLength = data.length;
+			}
+
+			// byte[] data_ = new byte[data.length];
+			// System.arraycopy(data,0,data_,0,data.length);
+
+			byte[] data_ = dataPreProcessor.handle(data, mime, uri,
+					item);
+			if (data_ != null) {
+				data = data_;
+				contentLength = data.length;
+			}
+
+			response.setContentType(mime);
+			response.sendStream(new ByteArrayInputStream(data), data.length);
+
+		}else{
+			boolean isRange = true;//= request.getHeaders().get("range") != null;
+
+			ResourceInputStream is = null;
+			synchronized (criticalSectionSynchronizedLock) {
+				is = (ResourceInputStream) packageResource
+						.getInputStream(isRange);
+
+				int updatedContentLength = packageResource
+						.getContentLength();
+				if (updatedContentLength != contentLength) {
+					Log.e(TAG, "UPDATED CONTENT LENGTH! "
+							+ updatedContentLength + "<--"
+							+ contentLength);
+				}
+			}
+
+			ByteStreamInput bis = new ByteStreamInput(is, isRange,
+					criticalSectionSynchronizedLock);
+			try {
+				response.sendStream(bis, bis.available());
+			} catch (IOException e) {
+				response.code(500);
+				response.end();
+				Log.e(TAG, e.toString());
+			}
+
+		}
+
+
 	}
 }
