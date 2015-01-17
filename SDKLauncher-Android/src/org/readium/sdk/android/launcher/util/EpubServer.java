@@ -36,6 +36,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.readium.sdk.android.ManifestItem;
@@ -73,7 +74,7 @@ public class EpubServer implements HttpServerRequestCallback {
 	}
 
 	private static final String TAG = "EpubServer";
-	public static final String HTTP_HOST = "0.0.0.0";
+	public static final String HTTP_HOST = "127.0.0.1";
 	public static final int HTTP_PORT = 8080;
 	/**
 	 * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
@@ -164,6 +165,8 @@ public class EpubServer implements HttpServerRequestCallback {
 		private long alreadyRead = 0;
 		private boolean isRange;
 
+        private boolean isOpen = true;
+
 		public ByteStreamInput(ResourceInputStream is,boolean isRange,
 				Object lock) {
 			this.isRange = isRange;
@@ -173,6 +176,7 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		@Override
 		public void close() throws IOException {
+            isOpen = false;
 			synchronized (criticalSectionSynchronizedLock) {
                 Log.d(TAG,"CLOSING3!");
 				ris.close();
@@ -181,11 +185,13 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		@Override
 		public int read() throws IOException {
-			byte[] buffer = new byte[1];
-			if (read(buffer) == 1) {
-				return buffer[0];
-			}
-			return -1;
+            if (isOpen) {
+                byte[] buffer = new byte[1];
+                if (read(buffer) == 1) {
+                    return buffer[0];
+                }
+            }
+            return -1;
 		}
 
 		public int available() throws IOException {
@@ -217,7 +223,7 @@ public class EpubServer implements HttpServerRequestCallback {
             if (offset != 0) {
                 throw new IOException("Offset parameter can only be zero");
             }
-            if(len == 0){
+            if (len == 0 || !isOpen) {
                 return -1;
             }
             int read;
@@ -247,22 +253,22 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		String uri = request.getPath();
 
-//		if (!quiet) {
-//			Log.d(TAG, session.getMethod() + " '" + uri + "' ");
-//
-//			Iterator<String> e = header.keySet().iterator();
-//			while (e.hasNext()) {
-//				String value = e.next();
-//				Log.d(TAG, "  HDR: '" + value + "' = '" + header.get(value)
-//						+ "'");
-//			}
-//			e = parms.keySet().iterator();
-//			while (e.hasNext()) {
-//				String value = e.next();
-//				Log.d(TAG, "  PRM: '" + value + "' = '" + parms.get(value)
-//						+ "'");
-//			}
-//		}
+		if (!quiet) {
+			Log.d(TAG, request.getMethod() + " '" + uri + "' ");
+
+			Iterator<String> e = request.getHeaders().getMultiMap().keySet().iterator();
+			while (e.hasNext()) {
+				String value = e.next();
+				Log.d(TAG, "  HDR: '" + value + "' = '" + request.getHeaders().get(value)
+						+ "'");
+			}
+			e = request.getQuery().keySet().iterator();
+			while (e.hasNext()) {
+				String value = e.next();
+				Log.d(TAG, "  PRM: '" + value + "' = '" + request.getQuery().get(value)
+						+ "'");
+			}
+		}
 
 		String httpPrefix = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
 		int iHttpPrefix = uri.indexOf(httpPrefix);
@@ -321,9 +327,6 @@ public class EpubServer implements HttpServerRequestCallback {
 				contentLength = data.length;
 			}
 
-			// byte[] data_ = new byte[data.length];
-			// System.arraycopy(data,0,data_,0,data.length);
-
 			byte[] data_ = dataPreProcessor.handle(data, mime, uri,
 					item);
 			if (data_ != null) {
@@ -335,9 +338,9 @@ public class EpubServer implements HttpServerRequestCallback {
 			response.sendStream(new ByteArrayInputStream(data), data.length);
 
 		}else{
-			boolean isRange = true;//= request.getHeaders().get("range") != null;
+			boolean isRange = request.getHeaders().get("range") != null;
 
-			ResourceInputStream is = null;
+			ResourceInputStream is;
 			synchronized (criticalSectionSynchronizedLock) {
                 Log.d(TAG,"NEW STREAM:"+request.getPath());
 				is = (ResourceInputStream) packageResource
@@ -355,9 +358,7 @@ public class EpubServer implements HttpServerRequestCallback {
             ByteStreamInput bis = new ByteStreamInput(is, isRange,
                     criticalSectionSynchronizedLock);
             try {
-
-                //response.sendStream(bis, bis.available());
-                sendStream(request,response,bis,bis.available());
+                response.sendStream(bis, bis.available());
             } catch (IOException e) {
                 response.code(500);
                 response.end();
@@ -366,66 +367,6 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		}
 
-
 	}
 
-    public void sendStream(final AsyncHttpServerRequest request,final AsyncHttpServerResponse response, final InputStream inputStream, long totalLength) {
-        long start = 0;
-        long end = totalLength - 1;
-
-        String range = request.getHeaders().get("Range");
-        if (range != null) {
-            String[] parts = range.split("=");
-            if (parts.length != 2 || !"bytes".equals(parts[0])) {
-                // Requested range not satisfiable
-                response.code(416);
-                response.end();
-                return;
-            }
-
-            parts = parts[1].split("-");
-            try {
-                if (parts.length > 2)
-                    throw new MalformedRangeException();
-                if (!TextUtils.isEmpty(parts[0]))
-                    start = Long.parseLong(parts[0]);
-                if (parts.length == 2 && !TextUtils.isEmpty(parts[1]))
-                    end = Long.parseLong(parts[1]);
-                else
-                    end = totalLength - 1;
-
-                response.code(206);
-                response.getHeaders().set("Content-Range", String.format("bytes %d-%d/%d", start, end, totalLength));
-            }
-            catch (Exception e) {
-                response.code(416);
-                response.end();
-                return;
-            }
-        }
-        try {
-            if (start != inputStream.skip(start))
-                throw new StreamSkipException("skip failed to skip requested amount");
-            long mContentLength = end - start + 1;
-            response.getHeaders().set("Content-Length", String.valueOf(mContentLength));
-            response.getHeaders().set("Accept-Ranges", "bytes");
-            if (request.getMethod().equals(AsyncHttpHead.METHOD)) {
-                response.writeHead();
-                response.end();
-                return;
-            }
-            Util.pump(inputStream, mContentLength, response, new CompletedCallback() {
-                @Override
-                public void onCompleted(Exception ex) {
-                    Log.d(TAG,"CLOSING2:"+request.getPath());
-                    //StreamUtility.closeQuietly(inputStream);
-                    response.end();
-                }
-            });
-        }
-        catch (Exception e) {
-            response.code(500);
-            response.end();
-        }
-    }
 }
