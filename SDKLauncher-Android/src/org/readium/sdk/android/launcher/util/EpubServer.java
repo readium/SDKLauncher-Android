@@ -174,6 +174,7 @@ public class EpubServer implements HttpServerRequestCallback {
 		@Override
 		public void close() throws IOException {
 			synchronized (criticalSectionSynchronizedLock) {
+                Log.d(TAG,"CLOSING3!");
 				ris.close();
 			}
 		}
@@ -338,6 +339,7 @@ public class EpubServer implements HttpServerRequestCallback {
 
 			ResourceInputStream is = null;
 			synchronized (criticalSectionSynchronizedLock) {
+                Log.d(TAG,"NEW STREAM:"+request.getPath());
 				is = (ResourceInputStream) packageResource
 						.getInputStream(isRange);
 
@@ -415,7 +417,8 @@ public class EpubServer implements HttpServerRequestCallback {
             Util.pump(inputStream, mContentLength, response, new CompletedCallback() {
                 @Override
                 public void onCompleted(Exception ex) {
-                    StreamUtility.closeQuietly(inputStream);
+                    Log.d(TAG,"CLOSING2:"+request.getPath());
+                    //StreamUtility.closeQuietly(inputStream);
                     response.end();
                 }
             });
