@@ -44,29 +44,18 @@ import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
 import org.readium.sdk.android.util.ResourceInputStream;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.koushikdutta.async.AsyncServer;
-import com.koushikdutta.async.Util;
-import com.koushikdutta.async.callback.CompletedCallback;
-import com.koushikdutta.async.http.AsyncHttpHead;
 import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
-import com.koushikdutta.async.http.server.AsyncHttpServerRequestImpl;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
-import com.koushikdutta.async.http.server.AsyncHttpServerResponseImpl;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
-import com.koushikdutta.async.http.server.MalformedRangeException;
-import com.koushikdutta.async.http.server.StreamSkipException;
-import com.koushikdutta.async.util.StreamUtility;
 
 /**
  * This small web server will serve media files such as audio and video.
  */
 public class EpubServer implements HttpServerRequestCallback {
-
-
 
 	public interface DataPreProcessor {
 		byte[] handle(byte[] data, String mime, String uriPath,
@@ -118,11 +107,11 @@ public class EpubServer implements HttpServerRequestCallback {
 		MIME_TYPES = Collections.unmodifiableMap(tmpMap);
 	}
 
-
 	AsyncHttpServer mHttpServer;
 	AsyncServer mAsyncServer;
 	String mHostName;
 	int mPortNumber;
+
 	public EpubServer(String host, int port, Package pckg, boolean quiet,
 			DataPreProcessor dataPreProcessor) {
 
@@ -137,20 +126,20 @@ public class EpubServer implements HttpServerRequestCallback {
 		mHttpServer.get(".*", this);
 	}
 
-
 	Package getPackage() {
 		return mPackage;
 	}
 
 	public void startServer() {
 		try {
-			mAsyncServer.listen(InetAddress.getByName(mHostName), mPortNumber, mHttpServer.getListenCallback());
+			mAsyncServer.listen(InetAddress.getByName(mHostName), mPortNumber,
+					mHttpServer.getListenCallback());
 		} catch (UnknownHostException e) {
 			Log.e(TAG, "" + e.getMessage());
 		}
 	}
 
-	public void stop(){
+	public void stop() {
 		mHttpServer.stop();
 		mAsyncServer.stop();
 	}
@@ -165,9 +154,9 @@ public class EpubServer implements HttpServerRequestCallback {
 		private long alreadyRead = 0;
 		private boolean isRange;
 
-        private boolean isOpen = true;
+		private boolean isOpen = true;
 
-		public ByteStreamInput(ResourceInputStream is,boolean isRange,
+		public ByteStreamInput(ResourceInputStream is, boolean isRange,
 				Object lock) {
 			this.isRange = isRange;
 			ris = is;
@@ -176,22 +165,22 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		@Override
 		public void close() throws IOException {
-            isOpen = false;
+			isOpen = false;
 			synchronized (criticalSectionSynchronizedLock) {
-                Log.d(TAG,"CLOSING3!");
+				Log.d(TAG, "CLOSING3!");
 				ris.close();
 			}
 		}
 
 		@Override
 		public int read() throws IOException {
-            if (isOpen) {
-                byte[] buffer = new byte[1];
-                if (read(buffer) == 1) {
-                    return buffer[0];
-                }
-            }
-            return -1;
+			if (isOpen) {
+				byte[] buffer = new byte[1];
+				if (read(buffer) == 1) {
+					return buffer[0];
+				}
+			}
+			return -1;
 		}
 
 		public int available() throws IOException {
@@ -220,13 +209,13 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		@Override
 		public int read(byte[] b, int offset, int len) throws IOException {
-            if (offset != 0) {
-                throw new IOException("Offset parameter can only be zero");
-            }
-            if (len == 0 || !isOpen) {
-                return -1;
-            }
-            int read;
+			if (offset != 0) {
+				throw new IOException("Offset parameter can only be zero");
+			}
+			if (len == 0 || !isOpen) {
+				return -1;
+			}
+			int read;
 
 			synchronized (criticalSectionSynchronizedLock) {
 
@@ -241,7 +230,7 @@ public class EpubServer implements HttpServerRequestCallback {
 			}
 
 			alreadyRead += read;
-			if(read == 0){
+			if (read == 0) {
 				read = -1;
 			}
 			return read;
@@ -249,24 +238,26 @@ public class EpubServer implements HttpServerRequestCallback {
 	}
 
 	@Override
-	public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+	public void onRequest(AsyncHttpServerRequest request,
+			AsyncHttpServerResponse response) {
 
 		String uri = request.getPath();
 
 		if (!quiet) {
 			Log.d(TAG, request.getMethod() + " '" + uri + "' ");
 
-			Iterator<String> e = request.getHeaders().getMultiMap().keySet().iterator();
+			Iterator<String> e = request.getHeaders().getMultiMap().keySet()
+					.iterator();
 			while (e.hasNext()) {
 				String value = e.next();
-				Log.d(TAG, "  HDR: '" + value + "' = '" + request.getHeaders().get(value)
-						+ "'");
+				Log.d(TAG, "  HDR: '" + value + "' = '"
+						+ request.getHeaders().get(value) + "'");
 			}
 			e = request.getQuery().keySet().iterator();
 			while (e.hasNext()) {
 				String value = e.next();
-				Log.d(TAG, "  PRM: '" + value + "' = '" + request.getQuery().get(value)
-						+ "'");
+				Log.d(TAG, "  PRM: '" + value + "' = '"
+						+ request.getQuery().get(value) + "'");
 			}
 		}
 
@@ -309,26 +300,25 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		ManifestItem item = pckg.getManifestItem(uri);
 		String contentType = item != null ? item.getMediaType() : null;
-		if (mime != "application/xhtml+xml" && mime != "application/xml" // FORCE
+		if (!mime.equals("application/xhtml+xml")
+				&& !mime.equals("application/xml") // FORCE
 				&& contentType != null && contentType.length() > 0) {
 			mime = contentType;
 		}
 
-		PackageResource packageResource = pckg
-				.getResourceAtRelativePath(uri);
+		PackageResource packageResource = pckg.getResourceAtRelativePath(uri);
 
-		boolean isHTML = mime == "text/html"
-				|| mime == "application/xhtml+xml";
-		if(isHTML){
+		boolean isHTML = mime.equals("text/html")
+				|| mime.equals("application/xhtml+xml");
+		if (isHTML) {
 			byte[] data = packageResource.readDataFull();
 			if (contentLength != data.length) {
-				Log.e(TAG, "CONTENT LENGTH! " + contentLength
-						+ " != " + data.length);
+				Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != "
+						+ data.length);
 				contentLength = data.length;
 			}
 
-			byte[] data_ = dataPreProcessor.handle(data, mime, uri,
-					item);
+			byte[] data_ = dataPreProcessor.handle(data, mime, uri, item);
 			if (data_ != null) {
 				data = data_;
 				contentLength = data.length;
@@ -337,33 +327,31 @@ public class EpubServer implements HttpServerRequestCallback {
 			response.setContentType(mime);
 			response.sendStream(new ByteArrayInputStream(data), data.length);
 
-		}else{
+		} else {
 			boolean isRange = request.getHeaders().get("range") != null;
 
 			ResourceInputStream is;
 			synchronized (criticalSectionSynchronizedLock) {
-                Log.d(TAG,"NEW STREAM:"+request.getPath());
+				Log.d(TAG, "NEW STREAM:" + request.getPath());
 				is = (ResourceInputStream) packageResource
 						.getInputStream(isRange);
 
-				int updatedContentLength = packageResource
-						.getContentLength();
+				int updatedContentLength = packageResource.getContentLength();
 				if (updatedContentLength != contentLength) {
 					Log.e(TAG, "UPDATED CONTENT LENGTH! "
-							+ updatedContentLength + "<--"
-							+ contentLength);
+							+ updatedContentLength + "<--" + contentLength);
 				}
 			}
 
-            ByteStreamInput bis = new ByteStreamInput(is, isRange,
-                    criticalSectionSynchronizedLock);
-            try {
-                response.sendStream(bis, bis.available());
-            } catch (IOException e) {
-                response.code(500);
-                response.end();
-                Log.e(TAG, e.toString());
-            }
+			ByteStreamInput bis = new ByteStreamInput(is, isRange,
+					criticalSectionSynchronizedLock);
+			try {
+				response.sendStream(bis, bis.available());
+			} catch (IOException e) {
+				response.code(500);
+				response.end();
+				Log.e(TAG, e.toString());
+			}
 
 		}
 
