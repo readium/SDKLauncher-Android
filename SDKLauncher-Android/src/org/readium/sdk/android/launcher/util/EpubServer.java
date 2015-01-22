@@ -31,7 +31,6 @@ package org.readium.sdk.android.launcher.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
@@ -146,97 +145,6 @@ public class EpubServer implements HttpServerRequestCallback {
 
 	private final Object criticalSectionSynchronizedLock = new Object();
 
-	public class ByteStreamInput extends InputStream {
-		protected final ResourceInputStream ris;
-		private final Object criticalSectionSynchronizedLock;
-
-		private long requestedOffset = 0;
-		private long alreadyRead = 0;
-		private boolean isRange;
-
-		private boolean isOpen = true;
-
-		public ByteStreamInput(ResourceInputStream is, boolean isRange,
-				Object lock) {
-			this.isRange = isRange;
-			ris = is;
-			criticalSectionSynchronizedLock = lock;
-		}
-
-		@Override
-		public void close() throws IOException {
-			isOpen = false;
-			synchronized (criticalSectionSynchronizedLock) {
-				Log.d(TAG, "CLOSING3!");
-				ris.close();
-			}
-		}
-
-		@Override
-		public int read() throws IOException {
-			if (isOpen) {
-				byte[] buffer = new byte[1];
-				if (read(buffer) == 1) {
-					return buffer[0];
-				}
-			}
-			return -1;
-		}
-
-		public int available() throws IOException {
-			int available;
-			synchronized (criticalSectionSynchronizedLock) {
-				available = ris.available();
-			}
-			long remaining = available - alreadyRead;
-			if (remaining < 0) {
-				remaining = 0;
-			}
-			return (int) remaining;
-		}
-
-		@Override
-		public long skip(long byteCount) throws IOException {
-			requestedOffset = alreadyRead + byteCount;
-			return byteCount;
-		}
-
-		@Override
-		public synchronized void reset() throws IOException {
-			requestedOffset = 0;
-			alreadyRead = 0;
-		}
-
-		@Override
-		public int read(byte[] b, int offset, int len) throws IOException {
-			if (offset != 0) {
-				throw new IOException("Offset parameter can only be zero");
-			}
-			if (len == 0 || !isOpen) {
-				return -1;
-			}
-			int read;
-
-			synchronized (criticalSectionSynchronizedLock) {
-
-				if (isRange) {
-
-					read = (int) ris.getRangeBytesX(requestedOffset
-							+ alreadyRead, (long) len, b);
-
-				} else {
-					read = (int) ris.readX((long) len, b);
-				}
-			}
-
-			alreadyRead += read;
-			if (read == 0) {
-				read = -1;
-			}
-			return read;
-		}
-	}
-
 	@Override
 	public void onRequest(AsyncHttpServerRequest request,
 			AsyncHttpServerResponse response) {
@@ -310,18 +218,14 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		boolean isHTML = mime.equals("text/html")
 				|| mime.equals("application/xhtml+xml");
+
 		if (isHTML) {
+            //Pre-process HTML data as a whole
 			byte[] data = packageResource.readDataFull();
-			if (contentLength != data.length) {
-				Log.e(TAG, "CONTENT LENGTH! " + contentLength + " != "
-						+ data.length);
-				contentLength = data.length;
-			}
 
 			byte[] data_ = dataPreProcessor.handle(data, mime, uri, item);
 			if (data_ != null) {
 				data = data_;
-				contentLength = data.length;
 			}
 
 			response.setContentType(mime);
@@ -343,15 +247,15 @@ public class EpubServer implements HttpServerRequestCallback {
 				}
 			}
 
-			ByteStreamInput bis = new ByteStreamInput(is, isRange,
-					criticalSectionSynchronizedLock);
-			try {
-				response.sendStream(bis, bis.available());
-			} catch (IOException e) {
-				response.code(500);
-				response.end();
-				Log.e(TAG, e.toString());
-			}
+            ByteRangeInputStream bis = new ByteRangeInputStream(is, isRange,
+                    criticalSectionSynchronizedLock);
+            try {
+                response.sendStream(bis, bis.available());
+            } catch (IOException e) {
+                response.code(500);
+                response.end();
+                Log.e(TAG, e.toString());
+            }
 
 		}
 
