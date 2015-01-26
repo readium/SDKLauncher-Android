@@ -220,7 +220,7 @@ public class EpubServer implements HttpServerRequestCallback {
 				|| mime.equals("application/xhtml+xml");
 
 		if (isHTML) {
-            //Pre-process HTML data as a whole
+			//Pre-process HTML data as a whole
 			byte[] data = packageResource.readDataFull();
 
 			byte[] data_ = dataPreProcessor.handle(data, mime, uri, item);
@@ -247,15 +247,15 @@ public class EpubServer implements HttpServerRequestCallback {
 				}
 			}
 
-            ByteRangeInputStream bis = new ByteRangeInputStream(is, isRange,
-                    criticalSectionSynchronizedLock);
-            try {
-                response.sendStream(bis, bis.available());
-            } catch (IOException e) {
-                response.code(500);
-                response.end();
-                Log.e(TAG, e.toString());
-            }
+			ByteRangeInputStream bis = new ByteRangeInputStream(is, isRange,
+					criticalSectionSynchronizedLock);
+			try {
+				response.sendStream(bis, bis.available());
+			} catch (IOException e) {
+				response.code(500);
+				response.end();
+				Log.e(TAG, e.toString());
+			}
 
 		}
 
