@@ -5,11 +5,14 @@
     android:orientation="vertical"
     tools:context=".WebViewActivity" >
 
-    <WebView
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:id="@+id/webview"/>
+        android:id="@+id/webview_fragment_container"
+        >
+    </FrameLayout>
+
     
     <LinearLayout android:orientation="horizontal"
         android:layout_width="match_parent"
