@@ -475,7 +475,7 @@ public class WebViewActivity extends FragmentActivity implements
 									}
 								});
 					} else {
-						mWebview.loadUrl("javascript:" + script);
+						mWebview.loadUrl("javascript:var exec = function(){\n" + script + "\n}; exec();");
 						syncObj.doNotify();
 					}
 				}
