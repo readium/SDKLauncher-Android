@@ -82,6 +82,8 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class WebViewActivity extends FragmentActivity implements
 		ViewerSettingsDialog.OnViewerSettingsChange {
@@ -430,31 +432,45 @@ public class WebViewActivity extends FragmentActivity implements
 			return false;
 		}
 
-		public class SyncronizeObj {
-
-			public void doWait() {
-				doWait(0);
-			}
-
-			public void doWait(long l) {
-				synchronized (this) {
-					try {
-						this.wait(l);
-					} catch (InterruptedException e) {
-					}
-				}
-			}
-
-			public void doNotify() {
-				synchronized (this) {
-					this.notify();
-				}
-			}
-		}
-
-		private final SyncronizeObj syncObj = new SyncronizeObj();
+		// public class SyncronizeObj {
+		//
+		// public void doWait() {
+		// doWait(0);
+		// }
+		//
+		// public void doWait(long l) {
+		// synchronized (this) {
+		// try {
+		// this.wait(l);
+		// } catch (InterruptedException e) {
+		// }
+		// }
+		// }
+		//
+		// public void doNotify() {
+		// synchronized (this) {
+		// this.notify();
+		// }
+		// }
+		// }
+		//
+		// private final SyncronizeObj syncObj = new SyncronizeObj();
+		Semaphore syncObj = new Semaphore(1, true);
 
 		private void evaluateJavascript(final String script) {
+
+			if (!quiet)
+				Log.d(TAG, "WebView evaluateJavascript INITIAL SEMAPHORE ACQUIRE ...");
+
+			try {
+				syncObj.tryAcquire(1000, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			if (!quiet)
+				Log.d(TAG, "WebView evaluateJavascript INITIAL SEMAPHORE ACQUIRE DONE.");
+
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -463,6 +479,10 @@ public class WebViewActivity extends FragmentActivity implements
 						Log.d(TAG, "WebView evaluateJavascript: " + script + "");
 
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+						if (!quiet)
+							Log.d(TAG, "WebView evaluateJavascript KitKat+ API");
+
 						mWebview.evaluateJavascript(script,
 								new ValueCallback<String>() {
 									@Override
@@ -471,12 +491,19 @@ public class WebViewActivity extends FragmentActivity implements
 											Log.d(TAG,
 													"WebView evaluateJavascript RETURN: "
 															+ str);
-										syncObj.doNotify();
+										//syncObj.doNotify();
+										syncObj.release();
 									}
 								});
 					} else {
-						mWebview.loadUrl("javascript:var exec = function(){\n" + script + "\n}; exec();");
-						syncObj.doNotify();
+
+						if (!quiet)
+							Log.d(TAG, "WebView loadUrl() API");
+
+						mWebview.loadUrl("javascript:var exec = function(){\n"
+								+ script + "\n}; exec();");
+						//syncObj.doNotify();
+						syncObj.release();
 					}
 				}
 			});
@@ -486,7 +513,7 @@ public class WebViewActivity extends FragmentActivity implements
 		public WebResourceResponse shouldInterceptRequest(WebView view,
 				String url) {
 			if (!quiet)
-				Log.d(TAG, "shouldInterceptRequest: " + url);
+				Log.d(TAG, "-------- shouldInterceptRequest: " + url);
 
 			if (url != null && url != "undefined") {
 
@@ -519,8 +546,22 @@ public class WebViewActivity extends FragmentActivity implements
 					// iframe(s)
 
 					evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
-					syncObj.doWait(1000);
+					
+					long startTime = System.currentTimeMillis();
+					if (!quiet) 
+						Log.d(TAG, "Semaphore lock ... " + cleanedUrl);
+					
+					// syncObj.doWait(1000);
+					try {
+						syncObj.tryAcquire(3000, TimeUnit.MILLISECONDS);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 
+					long timeDelta = System.currentTimeMillis() - startTime;
+					if (!quiet) 
+						Log.d(TAG, "Semaphore release ("+(timeDelta)+"ms) ... " + cleanedUrl);
+					
 					return new WebResourceResponse("text/javascript", UTF_8,
 							new ByteArrayInputStream(
 									"(function(){})()".getBytes()));
