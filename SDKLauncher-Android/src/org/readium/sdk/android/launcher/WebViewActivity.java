@@ -82,8 +82,6 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 public class WebViewActivity extends FragmentActivity implements
 		ViewerSettingsDialog.OnViewerSettingsChange {
@@ -432,31 +430,6 @@ public class WebViewActivity extends FragmentActivity implements
 			return false;
 		}
 
-		// public class SyncronizeObj {
-		//
-		// public void doWait() {
-		// doWait(0);
-		// }
-		//
-		// public void doWait(long l) {
-		// synchronized (this) {
-		// try {
-		// this.wait(l);
-		// } catch (InterruptedException e) {
-		// }
-		// }
-		// }
-		//
-		// public void doNotify() {
-		// synchronized (this) {
-		// this.notify();
-		// }
-		// }
-		// }
-		//
-		// private final SyncronizeObj syncObj = new SyncronizeObj();
-		Semaphore syncObj = new Semaphore(1, true);
-
 		private void evaluateJavascript(final String script) {
 
 			runOnUiThread(new Runnable() {
@@ -479,8 +452,6 @@ public class WebViewActivity extends FragmentActivity implements
 											Log.d(TAG,
 													"WebView evaluateJavascript RETURN: "
 															+ str);
-										//syncObj.doNotify();
-										syncObj.release();
 									}
 								});
 					} else {
@@ -490,8 +461,6 @@ public class WebViewActivity extends FragmentActivity implements
 
 						mWebview.loadUrl("javascript:var exec = function(){\n"
 								+ script + "\n}; exec();");
-						//syncObj.doNotify();
-						syncObj.release();
 					}
 				}
 			});
@@ -522,21 +491,6 @@ public class WebViewActivity extends FragmentActivity implements
 				if (!quiet)
 					Log.d(TAG, url + " => " + cleanedUrl);
 
-				long startTime = System.currentTimeMillis();
-				if (!quiet) 
-					Log.d(TAG, "Semaphore acquiring ... " + cleanedUrl);
-				
-				// syncObj.doWait(1000);
-				try {
-					syncObj.tryAcquire(3000, TimeUnit.MILLISECONDS);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
-				long timeDelta = System.currentTimeMillis() - startTime;
-				if (!quiet) 
-					Log.d(TAG, "Semaphore post-acquire ("+(timeDelta)+"ms) ... " + cleanedUrl);
-				
 				if (cleanedUrl
 						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
 					if (!quiet)
@@ -554,8 +508,6 @@ public class WebViewActivity extends FragmentActivity implements
 							new ByteArrayInputStream(
 									"(function(){})()".getBytes()));
 				}
-
-				syncObj.release();
 				
 				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
 					if (!quiet)
