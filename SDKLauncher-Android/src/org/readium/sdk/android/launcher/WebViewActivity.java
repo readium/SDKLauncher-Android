@@ -459,18 +459,6 @@ public class WebViewActivity extends FragmentActivity implements
 
 		private void evaluateJavascript(final String script) {
 
-			if (!quiet)
-				Log.d(TAG, "WebView evaluateJavascript INITIAL SEMAPHORE ACQUIRE ...");
-
-			try {
-				syncObj.tryAcquire(1000, TimeUnit.MILLISECONDS);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			if (!quiet)
-				Log.d(TAG, "WebView evaluateJavascript INITIAL SEMAPHORE ACQUIRE DONE.");
-
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -534,6 +522,21 @@ public class WebViewActivity extends FragmentActivity implements
 				if (!quiet)
 					Log.d(TAG, url + " => " + cleanedUrl);
 
+				long startTime = System.currentTimeMillis();
+				if (!quiet) 
+					Log.d(TAG, "Semaphore acquiring ... " + cleanedUrl);
+				
+				// syncObj.doWait(1000);
+				try {
+					syncObj.tryAcquire(3000, TimeUnit.MILLISECONDS);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				long timeDelta = System.currentTimeMillis() - startTime;
+				if (!quiet) 
+					Log.d(TAG, "Semaphore post-acquire ("+(timeDelta)+"ms) ... " + cleanedUrl);
+				
 				if (cleanedUrl
 						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
 					if (!quiet)
@@ -547,26 +550,13 @@ public class WebViewActivity extends FragmentActivity implements
 
 					evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
 					
-					long startTime = System.currentTimeMillis();
-					if (!quiet) 
-						Log.d(TAG, "Semaphore lock ... " + cleanedUrl);
-					
-					// syncObj.doWait(1000);
-					try {
-						syncObj.tryAcquire(3000, TimeUnit.MILLISECONDS);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-					long timeDelta = System.currentTimeMillis() - startTime;
-					if (!quiet) 
-						Log.d(TAG, "Semaphore release ("+(timeDelta)+"ms) ... " + cleanedUrl);
-					
 					return new WebResourceResponse("text/javascript", UTF_8,
 							new ByteArrayInputStream(
 									"(function(){})()".getBytes()));
 				}
 
+				syncObj.release();
+				
 				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
 					if (!quiet)
 						Log.d(TAG, "MathJax.js inject ...");
