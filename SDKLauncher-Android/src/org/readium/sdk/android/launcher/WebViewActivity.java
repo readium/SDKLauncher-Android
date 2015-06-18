@@ -430,31 +430,8 @@ public class WebViewActivity extends FragmentActivity implements
 			return false;
 		}
 
-		public class SyncronizeObj {
-
-			public void doWait() {
-				doWait(0);
-			}
-
-			public void doWait(long l) {
-				synchronized (this) {
-					try {
-						this.wait(l);
-					} catch (InterruptedException e) {
-					}
-				}
-			}
-
-			public void doNotify() {
-				synchronized (this) {
-					this.notify();
-				}
-			}
-		}
-
-		private final SyncronizeObj syncObj = new SyncronizeObj();
-
 		private void evaluateJavascript(final String script) {
+
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -463,6 +440,10 @@ public class WebViewActivity extends FragmentActivity implements
 						Log.d(TAG, "WebView evaluateJavascript: " + script + "");
 
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+						if (!quiet)
+							Log.d(TAG, "WebView evaluateJavascript KitKat+ API");
+
 						mWebview.evaluateJavascript(script,
 								new ValueCallback<String>() {
 									@Override
@@ -471,12 +452,15 @@ public class WebViewActivity extends FragmentActivity implements
 											Log.d(TAG,
 													"WebView evaluateJavascript RETURN: "
 															+ str);
-										syncObj.doNotify();
 									}
 								});
 					} else {
-						mWebview.loadUrl("javascript:" + script);
-						syncObj.doNotify();
+
+						if (!quiet)
+							Log.d(TAG, "WebView loadUrl() API");
+
+						mWebview.loadUrl("javascript:var exec = function(){\n"
+								+ script + "\n}; exec();");
 					}
 				}
 			});
@@ -486,7 +470,7 @@ public class WebViewActivity extends FragmentActivity implements
 		public WebResourceResponse shouldInterceptRequest(WebView view,
 				String url) {
 			if (!quiet)
-				Log.d(TAG, "shouldInterceptRequest: " + url);
+				Log.d(TAG, "-------- shouldInterceptRequest: " + url);
 
 			if (url != null && url != "undefined") {
 
@@ -519,13 +503,12 @@ public class WebViewActivity extends FragmentActivity implements
 					// iframe(s)
 
 					evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
-					syncObj.doWait(1000);
-
+					
 					return new WebResourceResponse("text/javascript", UTF_8,
 							new ByteArrayInputStream(
 									"(function(){})()".getBytes()));
 				}
-
+				
 				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
 					if (!quiet)
 						Log.d(TAG, "MathJax.js inject ...");
