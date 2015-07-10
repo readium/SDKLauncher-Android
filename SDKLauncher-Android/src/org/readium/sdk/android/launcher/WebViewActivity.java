@@ -393,7 +393,6 @@ public class WebViewActivity extends FragmentActivity implements
 
 		private static final String HTTP = "http";
 		private static final String UTF_8 = "utf-8";
-		private boolean skeletonPageLoaded = false;
 
 		@Override
 		public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -405,16 +404,6 @@ public class WebViewActivity extends FragmentActivity implements
 		public void onPageFinished(WebView view, String url) {
 			if (!quiet)
 				Log.d(TAG, "onPageFinished: " + url);
-
-			if (!skeletonPageLoaded && url.equals(READER_SKELETON)) {
-				skeletonPageLoaded = true;
-
-				if (!quiet)
-					Log.d(TAG, "openPageRequestData: " + mOpenPageRequestData);
-
-				mReadiumJSApi.openBook(mPackage, mViewerSettings,
-						mOpenPageRequestData);
-			}
 		}
 
 		@Override
@@ -729,6 +718,18 @@ public class WebViewActivity extends FragmentActivity implements
 		public void onReaderInitialized() {
 			if (!quiet)
 				Log.d(TAG, "onReaderInitialized");
+
+            if (!quiet)
+                Log.d(TAG, "openPageRequestData: " + mOpenPageRequestData);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mReadiumJSApi.openBook(mPackage, mViewerSettings,
+                            mOpenPageRequestData);
+                }
+            });
+
 		}
 
 		@JavascriptInterface
