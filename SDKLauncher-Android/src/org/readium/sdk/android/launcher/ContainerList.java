@@ -34,6 +34,7 @@ import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.Container;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
+import org.readium.sdk.android.ContentFilterErrorHandler;
 
 import android.app.Activity;
 import android.content.Context;
@@ -53,7 +54,9 @@ import android.content.DialogInterface;
  * @author chtian
  * 
  */
-public class ContainerList extends Activity implements SdkErrorHandler {
+public class ContainerList extends Activity implements SdkErrorHandler, ContentFilterErrorHandler {
+	
+	private static final String TAG = "ContainerList";
 	
 	protected abstract class SdkErrorHandlerMessagesCompleted {
 		Intent m_intent = null;
@@ -133,6 +136,9 @@ public class ContainerList extends Activity implements SdkErrorHandler {
         
         // Loads the native lib and sets the path to use for cache
         EPub3.setCachePath(getCacheDir().getAbsolutePath());
+        
+        // Sets the handler for ContentFilter errors in the Readium SDK.
+        EPub3.setContentFilterErrorHandler(this);
     }
 
     private Stack<String> m_SdkErrorHandler_Messages = null;
@@ -214,6 +220,17 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 	    
 		// never throws an exception
 		return true;
+	}
+	
+	@Override
+	public void handleContentFilterError(String filterId, long errorCode, String message) {
+		if (filterId.compareToIgnoreCase("3439DA53-2559-400D-8231-981ABA6A85B4") == 0) {
+			// We are dealing with an error in the PassThroughFilter.
+	        Log.e(TAG, "PassThroughFilter error - error code = " + errorCode + " - message = " + message);
+			return;
+		}
+		
+		Log.e(TAG,"ContentFilter error - Filter ID = " + filterId + " - error code = " + errorCode + " - message = " + message);
 	}
 	
     // get books in /sdcard/epubtest path
