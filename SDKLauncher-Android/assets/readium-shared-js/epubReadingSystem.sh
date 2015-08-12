@@ -114,7 +114,9 @@ echo "------"
 
 GIT_VERSION=0.0.0
 GIT_RELEASE=false
-GIT_TIMESTAMP=`date '+%s'`
+
+#GIT_TIMESTAMP=`date '+%s'`
+GIT_TIMESTAMP=$(($(date '+%s') * 1000))
 
 echo "FIRST:"
 echo "${FIRST}"
@@ -125,12 +127,12 @@ FIRST="false"
 
 echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_sha = '${GIT_SHA}';" >> "${JS_FILE}"
 echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_tag = '${GIT_TAG}';" >> "${JS_FILE}"
-echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_clean = '${GIT_CLEAN}';" >> "${JS_FILE}"
+echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_clean = ${GIT_CLEAN};" >> "${JS_FILE}"
 
 echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_version = '${GIT_VERSION}';" >> "${JS_FILE}"
 echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_branch = '${GIT_BRANCH}';" >> "${JS_FILE}"
-echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_release = '${GIT_RELEASE}';" >> "${JS_FILE}"
-echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_timestamp = '${GIT_TIMESTAMP}';" >> "${JS_FILE}"
+echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_release = ${GIT_RELEASE};" >> "${JS_FILE}"
+echo "ReadiumSDK.READIUM_${TARGET_PREFIX}_timestamp = ${GIT_TIMESTAMP};" >> "${JS_FILE}"
 }
 
 
