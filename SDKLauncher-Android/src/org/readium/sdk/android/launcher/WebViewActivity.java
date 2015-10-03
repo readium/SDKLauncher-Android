@@ -292,7 +292,7 @@ public class WebViewActivity extends FragmentActivity implements
 		if (mIsMoPlaying) {
 			mShouldResumeMO = true;
 			mReadiumJSApi.pauseMediaOverlay();
-        }
+		}
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mWebview.onPause();
@@ -302,11 +302,11 @@ public class WebViewActivity extends FragmentActivity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-        if (mShouldResumeMO) {
-        	mShouldResumeMO = false;
-            mReadiumJSApi.playMediaOverlay();
-        }
+
+		if (mShouldResumeMO) {
+			mShouldResumeMO = false;
+			mReadiumJSApi.playMediaOverlay();
+		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mWebview.onResume();
