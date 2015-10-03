@@ -100,6 +100,14 @@ public class ReadiumJSApi {
 		loadJSOnReady("ReadiumSDK.reader.toggleMediaOverlay();");
 	}
 	
+	public void pauseMediaOverlay(){
+		loadJSOnReady("ReadiumSDK.reader.pauseMediaOverlay();");
+	}
+	
+	public void playMediaOverlay(){
+		loadJSOnReady("ReadiumSDK.reader.playMediaOverlay();");
+	}
+	
 	
 	
     private void loadJSOnReady(String jScript) {
