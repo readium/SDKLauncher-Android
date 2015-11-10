@@ -110,6 +110,16 @@ public class ContainerList extends Activity implements SdkErrorHandler {
                 
                 EPub3.setSdkErrorHandler(ContainerList.this);
                 Container container = EPub3.openBook(path);
+				if (container == null) {
+					SdkErrorHandlerMessagesCompleted nothingCallback = new SdkErrorHandlerMessagesCompleted(null) {
+						@Override
+						public void once() {
+							// do nothing
+						}
+					};
+					popSdkErrorHandlerMessage(context, nothingCallback);
+					return;
+				}
                 EPub3.setSdkErrorHandler(null);
                 
                 ContainerHolder.getInstance().put(container.getNativePtr(), container);
