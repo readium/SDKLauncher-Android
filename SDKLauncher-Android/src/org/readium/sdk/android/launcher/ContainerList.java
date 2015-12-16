@@ -49,6 +49,8 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
+import android.os.Handler;
+import android.os.Message;
 /**
  * @author chtian
  * 
@@ -71,6 +73,8 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 	
     private Context context;
     private final String testPath = "epubtest";
+    private Handler mHandler = null;
+    private String mBookName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,34 +104,58 @@ public class ContainerList extends Activity implements SdkErrorHandler {
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                     long arg3) {
             	
-            	String bookName = list.get(arg2);
+            	mBookName = list.get(arg2);
 
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + bookName;
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + mBookName;
             	
-                Toast.makeText(context, "Select " + bookName, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
             	m_SdkErrorHandler_Messages = new Stack<String>();
                 
                 EPub3.setSdkErrorHandler(ContainerList.this);
-                Container container = EPub3.openBook(path);
-                EPub3.setSdkErrorHandler(null);
-                
-                ContainerHolder.getInstance().put(container.getNativePtr(), container);
 
-                Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(Constants.BOOK_NAME, bookName);
-                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
+                DrmInitialize drmInitialize = new DrmInitialize(); 
+                drmInitialize.initialize();
                 
-                SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
-					@Override
-					public void once() {
-		                startActivity(m_intent);
-					}
+            	mHandler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                    	Container container = (Container)msg.obj;
+                    	if(container == null){
+                    		//error message show
+                    		SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(null) {
+            					@Override
+            					public void once() {
+            		                //do notthing
+            					}
+                            };
+                            // async!
+                            popSdkErrorHandlerMessage(context, callback); 
+                    	}
+                    	else{
+                            ContainerHolder.getInstance().put(container.getNativePtr(), container);
+
+                            Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra(Constants.BOOK_NAME, mBookName);
+                            intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
+                            
+                            SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
+            					@Override
+            					public void once() {
+            		                startActivity(m_intent);
+            					}
+                            };
+
+                            // async!
+                            popSdkErrorHandlerMessage(context, callback); 
+                        }
+                    }
                 };
 
-                // async!
-                popSdkErrorHandlerMessage(context, callback); 
+                //Run on thread
+                OpenBookOnThread task = new OpenBookOnThread(path);
+            	task.run();
             }
         });
         
@@ -135,6 +163,22 @@ public class ContainerList extends Activity implements SdkErrorHandler {
         EPub3.setCachePath(getCacheDir().getAbsolutePath());
     }
 
+    class OpenBookOnThread extends Thread{
+    	String mPath;
+    	OpenBookOnThread(final String path){
+    		mPath = path;
+    	}
+    	@Override
+    	public void run() 
+    	{
+            EPub3.setSdkErrorHandler(null);
+            Container container = EPub3.openBook(mPath);
+            Message msg = new Message();
+            msg.obj = container;
+            mHandler.sendMessage(msg);
+    	}
+    };
+    
     private Stack<String> m_SdkErrorHandler_Messages = null;
 
     // async!
