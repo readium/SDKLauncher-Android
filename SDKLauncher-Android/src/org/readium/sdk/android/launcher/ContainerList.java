@@ -169,8 +169,6 @@ public class ContainerList extends Activity implements SdkErrorHandler {
     	@Override
     	public void run() 
     	{
-    	    DrmInitialize drmInitialize = new DrmInitialize(); 
-            drmInitialize.initialize(context);
             Container container = EPub3.openBook(mPath);
             EPub3.setSdkErrorHandler(null);
             Message msg = new Message();
@@ -178,6 +176,12 @@ public class ContainerList extends Activity implements SdkErrorHandler {
             mHandler.sendMessage(msg);
     	}
     };
+    
+    private void containerRegisterContentModules(Context context)
+    {
+	    DrmInitialize drmInitialize = new DrmInitialize(); 
+        drmInitialize.initialize(context);
+    }
     
     private Stack<String> m_SdkErrorHandler_Messages = null;
 
