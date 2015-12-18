@@ -114,8 +114,6 @@ public class ContainerList extends Activity implements SdkErrorHandler {
                 
                 EPub3.setSdkErrorHandler(ContainerList.this);
 
-                DrmInitialize drmInitialize = new DrmInitialize(); 
-                drmInitialize.initialize();
                 
             	mHandler = new Handler() {
                     @Override
@@ -155,7 +153,7 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 
                 //Run on thread
                 OpenBookOnThread task = new OpenBookOnThread(path);
-            	task.run();
+            	task.start();
             }
         });
         
@@ -171,8 +169,10 @@ public class ContainerList extends Activity implements SdkErrorHandler {
     	@Override
     	public void run() 
     	{
-            EPub3.setSdkErrorHandler(null);
+    	    DrmInitialize drmInitialize = new DrmInitialize(); 
+            drmInitialize.initialize(context);
             Container container = EPub3.openBook(mPath);
+            EPub3.setSdkErrorHandler(null);
             Message msg = new Message();
             msg.obj = container;
             mHandler.sendMessage(msg);
