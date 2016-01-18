@@ -303,6 +303,7 @@ public class WebViewActivity extends FragmentActivity implements
 	@SuppressLint({ "SetJavaScriptEnabled", "NewApi" })
 	private void initWebView() {
 		mWebview.getSettings().setJavaScriptEnabled(true);
+		mWebview.getSettings().setMediaPlaybackRequiresUserGesture(false);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			mWebview.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
