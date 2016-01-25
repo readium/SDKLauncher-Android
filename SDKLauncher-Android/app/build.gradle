@@ -573,7 +573,7 @@ task buildEpubReadingSystem(type: Copy) {
                 return line.replace("= '';", "= '" + timeString + "';")
             }
             else if (line.contains('_timestamp')) {
-                return line.replace("= '';", "= '" + timestamp + "';")
+                return line.replace("= '';", "= " + timestamp + ";")
             }
             else if (line.contains('_release')) {
                 return line.replace("= '';", "= '" + "false" + "';")

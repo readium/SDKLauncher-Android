@@ -117,6 +117,20 @@ require(['readium_shared_js/views/reader_view'], function (ReaderView)
         repo3.url = "https://github.com/readium/" + repo3.name + "/tree/" + repo3.sha;
         window.navigator.epubReadingSystem.readium.buildInfo.gitRepositories.push(repo3);
 
+        var repo4 = {};
+        repo4.name = "readium-cfi-js";
+        repo4.sha = ReadiumSDK.READIUM_CFI_JS_sha;
+        repo4.tag = ReadiumSDK.READIUM_CFI_JS_tag;
+        repo4.clean = ReadiumSDK.READIUM_CFI_JS_clean;
+
+        repo4.version = ReadiumSDK.READIUM_CFI_JS_version;
+        repo4.branch = ReadiumSDK.READIUM_CFI_JS_branch;
+        repo4.release = ReadiumSDK.READIUM_CFI_JS_release;
+        repo4.timestamp = ReadiumSDK.READIUM_CFI_JS_timestamp;
+
+        repo4.url = "https://github.com/readium/" + repo4.name + "/tree/" + repo4.sha;
+        window.navigator.epubReadingSystem.readium.buildInfo.gitRepositories.push(repo4);
+
         // Debug check:
         //console.debug(JSON.stringify(window.navigator.epubReadingSystem, undefined, 2));
     };
