@@ -143,6 +143,8 @@ GitDo "${pwd}" "/" "readium-sdk" "SDK"
 
 GitDo "${pwd}" "/" "readium-shared-js" "SHARED_JS"
 
+GitDo "${pwd}" "/" "readium-shared-js" "/" "readium-cfi-js" "CFI_JS"
+
 
 
 READIUM_dateTimeString=`date`
