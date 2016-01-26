@@ -1,4 +1,4 @@
-import org.apache.tools.ant.taskdefs.condition.Os
+import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.model.application'
 
@@ -575,10 +575,30 @@ task buildEpubReadingSystem(type: Copy) {
             else if (line.contains('_timestamp')) {
                 return line.replace("= '';", "= " + timestamp + ";")
             }
-            else if (line.contains('_release')) {
-                return line.replace("= '';", "= '" + "false" + "';")
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_version')) {
+
+                def folderRoot = "$projectDir/../../readium-shared-js/"
+
+                def packageSlurper = new JsonSlurper()
+                def packageJson = packageSlurper.parse file(folderRoot + 'package.json')
+
+                return line.replace("= '';", "= '" + packageJson.version + "';")
             }
-            else if (line.contains('_version')) {
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_version')) {
+
+                def folderRoot = "$projectDir/../../readium-shared-js/readium-cfi-js/"
+
+                def packageSlurper = new JsonSlurper()
+                def packageJson = packageSlurper.parse file(folderRoot + 'package.json')
+
+                return line.replace("= '';", "= '" + packageJson.version + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_version')) {
+
+                return line.replace("= '';", "= '" + "0.0.0" + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_version')) {
+
                 return line.replace("= '';", "= '" + "0.0.0" + "';")
             }
 
@@ -594,6 +614,9 @@ task buildEpubReadingSystem(type: Copy) {
             else if (line.startsWith('ReadiumSDK.READIUM_Android_branch')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchAndroid() + "';")
             }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchAndroid().startsWith("release/") || (buildEpubReadingSystem_Git.branchAndroid() == "master")) + "';")
+            }
 
             else if (line.startsWith('ReadiumSDK.READIUM_SDK_sha')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaSDK() + "';")
@@ -606,6 +629,9 @@ task buildEpubReadingSystem(type: Copy) {
             }
             else if (line.startsWith('ReadiumSDK.READIUM_SDK_branch')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchSDK() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchSDK().startsWith("release/") || (buildEpubReadingSystem_Git.branchSDK() == "master")) + "';")
             }
 
             else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_sha')) {
@@ -620,7 +646,9 @@ task buildEpubReadingSystem(type: Copy) {
             else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_branch')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchSharedJs() + "';")
             }
-
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchSharedJs().startsWith("release/") || (buildEpubReadingSystem_Git.branchSharedJs() == "master")) + "';")
+            }
 
             else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_sha')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaCfiJs() + "';")
@@ -633,6 +661,9 @@ task buildEpubReadingSystem(type: Copy) {
             }
             else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_branch')) {
                 return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchCfiJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchCfiJs().startsWith("release/") || (buildEpubReadingSystem_Git.branchCfiJs() == "master")) + "';")
             }
 
             else
