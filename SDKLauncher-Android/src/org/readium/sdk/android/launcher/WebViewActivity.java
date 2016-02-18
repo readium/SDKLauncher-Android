@@ -202,6 +202,7 @@ public class WebViewActivity extends FragmentActivity implements
 
 	private boolean mIsMoAvailable;
 	private boolean mIsMoPlaying;
+	private boolean mShouldResumeMO;
 	private int mEpubRsoInjectCounter = 0;
 
 	@Override
@@ -287,6 +288,12 @@ public class WebViewActivity extends FragmentActivity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
+		
+		if (mIsMoPlaying) {
+			mShouldResumeMO = true;
+			mReadiumJSApi.pauseMediaOverlay();
+		}
+		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mWebview.onPause();
 		}
@@ -295,6 +302,12 @@ public class WebViewActivity extends FragmentActivity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		if (mShouldResumeMO) {
+			mShouldResumeMO = false;
+			mReadiumJSApi.playMediaOverlay();
+		}
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mWebview.onResume();
 		}
