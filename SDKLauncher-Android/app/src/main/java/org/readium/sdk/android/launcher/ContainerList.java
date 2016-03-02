@@ -1,29 +1,36 @@
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
-//  Redistribution and use in source and binary forms, with or without modification, 
+//  Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-//  1. Redistributions of source code must retain the above copyright notice, this 
+//  1. Redistributions of source code must retain the above copyright notice, this
 //  list of conditions and the following disclaimer.
-//  2. Redistributions in binary form must reproduce the above copyright notice, 
-//  this list of conditions and the following disclaimer in the documentation and/or 
+//  2. Redistributions in binary form must reproduce the above copyright notice,
+//  this list of conditions and the following disclaimer in the documentation and/or
 //  other materials provided with the distribution.
-//  3. Neither the name of the organization nor the names of its contributors may be 
-//  used to endorse or promote products derived from this software without specific 
+//  3. Neither the name of the organization nor the names of its contributors may be
+//  used to endorse or promote products derived from this software without specific
 //  prior written permission.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-//  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-//  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-//  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+//  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+//  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGE
 
 package org.readium.sdk.android.launcher;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,14 +39,22 @@ import java.util.Stack;
 
 import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.Container;
+import org.readium.sdk.android.Package;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
+import org.readium.sdk.lcp.License;
+import org.readium.sdk.lcp.Service;
+import org.readium.sdk.lcp.ServiceFactory;
+import org.readium.sdk.lcp.StorageProvider;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -49,12 +64,14 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
+import com.koushikdutta.async.util.Charsets;
+
 /**
  * @author chtian
- * 
+ *
  */
-public class ContainerList extends Activity implements SdkErrorHandler {
-	
+public class ContainerList extends FragmentActivity implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener {
+
 	protected abstract class SdkErrorHandlerMessagesCompleted {
 		Intent m_intent = null;
 		public SdkErrorHandlerMessagesCompleted(Intent intent) {
@@ -68,9 +85,30 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 		}
 		public abstract void once();
 	}
-	
+
     private Context context;
     private final String testPath = "epubtest";
+
+	public void showPassphraseDialog() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        PassphraseDialogFragment newFragment = new PassphraseDialogFragment();
+        newFragment.show(fragmentManager, "dialog");
+	}
+
+    // The dialog fragment receives a reference to this Activity through the
+    // Fragment.onAttach() callback, which it uses to call the following methods
+    // defined by the NoticeDialogFragment.NoticeDialogListener interface
+    @Override
+    public void onPassphraseDialogPositiveClick(DialogFragment dialog) {
+        // User touched the dialog's positive button
+
+    }
+
+    @Override
+    public void onPassphraseDialogNegativeClick(DialogFragment dialog) {
+        // User touched the dialog's negative button
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,26 +137,88 @@ public class ContainerList extends Activity implements SdkErrorHandler {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                     long arg3) {
-            	
+                //String test = StorageProvider.getValue("test");
+
             	String bookName = list.get(arg2);
 
+                showPassphraseDialog();
+
                 String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + bookName;
-            	
+
                 Toast.makeText(context, "Select " + bookName, Toast.LENGTH_SHORT).show();
 
             	m_SdkErrorHandler_Messages = new Stack<String>();
-                
+
                 EPub3.setSdkErrorHandler(ContainerList.this);
-                Container container = EPub3.openBook(path);
+
+                String certContent = "";
+
+                //Get the text file
+                File sdcard = Environment.getExternalStorageDirectory();
+                File certFile = new File(sdcard, "epubtest/lcp.crt");
+
+				try {
+					FileInputStream fis = new FileInputStream(certFile);
+					byte[] data = new byte[(int) certFile.length()];
+					fis.read(data);
+					fis.close();
+					certContent = new String(data, "UTF-8");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				certContent = certContent.replaceAll("-*BEGIN CERTIFICATE-*", "");
+				certContent = certContent.replaceAll("-*END CERTIFICATE-*", "");
+				certContent = certContent.replaceAll("[\r\n]*", "");
+
+				// Call it before initializing lcp service to initialize readium sdk
+				boolean isEpub3Book = EPub3.isEpub3Book(path);
+
+				Service lcpService = ServiceFactory.build(certContent);
+
+				/*ContentFilterRegistrationHandler contentFilterRegistrationHandler = new ContentFilterRegistrationHandler();
+				EPub3.setContentFiltersRegistrationHandler(contentFilterRegistrationHandler);*/
+
+
+				Container container = EPub3.openBook(path);
+
+				InputStream licenseInputStream = container.getInputStream("META-INF/license.lcpl");
+                BufferedReader licenseReader = new BufferedReader(new InputStreamReader(licenseInputStream));
+                String licenseContent = "";
+
+                try {
+                    StringBuilder licenseStringBuilder = new StringBuilder(licenseInputStream.available());
+
+                    String line;
+
+                    while ((line = licenseReader.readLine()) != null) {
+                        licenseStringBuilder.append(line);
+                    }
+
+                    licenseContent = licenseStringBuilder.toString();
+                } catch (IOException e) {
+                    // Manage errors
+                }
+
+                //String licenseContent = licenseReader.;
+				License license = lcpService.openLicense(licenseContent);
+				boolean isDecrypted = license.isDecrypted();
+
+				if (!isDecrypted) {
+					// Decrypt license
+					license.decrypt("White whales are huge!");
+				}
+
+
                 EPub3.setSdkErrorHandler(null);
-                
+
                 ContainerHolder.getInstance().put(container.getNativePtr(), container);
 
                 Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(Constants.BOOK_NAME, bookName);
                 intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
-                
+
                 SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
 					@Override
 					public void once() {
@@ -127,10 +227,10 @@ public class ContainerList extends Activity implements SdkErrorHandler {
                 };
 
                 // async!
-                popSdkErrorHandlerMessage(context, callback); 
+                popSdkErrorHandlerMessage(context, callback);
             }
         });
-        
+
         // Loads the native lib and sets the path to use for cache
         EPub3.setCachePath(getCacheDir().getAbsolutePath());
     }
@@ -141,22 +241,22 @@ public class ContainerList extends Activity implements SdkErrorHandler {
     private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback)
     {
     	if (m_SdkErrorHandler_Messages != null) {
-    		
+
     		if (m_SdkErrorHandler_Messages.size() == 0) {
     			m_SdkErrorHandler_Messages = null;
     			callback.done();
     			return;
     		}
-    		
-    		String message = m_SdkErrorHandler_Messages.pop(); 
-		
+
+    		String message = m_SdkErrorHandler_Messages.pop();
+
 			AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
 
 			alertBuilder.setTitle("EPUB warning");
 			alertBuilder.setMessage(message);
 
 			alertBuilder.setCancelable(false);
-			
+
 			alertBuilder.setOnCancelListener(
 				new DialogInterface.OnCancelListener() {
 					@Override
@@ -175,7 +275,7 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 					}
 				}
 			);
-			
+
 			alertBuilder.setPositiveButton("Ignore",
 					new DialogInterface.OnClickListener() {
 						@Override
@@ -192,30 +292,30 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 					}
 		    	}
 			);
-			
+
 			AlertDialog alert = alertBuilder.create();
 			alert.setCanceledOnTouchOutside(false);
-			
+
 			alert.show(); //async!
 		}
     	else {
     		callback.done();
     	}
     }
-    
+
 	@Override
 	public boolean handleSdkError(String message, boolean isSevereEpubError) {
-	        
+
 	    System.out.println("SdkErrorHandler: " + message + " (" + (isSevereEpubError ? "warning" : "info") + ")");
-	
-	    if (m_SdkErrorHandler_Messages != null && isSevereEpubError) { 
+
+	    if (m_SdkErrorHandler_Messages != null && isSevereEpubError) {
 	    	m_SdkErrorHandler_Messages.push(message);
 	    }
-	    
+
 		// never throws an exception
 		return true;
 	}
-	
+
     // get books in /sdcard/epubtest path
     private List<String> getInnerBooks() {
         List<String> list = new ArrayList<String>();
@@ -229,7 +329,7 @@ public class ContainerList extends Activity implements SdkErrorHandler {
 	                String name = f.getName();
 	                if (name.length() > 5
 	                        && name.substring(name.length() - 5).equals(".epub")) {
-	
+
 	                    list.add(name);
 	                    Log.i("books", name);
 	                }

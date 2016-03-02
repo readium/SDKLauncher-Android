@@ -16,8 +16,8 @@ model {
         main {
             jniLibs {
                 dependencies {
-                    //library file("lib/x86/prebuilt.so") abi "x86"
                     project ":epub3"
+                    project ":lcp"
                 }
             }
         }
@@ -26,7 +26,8 @@ model {
                 source {
                     srcDirs = [
                             './src/main/java',
-                            '../../readium-sdk/Platform/Android/lib/src/main/java'
+                            '../../readium-sdk/Platform/Android/lib/src/main/java',
+                            '../../readium-lcp/platform/android/lib/src/main/java'
                     ]
                 }
             }
