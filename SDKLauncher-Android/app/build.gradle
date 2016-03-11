@@ -47,7 +47,7 @@ tasks.whenTaskAdded { task ->
 
     if (taskName.startsWith("compile")) {
         task.dependsOn "buildAssets",
-            ":epub3:buildMk"/*,
-            "buildEpubReadingSystem"*/
+            ":epub3:buildMk",
+            "buildEpubReadingSystem"
     }
 }
