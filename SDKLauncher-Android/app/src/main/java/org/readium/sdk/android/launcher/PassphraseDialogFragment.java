@@ -19,7 +19,7 @@ public class PassphraseDialogFragment extends DialogFragment {
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface PassphraseDialogListener {
-        public void onPassphraseDialogPositiveClick(DialogFragment dialog);
+        public void onPassphraseDialogPositiveClick(DialogFragment dialog, String passPhrase);
         public void onPassphraseDialogNegativeClick(DialogFragment dialog);
     }
 
@@ -35,12 +35,11 @@ public class PassphraseDialogFragment extends DialogFragment {
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         builder.setView(input);
 
-
         builder.setMessage(R.string.passphrase)
                 .setPositiveButton(R.string.generic_ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // User validated the passphrase
-                        mListener.onPassphraseDialogPositiveClick(PassphraseDialogFragment.this);
+                        mListener.onPassphraseDialogPositiveClick(PassphraseDialogFragment.this, input.getText().toString());
                     }
                 })
                 .setNegativeButton(R.string.generic_cancel, new DialogInterface.OnClickListener() {

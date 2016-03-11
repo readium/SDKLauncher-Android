@@ -87,6 +87,9 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
 	}
 
     private Context context;
+    private License mLicense;
+    private Container mContainer;
+    private String mBookName;
     private final String testPath = "epubtest";
 
 	public void showPassphraseDialog() {
@@ -99,15 +102,18 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
     // Fragment.onAttach() callback, which it uses to call the following methods
     // defined by the NoticeDialogFragment.NoticeDialogListener interface
     @Override
-    public void onPassphraseDialogPositiveClick(DialogFragment dialog) {
+    public void onPassphraseDialogPositiveClick(DialogFragment dialog, String passPhrase) {
         // User touched the dialog's positive button
+        if (passPhrase.isEmpty())
+            return;
 
+        mLicense.decrypt(passPhrase);
+        openSelectedBook();
     }
 
     @Override
     public void onPassphraseDialogNegativeClick(DialogFragment dialog) {
         // User touched the dialog's negative button
-
     }
 
     @Override
@@ -139,13 +145,11 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
                     long arg3) {
                 //String test = StorageProvider.getValue("test");
 
-            	String bookName = list.get(arg2);
+                mBookName = list.get(arg2);
 
-                showPassphraseDialog();
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + mBookName;
 
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + bookName;
-
-                Toast.makeText(context, "Select " + bookName, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
             	m_SdkErrorHandler_Messages = new Stack<String>();
 
@@ -156,83 +160,84 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
                 //Get the text file
                 File sdcard = Environment.getExternalStorageDirectory();
                 File certFile = new File(sdcard, "epubtest/lcp.crt");
+                if (certFile.exists()) {
+                    try {
+                        FileInputStream fis = new FileInputStream(certFile);
+                        byte[] data = new byte[(int) certFile.length()];
+                        fis.read(data);
+                        fis.close();
+                        certContent = new String(data, "UTF-8");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-				try {
-					FileInputStream fis = new FileInputStream(certFile);
-					byte[] data = new byte[(int) certFile.length()];
-					fis.read(data);
-					fis.close();
-					certContent = new String(data, "UTF-8");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+                    certContent = certContent.replaceAll("-*BEGIN CERTIFICATE-*", "");
+                    certContent = certContent.replaceAll("-*END CERTIFICATE-*", "");
+                    certContent = certContent.replaceAll("[\r\n]*", "");
+                }
 
-				certContent = certContent.replaceAll("-*BEGIN CERTIFICATE-*", "");
-				certContent = certContent.replaceAll("-*END CERTIFICATE-*", "");
-				certContent = certContent.replaceAll("[\r\n]*", "");
+                // Call it before initializing lcp service to initialize readium sdk
+                boolean isEpub3Book = EPub3.isEpub3Book(path);
 
-				// Call it before initializing lcp service to initialize readium sdk
-				boolean isEpub3Book = EPub3.isEpub3Book(path);
-
-				Service lcpService = ServiceFactory.build(certContent);
+                Service lcpService = ServiceFactory.build(certContent);
 
 				/*ContentFilterRegistrationHandler contentFilterRegistrationHandler = new ContentFilterRegistrationHandler();
 				EPub3.setContentFiltersRegistrationHandler(contentFilterRegistrationHandler);*/
 
+				mContainer = EPub3.openBook(path);
 
-				Container container = EPub3.openBook(path);
+				InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
+                if (licenseInputStream != null) {
+                    BufferedReader licenseReader = new BufferedReader(new InputStreamReader(licenseInputStream));
+                    String licenseContent = "";
 
-				InputStream licenseInputStream = container.getInputStream("META-INF/license.lcpl");
-                BufferedReader licenseReader = new BufferedReader(new InputStreamReader(licenseInputStream));
-                String licenseContent = "";
+                    try {
+                        StringBuilder licenseStringBuilder = new StringBuilder(licenseInputStream.available());
 
-                try {
-                    StringBuilder licenseStringBuilder = new StringBuilder(licenseInputStream.available());
+                        String line;
 
-                    String line;
+                        while ((line = licenseReader.readLine()) != null) {
+                            licenseStringBuilder.append(line);
+                        }
 
-                    while ((line = licenseReader.readLine()) != null) {
-                        licenseStringBuilder.append(line);
+                        licenseContent = licenseStringBuilder.toString();
+                    } catch (IOException e) {
+                        // Manage errors
                     }
 
-                    licenseContent = licenseStringBuilder.toString();
-                } catch (IOException e) {
-                    // Manage errors
+                    //String licenseContent = licenseReader.;
+                    mLicense = lcpService.openLicense(licenseContent);
+                    if (mLicense != null && !mLicense.isDecrypted())
+                        showPassphraseDialog();
+                } else {
+                    openSelectedBook();
                 }
 
-                //String licenseContent = licenseReader.;
-				License license = lcpService.openLicense(licenseContent);
-				boolean isDecrypted = license.isDecrypted();
-
-				if (!isDecrypted) {
-					// Decrypt license
-					license.decrypt("White whales are huge!");
-				}
-
-
                 EPub3.setSdkErrorHandler(null);
-
-                ContainerHolder.getInstance().put(container.getNativePtr(), container);
-
-                Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(Constants.BOOK_NAME, bookName);
-                intent.putExtra(Constants.CONTAINER_ID, container.getNativePtr());
-
-                SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
-					@Override
-					public void once() {
-		                startActivity(m_intent);
-					}
-                };
-
-                // async!
-                popSdkErrorHandlerMessage(context, callback);
             }
         });
 
         // Loads the native lib and sets the path to use for cache
         EPub3.setCachePath(getCacheDir().getAbsolutePath());
+    }
+
+    private void openSelectedBook() {
+        ContainerHolder.getInstance().put(mContainer.getNativePtr(), mContainer);
+
+        Intent intent = new Intent(getApplicationContext(), BookDataActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(Constants.BOOK_NAME, mBookName);
+        intent.putExtra(Constants.CONTAINER_ID, mContainer.getNativePtr());
+
+        SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(intent) {
+            @Override
+            public void once() {
+                startActivity(m_intent);
+            }
+        };
+
+        // async!
+        popSdkErrorHandlerMessage(context, callback);
     }
 
     private Stack<String> m_SdkErrorHandler_Messages = null;
