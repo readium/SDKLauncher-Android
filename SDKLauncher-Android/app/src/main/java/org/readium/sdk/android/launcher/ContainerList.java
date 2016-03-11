@@ -72,19 +72,19 @@ import com.koushikdutta.async.util.Charsets;
  */
 public class ContainerList extends FragmentActivity implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener {
 
-	protected abstract class SdkErrorHandlerMessagesCompleted {
-		Intent m_intent = null;
-		public SdkErrorHandlerMessagesCompleted(Intent intent) {
-			m_intent = intent;
-		}
-		public void done() {
-			if (m_intent != null) {
-				once();
-				m_intent = null;
-			}
-		}
-		public abstract void once();
-	}
+    protected abstract class SdkErrorHandlerMessagesCompleted {
+        Intent m_intent = null;
+        public SdkErrorHandlerMessagesCompleted(Intent intent) {
+            m_intent = intent;
+        }
+        public void done() {
+            if (m_intent != null) {
+                once();
+                m_intent = null;
+            }
+        }
+        public abstract void once();
+    }
 
     private Context context;
     private License mLicense;
@@ -92,11 +92,11 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
     private String mBookName;
     private final String testPath = "epubtest";
 
-	public void showPassphraseDialog() {
+    public void showPassphraseDialog() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         PassphraseDialogFragment newFragment = new PassphraseDialogFragment();
         newFragment.show(fragmentManager, "dialog");
-	}
+    }
 
     // The dialog fragment receives a reference to this Activity through the
     // Fragment.onAttach() callback, which it uses to call the following methods
@@ -108,6 +108,12 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
             return;
 
         mLicense.decrypt(passPhrase);
+
+        if (!mLicense.isDecrypted()) {
+            // Unable to decrypt license with the given passphrase
+            return;
+        }
+
         openSelectedBook();
     }
 
@@ -142,7 +148,7 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
 
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-                    long arg3) {
+                                    long arg3) {
                 //String test = StorageProvider.getValue("test");
 
                 mBookName = list.get(arg2);
@@ -151,42 +157,35 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
 
                 Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
-            	m_SdkErrorHandler_Messages = new Stack<String>();
+                m_SdkErrorHandler_Messages = new Stack<String>();
 
                 EPub3.setSdkErrorHandler(ContainerList.this);
 
+                //Get the text file
                 String certContent = "";
 
                 //Get the text file
-                File sdcard = Environment.getExternalStorageDirectory();
-                File certFile = new File(sdcard, "epubtest/lcp.crt");
-                if (certFile.exists()) {
-                    try {
-                        FileInputStream fis = new FileInputStream(certFile);
-                        byte[] data = new byte[(int) certFile.length()];
-                        fis.read(data);
-                        fis.close();
-                        certContent = new String(data, "UTF-8");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    certContent = certContent.replaceAll("-*BEGIN CERTIFICATE-*", "");
-                    certContent = certContent.replaceAll("-*END CERTIFICATE-*", "");
-                    certContent = certContent.replaceAll("[\r\n]*", "");
+                try {
+                    InputStream is = getAssets().open("lcp/lcp.crt");
+                    byte[] data = new byte[is.available()];
+                    is.read(data);
+                    is.close();
+                    certContent = new String(data, "UTF-8");
+                } catch (IOException e) {
+                    // TODO
                 }
 
                 // Call it before initializing lcp service to initialize readium sdk
                 boolean isEpub3Book = EPub3.isEpub3Book(path);
 
-                Service lcpService = ServiceFactory.build(certContent);
+                Service lcpService = ServiceFactory.build(certContent, new StorageProvider(getApplicationContext()));
 
-				/*ContentFilterRegistrationHandler contentFilterRegistrationHandler = new ContentFilterRegistrationHandler();
-				EPub3.setContentFiltersRegistrationHandler(contentFilterRegistrationHandler);*/
+                /*ContentFilterRegistrationHandler contentFilterRegistrationHandler = new ContentFilterRegistrationHandler();
+                EPub3.setContentFiltersRegistrationHandler(contentFilterRegistrationHandler);*/
 
-				mContainer = EPub3.openBook(path);
+                mContainer = EPub3.openBook(path);
 
-				InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
+                InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
                 if (licenseInputStream != null) {
                     BufferedReader licenseReader = new BufferedReader(new InputStreamReader(licenseInputStream));
                     String licenseContent = "";
@@ -207,8 +206,11 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
 
                     //String licenseContent = licenseReader.;
                     mLicense = lcpService.openLicense(licenseContent);
-                    if (mLicense != null && !mLicense.isDecrypted())
+                    if (mLicense != null && !mLicense.isDecrypted()) {
                         showPassphraseDialog();
+                    } else {
+                        openSelectedBook();
+                    }
                 } else {
                     openSelectedBook();
                 }
@@ -245,81 +247,81 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
     // async!
     private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback)
     {
-    	if (m_SdkErrorHandler_Messages != null) {
+        if (m_SdkErrorHandler_Messages != null) {
 
-    		if (m_SdkErrorHandler_Messages.size() == 0) {
-    			m_SdkErrorHandler_Messages = null;
-    			callback.done();
-    			return;
-    		}
+            if (m_SdkErrorHandler_Messages.size() == 0) {
+                m_SdkErrorHandler_Messages = null;
+                callback.done();
+                return;
+            }
 
-    		String message = m_SdkErrorHandler_Messages.pop();
+            String message = m_SdkErrorHandler_Messages.pop();
 
-			AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
+            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
 
-			alertBuilder.setTitle("EPUB warning");
-			alertBuilder.setMessage(message);
+            alertBuilder.setTitle("EPUB warning");
+            alertBuilder.setMessage(message);
 
-			alertBuilder.setCancelable(false);
+            alertBuilder.setCancelable(false);
 
-			alertBuilder.setOnCancelListener(
-				new DialogInterface.OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						m_SdkErrorHandler_Messages = null;
-						callback.done();
-					}
-				}
-			);
+            alertBuilder.setOnCancelListener(
+                    new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            m_SdkErrorHandler_Messages = null;
+                            callback.done();
+                        }
+                    }
+            );
 
-			alertBuilder.setOnDismissListener(
-				new DialogInterface.OnDismissListener() {
-					@Override
-					public void onDismiss(DialogInterface dialog) {
-						popSdkErrorHandlerMessage(ctx, callback);
-					}
-				}
-			);
+            alertBuilder.setOnDismissListener(
+                    new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            popSdkErrorHandlerMessage(ctx, callback);
+                        }
+                    }
+            );
 
-			alertBuilder.setPositiveButton("Ignore",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.dismiss();
-						}
-			    	}
-				);
-			alertBuilder.setNegativeButton("Ignore all",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-		    	}
-			);
+            alertBuilder.setPositiveButton("Ignore",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    }
+            );
+            alertBuilder.setNegativeButton("Ignore all",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    }
+            );
 
-			AlertDialog alert = alertBuilder.create();
-			alert.setCanceledOnTouchOutside(false);
+            AlertDialog alert = alertBuilder.create();
+            alert.setCanceledOnTouchOutside(false);
 
-			alert.show(); //async!
-		}
-    	else {
-    		callback.done();
-    	}
+            alert.show(); //async!
+        }
+        else {
+            callback.done();
+        }
     }
 
-	@Override
-	public boolean handleSdkError(String message, boolean isSevereEpubError) {
+    @Override
+    public boolean handleSdkError(String message, boolean isSevereEpubError) {
 
-	    System.out.println("SdkErrorHandler: " + message + " (" + (isSevereEpubError ? "warning" : "info") + ")");
+        System.out.println("SdkErrorHandler: " + message + " (" + (isSevereEpubError ? "warning" : "info") + ")");
 
-	    if (m_SdkErrorHandler_Messages != null && isSevereEpubError) {
-	    	m_SdkErrorHandler_Messages.push(message);
-	    }
+        if (m_SdkErrorHandler_Messages != null && isSevereEpubError) {
+            m_SdkErrorHandler_Messages.push(message);
+        }
 
-		// never throws an exception
-		return true;
-	}
+        // never throws an exception
+        return true;
+    }
 
     // get books in /sdcard/epubtest path
     private List<String> getInnerBooks() {
@@ -328,27 +330,27 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
         File epubpath = new File(sdcard, "epubtest");
         epubpath.mkdirs();
         File[] files = epubpath.listFiles();
-		if (files != null) {
-	        for (File f : files) {
-	            if (f.isFile()) {
-	                String name = f.getName();
-	                if (name.length() > 5
-	                        && name.substring(name.length() - 5).equals(".epub")) {
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile()) {
+                    String name = f.getName();
+                    if (name.length() > 5
+                            && name.substring(name.length() - 5).equals(".epub")) {
 
-	                    list.add(name);
-	                    Log.i("books", name);
-	                }
-	            }
-	        }
+                        list.add(name);
+                        Log.i("books", name);
+                    }
+                }
+            }
         }
-		Collections.sort(list, new Comparator<String>() {
+        Collections.sort(list, new Comparator<String>() {
 
-			@Override
-			public int compare(String s1, String s2) {
-				return s1.compareToIgnoreCase(s2);
-			}
+            @Override
+            public int compare(String s1, String s2) {
+                return s1.compareToIgnoreCase(s2);
+            }
 
-		});
+        });
         return list;
     }
 }
