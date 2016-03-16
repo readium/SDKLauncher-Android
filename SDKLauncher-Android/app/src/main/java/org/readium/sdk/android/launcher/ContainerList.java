@@ -23,30 +23,32 @@
 
 package org.readium.sdk.android.launcher;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import org.apache.commons.io.FilenameUtils;
 import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.Container;
-import org.readium.sdk.android.Package;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
+import org.readium.sdk.lcp.Acquisition;
 import org.readium.sdk.lcp.License;
+import org.readium.sdk.lcp.NetProvider;
 import org.readium.sdk.lcp.Service;
 import org.readium.sdk.lcp.ServiceFactory;
 import org.readium.sdk.lcp.StorageProvider;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -54,7 +56,6 @@ import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -64,13 +65,25 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
-import com.koushikdutta.async.util.Charsets;
+import com.koushikdutta.ion.builder.Builders;
 
 /**
  * @author chtian
  *
  */
-public class ContainerList extends FragmentActivity implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener {
+public class ContainerList extends FragmentActivity
+        implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener,
+        AcquisitionDialogFragment.Listener
+{
+    private Context context;
+    private Stack<String> m_SdkErrorHandler_Messages = null;
+    private License mLicense;
+    private Acquisition mAcquisition;
+    private AcquisitionDialogFragment mAcquisitionDialogFragment;
+    private Container mContainer;
+    private String mBookName;
+    private Service mLcpService;
+    private final String testPath = "epubtest";
 
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
@@ -86,11 +99,45 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
         public abstract void once();
     }
 
-    private Context context;
-    private License mLicense;
-    private Container mContainer;
-    private String mBookName;
-    private final String testPath = "epubtest";
+    public void showAcquisitionDialog() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        AcquisitionDialogFragment newFragment = new AcquisitionDialogFragment();
+        newFragment.show(fragmentManager, "dialog");
+        mAcquisitionDialogFragment = newFragment;
+    }
+
+    /**
+     * Set the progress bar value
+     * @param value Progress value between 0 and 1
+     */
+    public void progressAcquisitionDialog(float value) {
+        if (mAcquisitionDialogFragment == null) {
+            return;
+        }
+
+        ProgressDialog dialog = (ProgressDialog) mAcquisitionDialogFragment.getDialog();
+
+        if (dialog == null) {
+            // Progress dialog is not visible
+            return;
+        }
+
+        dialog.setProgress((int)(value*100.0));
+    }
+
+    public void removeAcquisitionDialog() {
+        if (mAcquisitionDialogFragment == null) {
+            return;
+        }
+
+        mAcquisitionDialogFragment.dismiss();
+        mAcquisitionDialogFragment = null;
+    }
+
+    @Override
+    public void onAcquisitionDialogCancel(DialogFragment dialog) {
+        removeAcquisitionDialog();
+    }
 
     public void showPassphraseDialog() {
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -98,9 +145,6 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
         newFragment.show(fragmentManager, "dialog");
     }
 
-    // The dialog fragment receives a reference to this Activity through the
-    // Fragment.onAttach() callback, which it uses to call the following methods
-    // defined by the NoticeDialogFragment.NoticeDialogListener interface
     @Override
     public void onPassphraseDialogPositiveClick(DialogFragment dialog, String passPhrase) {
         // User touched the dialog's positive button
@@ -144,83 +188,136 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
                     Toast.LENGTH_LONG).show();
         }
 
+
+        // Initialize epub3
+        // Call it before initializing lcp service to initialize readium filters
+        EPub3.initialize();
+
+        // Loads the native lib and sets the path to use for cache
+        EPub3.setCachePath(getCacheDir().getAbsolutePath());
+
+        // Initialize lcp
+        // Load certificate
+        String certContent = "";
+        try {
+            InputStream is = getAssets().open("lcp/lcp.crt");
+            byte[] data = new byte[is.available()];
+            is.read(data);
+            is.close();
+            certContent = new String(data, "UTF-8");
+        } catch (IOException e) {
+            // TODO
+        }
+
+        StorageProvider storageProvider = new StorageProvider(getApplicationContext());
+        NetProvider netProvider = new NetProvider(getApplicationContext());
+        mLcpService = ServiceFactory.build(
+                certContent, storageProvider, netProvider);
+
+
         view.setOnItemClickListener(new ListView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                                     long arg3) {
-                //String test = StorageProvider.getValue("test");
-
                 mBookName = list.get(arg2);
 
                 String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + mBookName;
 
                 Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
-                m_SdkErrorHandler_Messages = new Stack<String>();
-
-                EPub3.setSdkErrorHandler(ContainerList.this);
-
-                //Get the text file
-                String certContent = "";
-
-                //Get the text file
-                try {
-                    InputStream is = getAssets().open("lcp/lcp.crt");
-                    byte[] data = new byte[is.available()];
-                    is.read(data);
-                    is.close();
-                    certContent = new String(data, "UTF-8");
-                } catch (IOException e) {
-                    // TODO
-                }
-
-                // Call it before initializing lcp service to initialize readium sdk
-                boolean isEpub3Book = EPub3.isEpub3Book(path);
-
-                Service lcpService = ServiceFactory.build(certContent, new StorageProvider(getApplicationContext()));
-
-                /*ContentFilterRegistrationHandler contentFilterRegistrationHandler = new ContentFilterRegistrationHandler();
-                EPub3.setContentFiltersRegistrationHandler(contentFilterRegistrationHandler);*/
-
-                mContainer = EPub3.openBook(path);
-
-                InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
-                if (licenseInputStream != null) {
-                    BufferedReader licenseReader = new BufferedReader(new InputStreamReader(licenseInputStream));
-                    String licenseContent = "";
-
-                    try {
-                        StringBuilder licenseStringBuilder = new StringBuilder(licenseInputStream.available());
-
-                        String line;
-
-                        while ((line = licenseReader.readLine()) != null) {
-                            licenseStringBuilder.append(line);
-                        }
-
-                        licenseContent = licenseStringBuilder.toString();
-                    } catch (IOException e) {
-                        // Manage errors
-                    }
-
-                    //String licenseContent = licenseReader.;
-                    mLicense = lcpService.openLicense(licenseContent);
-                    if (mLicense != null && !mLicense.isDecrypted()) {
-                        showPassphraseDialog();
-                    } else {
-                        openSelectedBook();
-                    }
+                if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                    downloadAndOpenSelectedBook(path);
                 } else {
-                    openSelectedBook();
+                    decryptAndOpenSelectedBook(path);
                 }
-
-                EPub3.setSdkErrorHandler(null);
             }
         });
+    }
 
-        // Loads the native lib and sets the path to use for cache
-        EPub3.setCachePath(getCacheDir().getAbsolutePath());
+    /**
+     * Acquire epub defined in the LCPL license and open it
+     * @param licensePath Path of the LCPL license
+     *
+     */
+    private void downloadAndOpenSelectedBook(String licensePath) {
+        InputStream licenseInputStream = null;
+
+        try {
+            licenseInputStream = new FileInputStream(licensePath);
+        } catch (FileNotFoundException e) {
+            // TODO
+        }
+
+        mLicense = mLcpService.openLicense(licenseInputStream);
+
+        // Store downloaded epub in a temporary file
+        File outputFile = null;
+
+        try {
+            outputFile = File.createTempFile("lcp", ".epub", getCacheDir());
+        } catch (IOException e) {
+            // TODO
+        }
+
+        final String path = outputFile.getAbsolutePath();
+        mAcquisition = mLicense.createAcquisition(path);
+
+        if (mAcquisition != null) {
+            mAcquisition.start(new Acquisition.Listener() {
+                @Override
+                public void onAcquisitionStarted() {
+                    // Show progress bar
+                    showAcquisitionDialog();
+                }
+
+                @Override
+                public void onAcquisitionEnded() {
+                    // Download is done
+                    progressAcquisitionDialog(1.0f);
+
+                    // Remove acquisition dialog after 5 seconds
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            removeAcquisitionDialog();
+                            decryptAndOpenSelectedBook(path);
+                        }
+                    }, 2000);
+                }
+
+                @Override
+                public void onAcquisitionProgressed(float value) {
+                    // Update progress bar value
+                    progressAcquisitionDialog(value);
+                }
+            });
+        }
+    }
+
+    private void decryptAndOpenSelectedBook(String path) {
+        m_SdkErrorHandler_Messages = new Stack<>();
+        EPub3.setSdkErrorHandler(this);
+
+        mContainer = EPub3.openBook(path);
+
+        // Is the book encrypted ?
+        InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
+
+        if (licenseInputStream != null) {
+            mLicense = mLcpService.openLicense(licenseInputStream);
+
+            if (mLicense != null && !mLicense.isDecrypted()) {
+                showPassphraseDialog();
+            } else {
+                openSelectedBook();
+            }
+        } else {
+            openSelectedBook();
+        }
+
+        EPub3.setSdkErrorHandler(null);
     }
 
     private void openSelectedBook() {
@@ -241,8 +338,6 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
         // async!
         popSdkErrorHandlerMessage(context, callback);
     }
-
-    private Stack<String> m_SdkErrorHandler_Messages = null;
 
     // async!
     private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback)
@@ -332,15 +427,21 @@ public class ContainerList extends FragmentActivity implements SdkErrorHandler, 
         File[] files = epubpath.listFiles();
         if (files != null) {
             for (File f : files) {
-                if (f.isFile()) {
-                    String name = f.getName();
-                    if (name.length() > 5
-                            && name.substring(name.length() - 5).equals(".epub")) {
-
-                        list.add(name);
-                        Log.i("books", name);
-                    }
+                if (!f.isFile()) {
+                    continue;
                 }
+
+                // Get file extension
+                String name = f.getName();
+                String ext = FilenameUtils.getExtension(name);
+
+                if (!ext.equals("epub") && !ext.equals("lcpl")) {
+                    continue;
+                }
+
+                // Only add epub and lcpl files
+                list.add(name);
+                Log.i("books", name);
             }
         }
         Collections.sort(list, new Comparator<String>() {
