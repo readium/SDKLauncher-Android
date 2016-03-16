@@ -9,9 +9,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.widget.EditText;
 
-/**
- * Created by clebeaupin on 28/01/16.
- */
 public class PassphraseDialogFragment extends DialogFragment {
     PassphraseDialogListener mListener;
 
@@ -63,7 +60,7 @@ public class PassphraseDialogFragment extends DialogFragment {
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(activity.toString()
-                    + " must implement NoticeDialogListener");
+                    + " must implement PassphraseDialogListener");
         }
     }
 }
