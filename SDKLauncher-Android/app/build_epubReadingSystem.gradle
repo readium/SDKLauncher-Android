@@ -1,0 +1,238 @@
+import groovy.json.JsonSlurper
+
+def getCommandOutput(cwd, cmd) {
+    def stdout = new ByteArrayOutputStream()
+
+    exec {
+        workingDir = cwd
+        commandLine = cmd
+        standardOutput = stdout
+    }
+
+    return stdout.toString().trim()
+}
+
+def getGitSha(cwd) {
+    return getCommandOutput(cwd, ["git", "rev-parse", "--verify", "HEAD"])
+}
+
+def getGitStatus(cwd) {
+    return getCommandOutput(cwd, ["git", "status", "--porcelain"])
+}
+
+def getGitBranch(cwd, sha) {
+    def output = getCommandOutput(cwd, ["git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', "refs/heads/"])
+
+    def lines = output.split("###")
+
+    for (def line: lines) {
+        if (line.contains(sha)) {
+            return line.split("@@@")[0]
+        }
+    }
+
+    return ""
+}
+
+def getGitTag(cwd, sha) {
+    return getCommandOutput(cwd, ["git", "describe", "--tags", "--long", sha])
+}
+
+task buildEpubReadingSystem_Git() {
+    doLast {
+        println "Build navigator.epubReadingSystem Git version info..."
+        println file('.').absolutePath
+
+        // Root
+        def rootFolder = "$projectDir/../../"
+        def rootSha = getGitSha(rootFolder)
+        def rootStatus = getGitStatus(rootFolder)
+        def rootBranch = getGitBranch(rootFolder, rootSha)
+        def rootTag = getGitTag(rootFolder, rootSha)
+        def rootClean = "false";
+
+        if (rootStatus.length() == 0) {
+            rootClean = "true";
+        }
+
+        ext.shaAndroid = { return rootSha }
+        ext.tagAndroid = { return rootTag }
+        ext.cleanAndroid = { return rootClean }
+        ext.branchAndroid = { return rootBranch }
+
+        // SDK
+        def sdkFolder = "$projectDir/../../readium-sdk/"
+        def sdkSha = getGitSha(sdkFolder)
+        def sdkStatus = getGitStatus(sdkFolder)
+        def sdkBranch = getGitBranch(sdkFolder, sdkSha)
+        def sdkTag = getGitTag(sdkFolder, sdkSha)
+        def sdkClean = "false";
+
+        if (sdkStatus.length() == 0) {
+            sdkClean = "true";
+        }
+
+        ext.shaSDK = { return sdkSha }
+        ext.tagSDK = { return sdkTag }
+        ext.cleanSDK = { return sdkClean }
+        ext.branchSDK = { return sdkBranch }
+
+        // SharedJs
+        def sharedJsFolder = "$projectDir/../../readium-shared-js/"
+        def sharedJsSha = getGitSha(sharedJsFolder)
+        def sharedJsStatus = getGitStatus(sharedJsFolder)
+        def sharedJsBranch = getGitBranch(sharedJsFolder, sharedJsSha)
+        def sharedJsTag = getGitTag(sharedJsFolder, sharedJsSha)
+        def sharedJsClean = "false";
+
+        if (sharedJsStatus.length() == 0) {
+            sharedJsClean = "true";
+        }
+
+        ext.shaSharedJs = { return sharedJsSha }
+        ext.tagSharedJs = { return sharedJsTag }
+        ext.cleanSharedJs = { return sharedJsClean }
+        ext.branchSharedJs = { return sharedJsBranch }
+
+        // CFI Js
+        def cfiJsFolder = "$projectDir/../../readium-shared-js/readium-cfi-js/"
+        def cfiJsSha = getGitSha(cfiJsFolder)
+        def cfiJsStatus = getGitStatus(cfiJsFolder)
+        def cfiJsBranch = getGitBranch(cfiJsFolder, cfiJsSha)
+        def cfiJsTag = getGitTag(cfiJsFolder, cfiJsSha)
+        def cfiJsClean = "false";
+
+        if (cfiJsStatus.length() == 0) {
+            cfiJsClean = "true";
+        }
+
+        ext.shaCfiJs = { return cfiJsSha }
+        ext.tagCfiJs = { return cfiJsTag }
+        ext.cleanCfiJs = { return cfiJsClean }
+        ext.branchCfiJs = { return cfiJsBranch }
+    }
+}
+
+task buildEpubReadingSystem_DELETE(type: Delete) {
+    dependsOn buildEpubReadingSystem_Git
+
+    delete './src/main/assets/readium-shared-js/epubReadingSystem.js'
+}
+
+task buildEpubReadingSystem(type: Copy) {
+    dependsOn buildEpubReadingSystem_DELETE
+
+    def timestamp = new Date().getTime()
+    println timestamp
+    def timeString = new Date().toGMTString()
+    println timeString
+
+    from './src/main/assets/readium-shared-js/epubReadingSystem_EMPTY.js'
+    into './src/main/assets/readium-shared-js'
+    rename { String fileName ->
+        fileName.replace('_EMPTY', '')
+    }
+    filter {
+        String line ->
+            if (line.startsWith('ReadiumSDK.READIUM_dateTimeString')) {
+                return line.replace("= '';", "= '" + timeString + "';")
+            }
+            else if (line.contains('_timestamp')) {
+                return line.replace("= '';", "= " + timestamp + ";")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_version')) {
+
+                def folderRoot = "$projectDir/../../readium-shared-js/"
+
+                def packageSlurper = new JsonSlurper()
+                def packageJson = packageSlurper.parse file(folderRoot + 'package.json')
+
+                return line.replace("= '';", "= '" + packageJson.version + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_version')) {
+
+                def folderRoot = "$projectDir/../../readium-shared-js/readium-cfi-js/"
+
+                def packageSlurper = new JsonSlurper()
+                def packageJson = packageSlurper.parse file(folderRoot + 'package.json')
+
+                return line.replace("= '';", "= '" + packageJson.version + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_version')) {
+
+                return line.replace("= '';", "= '" + "0.0.0" + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_version')) {
+
+                return line.replace("= '';", "= '" + "0.0.0" + "';")
+            }
+
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_sha')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaAndroid() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_tag')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.tagAndroid() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_clean')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.cleanAndroid() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_branch')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchAndroid() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_Android_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchAndroid().startsWith("release/") || (buildEpubReadingSystem_Git.branchAndroid() == "master")) + "';")
+            }
+
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_sha')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaSDK() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_tag')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.tagSDK() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_clean')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.cleanSDK() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_branch')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchSDK() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SDK_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchSDK().startsWith("release/") || (buildEpubReadingSystem_Git.branchSDK() == "master")) + "';")
+            }
+
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_sha')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaSharedJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_tag')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.tagSharedJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_clean')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.cleanSharedJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_branch')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchSharedJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_SHARED_JS_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchSharedJs().startsWith("release/") || (buildEpubReadingSystem_Git.branchSharedJs() == "master")) + "';")
+            }
+
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_sha')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.shaCfiJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_tag')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.tagCfiJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_clean')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.cleanCfiJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_branch')) {
+                return line.replace("= '';", "= '" + buildEpubReadingSystem_Git.branchCfiJs() + "';")
+            }
+            else if (line.startsWith('ReadiumSDK.READIUM_CFI_JS_release')) {
+                return line.replace("= '';", "= '" + (buildEpubReadingSystem_Git.branchCfiJs().startsWith("release/") || (buildEpubReadingSystem_Git.branchCfiJs() == "master")) + "';")
+            }
+
+            else
+                return line
+    }
+}
+
