@@ -1,452 +1,115 @@
 import groovy.json.JsonSlurper
 
+def getCommandOutput(cwd, cmd) {
+    def stdout = new ByteArrayOutputStream()
 
-def getShaFromHead(gitFolder) {
-
-    def head = new File(gitFolder + "HEAD").text.split(":")
-    def isCommit = head.length == 1
-    if(isCommit) return head[0].trim()
-    def refHead = new File(gitFolder + head[1].trim())
-    return refHead.text.trim()
-}
-
-task buildEpubReadingSystem_Git_SHA_ANDROID(type: Exec) {
-
-    //def gitRootFolder = "$gitFolder../"
-    //println gitRootFolder
-    //def cmd = "git --git-dir=$gitRootFolder --work-tree=. rev-parse --verify HEAD"
-    //def proc = cmd.execute()
-    //def rev = proc.text.trim()
-    //println rev
-
-    def gitFolder = "$projectDir/../../"
-    ext.gitFolder = gitFolder
-
-    workingDir "$gitFolder"
-
-    //"--git-dir=$gitFolder", "--work-tree=.",
-//
-//                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//                    println "WINDOWS"
-//                    commandLine "cmd", "/c", "git", "rev-parse", "--verify", "HEAD"
-//                } else {
-//                    println "NOT WINDOWS"
-//                    commandLine "git", "rev-parse", "--verify", "HEAD"
-//                }
-
-    commandLine "git", "rev-parse", "--verify", "HEAD"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
+    exec {
+        workingDir = cwd
+        commandLine = cmd
+        standardOutput = stdout
     }
+
+    return stdout.toString().trim()
 }
 
-task buildEpubReadingSystem_Git_STATUS_ANDROID(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_SHA_ANDROID
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_ANDROID.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "status", "--porcelain"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
+def getGitSha(cwd) {
+    return getCommandOutput(cwd, ["git", "rev-parse", "--verify", "HEAD"])
 }
 
-task buildEpubReadingSystem_Git_BRANCH_ANDROID(type: Exec) {
+def getGitStatus(cwd) {
+    return getCommandOutput(cwd, ["git", "status", "--porcelain"])
+}
 
-    dependsOn buildEpubReadingSystem_Git_STATUS_ANDROID
+def getGitBranch(cwd, sha) {
+    def output = getCommandOutput(cwd, ["git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', "refs/heads/"])
 
-    def gitFolder = buildEpubReadingSystem_Git_SHA_ANDROID.gitFolder
+    def lines = output.split("###")
 
-    workingDir "$gitFolder"
-
-    commandLine "git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', '\'refs/heads/\''
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        def sha = buildEpubReadingSystem_Git_SHA_ANDROID.output()
-        def lines = standardOutput.toString().trim().split("###")
-        for (int i = 0; i < lines.length; i++) {
-            def line = lines[i].trim()
-            if (line.contains(sha)) {
-                return line.split("@@@")[0]
-            }
+    for (def line: lines) {
+        if (line.contains(sha)) {
+            return line.split("@@@")[0]
         }
-        return "";
     }
+
+    return ""
 }
 
-task buildEpubReadingSystem_Git_TAG_ANDROID(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_BRANCH_ANDROID
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_ANDROID.gitFolder
-
-    workingDir "$gitFolder"
-
-    def sha = buildEpubReadingSystem_Git_SHA_ANDROID.output()
-
-    commandLine "git", "describe", "--tags", "--long", "$sha"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
+def getGitTag(cwd, sha) {
+    return getCommandOutput(cwd, ["git", "describe", "--tags", "--long", sha])
 }
-
-task buildEpubReadingSystem_Git_SHA_SDK(type: Exec) {
-
-    def gitFolder = "$projectDir/../../readium-sdk/"
-    ext.gitFolder = gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "rev-parse", "--verify", "HEAD"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_STATUS_SDK(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_SHA_SDK
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SDK.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "status", "--porcelain"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_BRANCH_SDK(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_STATUS_SDK
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SDK.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', '\'refs/heads/\''
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        def sha = buildEpubReadingSystem_Git_SHA_SDK.output()
-        def lines = standardOutput.toString().trim().split("###")
-        for (int i = 0; i < lines.length; i++) {
-            def line = lines[i].trim()
-            if (line.contains(sha)) {
-                return line.split("@@@")[0]
-            }
-        }
-        return "";
-    }
-}
-
-task buildEpubReadingSystem_Git_TAG_SDK(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_BRANCH_SDK
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SDK.gitFolder
-
-    workingDir "$gitFolder"
-
-    def sha = buildEpubReadingSystem_Git_SHA_SDK.output()
-
-    commandLine "git", "describe", "--tags", "--long", "$sha"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_SHA_SHARED_JS(type: Exec) {
-
-    def gitFolder = "$projectDir/../../readium-shared-js/"
-    ext.gitFolder = gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "rev-parse", "--verify", "HEAD"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_STATUS_SHARED_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_SHA_SHARED_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SHARED_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "status", "--porcelain"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_BRANCH_SHARED_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_STATUS_SHARED_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SHARED_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', '\'refs/heads/\''
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        def sha = buildEpubReadingSystem_Git_SHA_SHARED_JS.output()
-        def lines = standardOutput.toString().trim().split("###")
-        for (int i = 0; i < lines.length; i++) {
-            def line = lines[i].trim()
-            if (line.contains(sha)) {
-                return line.split("@@@")[0]
-            }
-        }
-        return "";
-    }
-}
-
-task buildEpubReadingSystem_Git_TAG_SHARED_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_BRANCH_SHARED_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_SHARED_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    def sha = buildEpubReadingSystem_Git_SHA_SHARED_JS.output()
-
-    commandLine "git", "describe", "--tags", "--long", "$sha"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_SHA_CFI_JS(type: Exec) {
-
-    def gitFolder = "$projectDir/../../readium-shared-js/readium-cfi-js/"
-    ext.gitFolder = gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "rev-parse", "--verify", "HEAD"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_STATUS_CFI_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_SHA_CFI_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_CFI_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "status", "--porcelain"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
-task buildEpubReadingSystem_Git_BRANCH_CFI_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_STATUS_CFI_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_CFI_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    commandLine "git", "for-each-ref", '--format="###%(refname:short)@@@%(objectname)"', '\'refs/heads/\''
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        def sha = buildEpubReadingSystem_Git_SHA_CFI_JS.output()
-        def lines = standardOutput.toString().trim().split("###")
-        for (int i = 0; i < lines.length; i++) {
-            def line = lines[i].trim()
-            if (line.contains(sha)) {
-                return line.split("@@@")[0]
-            }
-        }
-        return "";
-    }
-}
-
-task buildEpubReadingSystem_Git_TAG_CFI_JS(type: Exec) {
-
-    dependsOn buildEpubReadingSystem_Git_BRANCH_CFI_JS
-
-    def gitFolder = buildEpubReadingSystem_Git_SHA_CFI_JS.gitFolder
-
-    workingDir "$gitFolder"
-
-    def sha = buildEpubReadingSystem_Git_SHA_CFI_JS.output()
-
-    commandLine "git", "describe", "--tags", "--long", "$sha"
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        return standardOutput.toString().trim()
-    }
-}
-
 
 task buildEpubReadingSystem_Git() {
-
-    dependsOn buildEpubReadingSystem_Git_TAG_ANDROID, buildEpubReadingSystem_Git_TAG_SDK, buildEpubReadingSystem_Git_TAG_SHARED_JS, buildEpubReadingSystem_Git_TAG_CFI_JS
     doLast {
         println "Build navigator.epubReadingSystem Git version info..."
-
         println file('.').absolutePath
 
-        def gitFolderRoot = "$projectDir/../../.git/"
-        println gitFolderRoot
-        def sha_ANDROID = getShaFromHead(gitFolderRoot)
-        println sha_ANDROID
+        // Root
+        def rootFolder = "$projectDir/../../"
+        def rootSha = getGitSha(rootFolder)
+        def rootStatus = getGitStatus(rootFolder)
+        def rootBranch = getGitBranch(rootFolder, rootSha)
+        def rootTag = getGitTag(rootFolder, rootSha)
+        def rootClean = "false";
 
-        println buildEpubReadingSystem_Git_SHA_ANDROID.output()
-        def tagRoot = buildEpubReadingSystem_Git_TAG_ANDROID.output()
-        println tagRoot
-
-        def statusRoot = buildEpubReadingSystem_Git_STATUS_ANDROID.output()
-        //println statusRoot
-        def cleanRoot = "false";
-        if (statusRoot.length() == 0) {
-            cleanRoot = "true";
+        if (rootStatus.length() == 0) {
+            rootClean = "true";
         }
-        println cleanRoot
 
-        def branchRoot = buildEpubReadingSystem_Git_BRANCH_ANDROID.output()
-        println branchRoot
+        ext.shaAndroid = { return rootSha }
+        ext.tagAndroid = { return rootTag }
+        ext.cleanAndroid = { return rootClean }
+        ext.branchAndroid = { return rootBranch }
 
-        ext.shaAndroid = { return sha_ANDROID }
-        ext.tagAndroid = { return tagRoot }
-        ext.cleanAndroid = { return cleanRoot }
-        ext.branchAndroid = { return branchRoot }
+        // SDK
+        def sdkFolder = "$projectDir/../../readium-sdk/"
+        def sdkSha = getGitSha(sdkFolder)
+        def sdkStatus = getGitStatus(sdkFolder)
+        def sdkBranch = getGitBranch(sdkFolder, sdkSha)
+        def sdkTag = getGitTag(sdkFolder, sdkSha)
+        def sdkClean = "false";
 
-
-        def gitFolderSdk = "$gitFolderRoot" + "modules/readium-sdk/"
-        println gitFolderSdk
-        def sha_SDK = getShaFromHead(gitFolderSdk)
-        println sha_SDK
-
-        println buildEpubReadingSystem_Git_SHA_SDK.output()
-        def tagSdk = buildEpubReadingSystem_Git_TAG_SDK.output()
-        println tagSdk
-
-        def statusSdk = buildEpubReadingSystem_Git_STATUS_SDK.output()
-        //println statusSdk
-        def cleanSdk = "false";
-        if (statusSdk.length() == 0) {
-            cleanSdk = "true";
+        if (sdkStatus.length() == 0) {
+            sdkClean = "true";
         }
-        println cleanSdk
 
-        def branchSdk = buildEpubReadingSystem_Git_BRANCH_SDK.output()
-        println branchSdk
+        ext.shaSDK = { return sdkSha }
+        ext.tagSDK = { return sdkTag }
+        ext.cleanSDK = { return sdkClean }
+        ext.branchSDK = { return sdkBranch }
 
-        ext.shaSDK = { return sha_SDK }
-        ext.tagSDK = { return tagSdk }
-        ext.cleanSDK = { return cleanSdk }
-        ext.branchSDK = { return branchSdk }
+        // SharedJs
+        def sharedJsFolder = "$projectDir/../../readium-shared-js/"
+        def sharedJsSha = getGitSha(sharedJsFolder)
+        def sharedJsStatus = getGitStatus(sharedJsFolder)
+        def sharedJsBranch = getGitBranch(sharedJsFolder, sharedJsSha)
+        def sharedJsTag = getGitTag(sharedJsFolder, sharedJsSha)
+        def sharedJsClean = "false";
 
-
-        def gitFolderSharedJs = "$projectDir/../../.git/modules/readium-shared-js/"
-        println gitFolderSharedJs
-        def sha_SHARED_JS = getShaFromHead(gitFolderSharedJs)
-        println sha_SHARED_JS
-
-        println buildEpubReadingSystem_Git_SHA_SHARED_JS.output()
-        def tagSharedJs = buildEpubReadingSystem_Git_TAG_SHARED_JS.output()
-        println tagSharedJs
-
-        def statusSharedJS = buildEpubReadingSystem_Git_STATUS_SHARED_JS.output()
-        //println statusSharedJS
-        def cleanSharedJs = "false";
-        if (statusSharedJS.length() == 0) {
-            cleanSharedJs = "true";
+        if (sharedJsStatus.length() == 0) {
+            sharedJsClean = "true";
         }
-        println cleanSharedJs
 
-        def branchSharedJs = buildEpubReadingSystem_Git_BRANCH_SHARED_JS.output()
-        println branchSharedJs
+        ext.shaSharedJs = { return sharedJsSha }
+        ext.tagSharedJs = { return sharedJsTag }
+        ext.cleanSharedJs = { return sharedJsClean }
+        ext.branchSharedJs = { return sharedJsBranch }
 
-        ext.shaSharedJs = { return sha_SHARED_JS }
-        ext.tagSharedJs = { return tagSharedJs }
-        ext.cleanSharedJs = { return cleanSharedJs }
-        ext.branchSharedJs = { return branchSharedJs }
+        // CFI Js
+        def cfiJsFolder = "$projectDir/../../readium-shared-js/readium-cfi-js/"
+        def cfiJsSha = getGitSha(cfiJsFolder)
+        def cfiJsStatus = getGitStatus(cfiJsFolder)
+        def cfiJsBranch = getGitBranch(cfiJsFolder, cfiJsSha)
+        def cfiJsTag = getGitTag(cfiJsFolder, cfiJsSha)
+        def cfiJsClean = "false";
 
-
-
-        def gitFolderCfiJs = "$gitFolderSharedJs" + "modules/readium-cfi-js/"
-        println gitFolderCfiJs
-        def sha_CFI_JS = getShaFromHead(gitFolderCfiJs)
-        println sha_CFI_JS
-
-        println buildEpubReadingSystem_Git_SHA_CFI_JS.output()
-        def tagCfiJs = buildEpubReadingSystem_Git_TAG_CFI_JS.output()
-        println tagCfiJs
-
-        def statusCfiJs = buildEpubReadingSystem_Git_STATUS_CFI_JS.output()
-        //println statusCfiJs
-        def cleanCfiJs = "false";
-        if (statusCfiJs.length() == 0) {
-            cleanCfiJs = "true";
+        if (cfiJsStatus.length() == 0) {
+            cfiJsClean = "true";
         }
-        println cleanCfiJs
 
-        def branchCfiJs = buildEpubReadingSystem_Git_BRANCH_CFI_JS.output()
-        println branchCfiJs
-
-        ext.shaCfiJs = { return sha_CFI_JS }
-        ext.tagCfiJs = { return tagCfiJs }
-        ext.cleanCfiJs = { return cleanCfiJs }
-        ext.branchCfiJs = { return branchCfiJs }
+        ext.shaCfiJs = { return cfiJsSha }
+        ext.tagCfiJs = { return cfiJsTag }
+        ext.cleanCfiJs = { return cfiJsClean }
+        ext.branchCfiJs = { return cfiJsBranch }
     }
 }
 
@@ -572,3 +235,4 @@ task buildEpubReadingSystem(type: Copy) {
                 return line
     }
 }
+
