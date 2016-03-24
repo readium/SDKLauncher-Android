@@ -27,7 +27,7 @@ model {
                     srcDirs = [
                             './src/main/java',
                             '../../readium-sdk/Platform/Android/lib/src/main/java',
-                            '../../readium-lcp/platform/android/lib/src/main/java'
+                            '../../readium-lcp-client/platform/android/lib/src/main/java'
                     ]
                 }
             }
