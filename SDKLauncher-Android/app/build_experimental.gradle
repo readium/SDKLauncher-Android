@@ -17,6 +17,7 @@ model {
             jniLibs {
                 dependencies {
                     project ":epub3"
+                    project ":lcp"
                 }
             }
         }
@@ -25,7 +26,8 @@ model {
                 source {
                     srcDirs = [
                             './src/main/java',
-                            '../../readium-sdk/Platform/Android/lib/src/main/java'
+                            '../../readium-sdk/Platform/Android/lib/src/main/java',
+                            '../../readium-lcp-client/platform/android/lib/src/main/java'
                     ]
                 }
             }

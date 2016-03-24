@@ -18,12 +18,21 @@ How to get source from github
 How to build Readium SDK
 -------------------------------
 ````
-cd readium-sdk/Platform/Android
+cd readium-sdk/Platform/Androidmantano-test-lcp.epub
 ./ndk-compile.sh build your-ndk-path
 ````
 How to open eclipse project
 ----------------------
 Use File->Import... menu, don't use File->New menu 
+
+Test LCP
+--------
+
+We provide in this repository an LCP encrypted epub : epub-samples/mantano-test-lcp.epub
+You can push this book in /sdcard/epubtest directory on your device
+
+To decrypt this epub, you will be required to enter the following passphrase: White whales are huge!
+If you do not you will be unable to open this epub
 
 Debug C++ code on Android Studio 2
 ----------------------------------

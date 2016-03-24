@@ -1,4 +1,6 @@
 include ':epub3'
+include ':lcp'
 include ':app'
 
 project(':epub3').projectDir = new File(rootProject.projectDir, '../readium-sdk/Platform/Android/epub3')
+project(':lcp').projectDir = new File(rootProject.projectDir, '../readium-lcp-client/platform/android/lcp')
