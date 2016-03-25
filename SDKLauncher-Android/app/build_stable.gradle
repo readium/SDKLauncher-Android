@@ -14,10 +14,11 @@ android {
         main {
             java.srcDirs = [
                     './src/main/java',
-                    '../../readium-sdk/Platform/Android/lib/src/main/java'
+                    '../../readium-sdk/Platform/Android/lib/src/main/java',
+                    '../../readium-lcp-client/platform/android/lib/src/main/java'
             ]
             jniLibs.srcDirs = [
-                    '../../readium-sdk/Platform/Android/epub3/libs'
+                    '../../readium-lcp-client/platform/android/lcp/libs'
             ]
         }
     }
