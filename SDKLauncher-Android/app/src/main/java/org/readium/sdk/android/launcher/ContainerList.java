@@ -156,6 +156,11 @@ public class ContainerList extends FragmentActivity
 
     @Override
     public void onAcquisitionDialogCancel(DialogFragment dialog) {
+        if (mAcquisition != null) {
+            // Cancel download
+            mAcquisition.cancel();
+        }
+
         removeAcquisitionDialog();
     }
 
@@ -287,6 +292,13 @@ public class ContainerList extends FragmentActivity
 
         // New book local path is the temporary path
         mBookPath = outputFile.getAbsolutePath();
+
+        // If there is a current acquisition cancel it
+        if (mAcquisition != null) {
+            // Cancel download
+            mAcquisition.cancel();
+        }
+
         mAcquisition = mLicense.createAcquisition(mBookPath);
 
         if (mAcquisition != null) {
@@ -317,6 +329,10 @@ public class ContainerList extends FragmentActivity
                 public void onAcquisitionProgressed(float value) {
                     // Update progress bar value
                     progressAcquisitionDialog(value);
+                }
+
+                @Override
+                public void onAcquisitionCanceled() {
                 }
             });
         }
