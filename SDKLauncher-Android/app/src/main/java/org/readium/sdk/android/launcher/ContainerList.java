@@ -42,6 +42,7 @@ import org.readium.sdk.android.Container;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
 import org.readium.sdk.lcp.Acquisition;
+import org.readium.sdk.lcp.CredentialHandler;
 import org.readium.sdk.lcp.License;
 import org.readium.sdk.lcp.NetProvider;
 import org.readium.sdk.lcp.Service;
@@ -51,6 +52,7 @@ import org.readium.sdk.lcp.StorageProvider;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.DialogFragment;
@@ -81,9 +83,27 @@ public class ContainerList extends FragmentActivity
     private Acquisition mAcquisition;
     private AcquisitionDialogFragment mAcquisitionDialogFragment;
     private Container mContainer;
-    private String mBookName;
+    private String mBookName; // Name of the selected book
+    private String mBookPath; // Path of the selected book
     private Service mLcpService;
     private final String testPath = "epubtest";
+
+    private class OpenBook extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            m_SdkErrorHandler_Messages = new Stack<>();
+            EPub3.setSdkErrorHandler(ContainerList.this);
+            mContainer = EPub3.openBook(mBookPath);
+            EPub3.setSdkErrorHandler(null);
+
+            if (mContainer != null) {
+                // Container opening succeed
+                openSelectedBook();
+            }
+
+            return null;
+        }
+    }
 
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
@@ -155,10 +175,11 @@ public class ContainerList extends FragmentActivity
 
         if (!mLicense.isDecrypted()) {
             // Unable to decrypt license with the given passphrase
+            Toast.makeText(context, "Bad passphrase", Toast.LENGTH_LONG).show();
             return;
         }
 
-        openSelectedBook();
+        decryptAndOpenSelectedBook();
     }
 
     @Override
@@ -188,7 +209,6 @@ public class ContainerList extends FragmentActivity
                     Toast.LENGTH_LONG).show();
         }
 
-
         // Initialize epub3
         // Call it before initializing lcp service to initialize readium filters
         EPub3.initialize();
@@ -212,7 +232,13 @@ public class ContainerList extends FragmentActivity
         StorageProvider storageProvider = new StorageProvider(getApplicationContext());
         NetProvider netProvider = new NetProvider(getApplicationContext());
         mLcpService = ServiceFactory.build(
-                certContent, storageProvider, netProvider);
+                certContent, storageProvider, netProvider, new CredentialHandler() {
+                    @Override
+                    public void decrypt(License license) {
+                        mLicense = license;
+                        showPassphraseDialog();
+                    }
+                });
 
 
         view.setOnItemClickListener(new ListView.OnItemClickListener() {
@@ -221,15 +247,15 @@ public class ContainerList extends FragmentActivity
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                                     long arg3) {
                 mBookName = list.get(arg2);
-
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + testPath + "/" + mBookName;
+                mBookPath = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                        "/" + testPath + "/" + mBookName;
 
                 Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
                 if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                    downloadAndOpenSelectedBook(path);
+                    downloadAndOpenSelectedBook();
                 } else {
-                    decryptAndOpenSelectedBook(path);
+                    decryptAndOpenSelectedBook();
                 }
             }
         });
@@ -237,14 +263,13 @@ public class ContainerList extends FragmentActivity
 
     /**
      * Acquire epub defined in the LCPL license and open it
-     * @param licensePath Path of the LCPL license
-     *
      */
-    private void downloadAndOpenSelectedBook(String licensePath) {
+    private void downloadAndOpenSelectedBook() {
         InputStream licenseInputStream = null;
 
         try {
-            licenseInputStream = new FileInputStream(licensePath);
+            // Book path is a reference of an LCPL file
+            licenseInputStream = new FileInputStream(mBookPath);
         } catch (FileNotFoundException e) {
             // TODO
         }
@@ -260,8 +285,9 @@ public class ContainerList extends FragmentActivity
             // TODO
         }
 
-        final String path = outputFile.getAbsolutePath();
-        mAcquisition = mLicense.createAcquisition(path);
+        // New book local path is the temporary path
+        mBookPath = outputFile.getAbsolutePath();
+        mAcquisition = mLicense.createAcquisition(mBookPath);
 
         if (mAcquisition != null) {
             mAcquisition.start(new Acquisition.Listener() {
@@ -282,7 +308,7 @@ public class ContainerList extends FragmentActivity
                         @Override
                         public void run() {
                             removeAcquisitionDialog();
-                            decryptAndOpenSelectedBook(path);
+                            decryptAndOpenSelectedBook();
                         }
                     }, 2000);
                 }
@@ -296,28 +322,9 @@ public class ContainerList extends FragmentActivity
         }
     }
 
-    private void decryptAndOpenSelectedBook(String path) {
-        m_SdkErrorHandler_Messages = new Stack<>();
-        EPub3.setSdkErrorHandler(this);
-
-        mContainer = EPub3.openBook(path);
-
-        // Is the book encrypted ?
-        InputStream licenseInputStream = mContainer.getInputStream("META-INF/license.lcpl");
-
-        if (licenseInputStream != null) {
-            mLicense = mLcpService.openLicense(licenseInputStream);
-
-            if (mLicense != null && !mLicense.isDecrypted()) {
-                showPassphraseDialog();
-            } else {
-                openSelectedBook();
-            }
-        } else {
-            openSelectedBook();
-        }
-
-        EPub3.setSdkErrorHandler(null);
+    private void decryptAndOpenSelectedBook() {
+        // Do it asynchronously to avoid blocking UI thread
+        new OpenBook().execute();
     }
 
     private void openSelectedBook() {
