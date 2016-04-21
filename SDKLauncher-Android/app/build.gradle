@@ -15,7 +15,10 @@ repositories {
 
 dependencies {
     compile 'com.android.support:support-v4:23.+'
+
     compile 'com.koushikdutta.ion:ion:2.+'
+    // compile 'com.koushikdutta.async:androidasync:2.+' ALREADY INCLUDED AS DEPENDENCY OF com.koushikdutta.ion
+
     compile 'commons-io:commons-io:2.4'
 }
 
