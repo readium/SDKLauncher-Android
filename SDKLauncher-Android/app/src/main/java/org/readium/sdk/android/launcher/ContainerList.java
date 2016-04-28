@@ -88,23 +88,6 @@ public class ContainerList extends FragmentActivity
     private Service mLcpService;
     private final String testPath = "epubtest";
 
-    private class OpenBook extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... params) {
-            m_SdkErrorHandler_Messages = new Stack<>();
-            EPub3.setSdkErrorHandler(ContainerList.this);
-            mContainer = EPub3.openBook(mBookPath);
-            EPub3.setSdkErrorHandler(null);
-
-            if (mContainer != null) {
-                // Container opening succeed
-                openSelectedBook();
-            }
-
-            return null;
-        }
-    }
-
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
         public SdkErrorHandlerMessagesCompleted(Intent intent) {
@@ -339,8 +322,15 @@ public class ContainerList extends FragmentActivity
     }
 
     private void decryptAndOpenSelectedBook() {
-        // Do it asynchronously to avoid blocking UI thread
-        new OpenBook().execute();
+        m_SdkErrorHandler_Messages = new Stack<>();
+        EPub3.setSdkErrorHandler(ContainerList.this);
+        mContainer = EPub3.openBook(mBookPath);
+        EPub3.setSdkErrorHandler(null);
+
+        if (mContainer != null) {
+            // Container opening succeed
+            openSelectedBook();
+        }
     }
 
     private void openSelectedBook() {
