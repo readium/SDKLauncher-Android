@@ -33,10 +33,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
@@ -68,6 +72,8 @@ public class EpubServer implements HttpServerRequestCallback {
 	 * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
 	 */
 	public static final Map<String, String> MIME_TYPES;
+
+	private final SimpleDateFormat mHTTPDateFormat;
 
 	private final Package mPackage;
 	private final boolean quiet;
@@ -121,6 +127,9 @@ public class EpubServer implements HttpServerRequestCallback {
 		this.dataPreProcessor = dataPreProcessor;
 		this.mHttpServer = new AsyncHttpServer();
 		this.mAsyncServer = new AsyncServer();
+		this.mHTTPDateFormat = new SimpleDateFormat(
+				"EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+		this.mHTTPDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		mHttpServer.get(".*", this);
 	}
@@ -218,6 +227,13 @@ public class EpubServer implements HttpServerRequestCallback {
 
 		boolean isHTML = mime.equals("text/html")
 				|| mime.equals("application/xhtml+xml");
+
+		Calendar now = Calendar.getInstance();
+		Calendar expires = (Calendar)now.clone();
+		expires.add(Calendar.DAY_OF_MONTH, 10);
+		response.getHeaders().add("Cache-control", "no-transform,public,max-age=3000,s-maxage=9000");
+		response.getHeaders().add("Last-Modified", this.mHTTPDateFormat.format(now.getTime()));
+		response.getHeaders().add("Expires", this.mHTTPDateFormat.format(expires.getTime()));
 
 		if (isHTML) {
 			//Pre-process HTML data as a whole
