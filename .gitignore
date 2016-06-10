@@ -16,6 +16,8 @@
 # generated files
 bin/
 gen/
+build/
+.gradle/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -27,6 +29,10 @@ local.properties
 # IDEA project files
 .idea
 
+SDKLauncher-Android/app/src/main/assets/readium-shared-js/builds
 SDKLauncher-Android/assets/readium-shared-js/epubReadingSystem_.js
 SDKLauncher-Android/.settings/org.eclipse.core.resources.prefs
 SDKLauncher-Android/lint.xml
+
+SDKLauncher-Android/SDKLauncher-Android.iml
+SDKLauncher-Android/app/app.iml

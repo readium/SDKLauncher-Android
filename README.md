@@ -13,17 +13,27 @@ develop [![Build Status](http://jenkinsmaster.datalogics-cloud.com:8080/buildSta
 
 How to get source from github
 -------------------------------
- git clone --recursive https://github.com/readium/Launcher-Android.git
+ git clone --recursive https://github.com/readium/SDKLauncher-Android.git
 
-How to build Readium SDK
--------------------------------
+
+Debug C++ code on Android Studio 2
+----------------------------------
+
+Gradle experimental build plugin and Android Studio 2 are required to debug C++ code.
+By default the project uses stable version of gradle plugin but you can switch easily to the experimental one by adding the following line to local.properties file:
 ````
-cd readium-sdk/Platform/Android
-./ndk-compile.sh build your-ndk-path
+readium.ndk_debug=true
 ````
-How to open eclipse project
-----------------------
-Use File->Import... menu, don't use File->New menu 
+
+This settings will switch the build system to the gradle experimental version and allow you to debug, add breakpoints on the C++ code.
+
+You must be careful that if you switch from the stable to the experimental version, you have first to delete all intermediate build files in:
+- Platform/Android/epub3/build
+- Platform/Android/include
+- Platform/Android/obj
+- Platform/Android/libs
+
+If you forget to delete these files, the application will crash because of bad version of shared and static libraries.
 
 Licensing info
 ----------------

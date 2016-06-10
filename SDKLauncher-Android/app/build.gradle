@@ -1,0 +1,53 @@
+if (rootProject.hasProperty("readium_ndk_debug") && rootProject.readium_ndk_debug) {
+    // Use gradle experimental receipt to debug C/C++ code
+    println "${project.name}: Use gradle experimental to build application"
+    apply from: 'build_experimental.gradle'
+} else {
+    apply from: 'build_stable.gradle'
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs '../libs'
+    }
+}
+
+dependencies {
+    compile fileTree(dir: '../libs', include: '*.jar')
+}
+
+task buildCssAssets(type: Copy) {
+    from '../../readium-shared-js/build-output/css'
+    into './src/main/assets/readium-shared-js/builds/css'
+}
+
+task buildSingleBundleAssets(type: Copy) {
+    from '../../readium-shared-js/build-output/_multiple-bundles'
+    into './src/main/assets/readium-shared-js/builds/multiple-bundle'
+}
+
+task buildMultipleBundleAssets(type: Copy) {
+    from '../../readium-shared-js/build-output/_single-bundle'
+    into './src/main/assets/readium-shared-js/builds/single-bundle'
+}
+
+task buildAssets {
+    println "Build Js Assets"
+}
+
+buildAssets.dependsOn "buildCssAssets",
+        "buildSingleBundleAssets",
+        "buildMultipleBundleAssets"
+
+apply from: 'build_epubReadingSystem.gradle'
+
+tasks.whenTaskAdded { task ->
+    def taskName = task.name
+
+    if (taskName.startsWith("compile")) {
+        task.dependsOn "buildAssets",
+            ":epub3:buildMk",
+            "buildEpubReadingSystem"
+    }
+}

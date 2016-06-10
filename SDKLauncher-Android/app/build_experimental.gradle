@@ -1,0 +1,57 @@
+apply plugin: 'com.android.model.application'
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.3"
+
+        defaultConfig.with {
+            applicationId="org.readium.sdk.android.launcher"
+            minSdkVersion.apiLevel   = 19
+            targetSdkVersion.apiLevel = 23
+        }
+    }
+
+    android.sources {
+        main {
+            jniLibs {
+                dependencies {
+                    project ":epub3"
+                }
+            }
+        }
+        main {
+            java {
+                source {
+                    srcDirs = [
+                            './src/main/java',
+                            '../../readium-sdk/Platform/Android/lib/src/main/java'
+                    ]
+                }
+            }
+        }
+    }
+
+    android.buildTypes {
+        debug {
+            minifyEnabled = false
+        }
+        release {
+            minifyEnabled = false
+            proguardFiles.add(file('proguard-rules.txt'))
+        }
+    }
+
+    android.productFlavors {
+        create ("arm") {
+            ndk.with {
+                abiFilters.add("armeabi-v7a")
+            }
+        }
+        create ("x86") {
+            ndk.with {
+                abiFilters.add("x86")
+            }
+        }
+    }
+}
