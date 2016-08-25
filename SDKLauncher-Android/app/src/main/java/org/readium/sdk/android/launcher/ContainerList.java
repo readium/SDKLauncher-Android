@@ -52,7 +52,9 @@ import org.readium.sdk.lcp.StorageProvider;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.DialogFragment;
@@ -86,7 +88,7 @@ public class ContainerList extends FragmentActivity
     private String mBookName; // Name of the selected book
     private String mBookPath; // Path of the selected book
     private Service mLcpService;
-    private final String testPath = "epubtest";
+
 
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
@@ -178,12 +180,23 @@ public class ContainerList extends FragmentActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.container_list);
         context = this;
+
         BookmarkDatabase.initInstance(getApplicationContext());
         final ListView view = (ListView) findViewById(R.id.containerList);
 
-        final List<String> list = getInnerBooks();
+
+        String epubFolder = getIntent().getStringExtra("epubFolder");
+        final File epubpath = new File(epubFolder);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            boolean test = Environment.isExternalStorageEmulated(epubpath);
+            boolean breakpoint = true;
+        }
+
+        final List<String> list = getInnerBooks(epubpath);
 
         BookListAdapter bookListAdapter = new BookListAdapter(this, list);
         view.setAdapter(bookListAdapter);
@@ -191,9 +204,7 @@ public class ContainerList extends FragmentActivity
         if (list.isEmpty()) {
             Toast.makeText(
                     context,
-                    Environment.getExternalStorageDirectory().getAbsolutePath()
-                            + "/" + testPath
-                            + "/ is empty, copy epub3 test file first please.",
+                    epubpath + "/ is empty, copy epub3 test file first please.",
                     Toast.LENGTH_LONG).show();
         }
 
@@ -235,8 +246,7 @@ public class ContainerList extends FragmentActivity
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                                     long arg3) {
                 mBookName = list.get(arg2);
-                mBookPath = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                        "/" + testPath + "/" + mBookName;
+                mBookPath = epubpath.getPath() + "/" + mBookName;
 
                 Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
@@ -432,11 +442,9 @@ public class ContainerList extends FragmentActivity
     }
 
     // get books in /sdcard/epubtest path
-    private List<String> getInnerBooks() {
+    private List<String> getInnerBooks(File epubpath) {
         List<String> list = new ArrayList<String>();
-        File sdcard = Environment.getExternalStorageDirectory();
-        File epubpath = new File(sdcard, "epubtest");
-        epubpath.mkdirs();
+
         File[] files = epubpath.listFiles();
         if (files != null) {
             for (File f : files) {

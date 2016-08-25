@@ -23,17 +23,66 @@
 
 package org.readium.sdk.android.launcher;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
 import android.content.Intent;
+import android.widget.Toast;
+
+import com.nononsenseapps.filepicker.FilePickerActivity;
+
 import org.readium.sdk.lcp.ServiceFactory;
+
+import java.io.File;
 
 public class MainActivity extends Activity {
 
     private static final int STOPSPLASH = 0;
     private static final long SPLASHTIME = 500;
+    private final String testPath = "epubtest";
+
+    //@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 0 && resultCode == Activity.RESULT_OK) {
+//            if (data.getBooleanExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false)) {
+//                // For JellyBean and above
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//                    ClipData clip = data.getClipData();
+//
+//                    if (clip != null) {
+//                        for (int i = 0; i < clip.getItemCount(); i++) {
+//                            Uri uri = clip.getItemAt(i).getUri();
+//                            // Do something with the URI
+//                        }
+//                    }
+//                    // For Ice Cream Sandwich
+//                } else {
+//                    ArrayList<String> paths = data.getStringArrayListExtra
+//                            (FilePickerActivity.EXTRA_PATHS);
+//
+//                    if (paths != null) {
+//                        for (String path: paths) {
+//                            Uri uri = Uri.parse(path);
+//                            // Do something with the URI
+//                        }
+//                    }
+//                }
+//
+//            }
+
+            Uri uri = data.getData();
+
+            Intent listIntent = new Intent(getApplicationContext(),
+                    ContainerList.class);
+            listIntent.putExtra("epubFolder", uri.getPath());
+            startActivity(listIntent);
+            MainActivity.this.finish();
+        }
+    }
 
     // handler for splash screen
     private Handler splashHandler = new Handler() {
@@ -41,10 +90,26 @@ public class MainActivity extends Activity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
             case STOPSPLASH:
-                Intent intent = new Intent(getApplicationContext(),
-                        ContainerList.class);
-                startActivity(intent);
-                MainActivity.this.finish();
+
+                File sdcard = Environment.getExternalStorageDirectory();
+                File epubpath = new File(sdcard, testPath);
+                epubpath.mkdirs();
+
+                //String path = epubpath.getPath();
+                //Uri uri = Uri.parse(path);
+
+                Intent i = new Intent(MainActivity.this.getApplicationContext(), FilePickerActivity.class);
+                // Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+
+                // Set these depending on your use case. These are the defaults.
+                i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+                i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
+                i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_DIR);
+
+                i.putExtra(FilePickerActivity.EXTRA_START_PATH, epubpath.getPath());
+
+                startActivityForResult(i, 0);
+
                 break;
             }
             super.handleMessage(msg);

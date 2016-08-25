@@ -8,12 +8,15 @@ if (rootProject.hasProperty("readium_ndk_debug") && rootProject.readium_ndk_debu
 
 repositories {
     mavenCentral()
+    jcenter()
     flatDir {
         dirs '../libs'
     }
 }
 
 dependencies {
+    compile 'com.nononsenseapps:filepicker:3.0.0'
+
     compile 'com.android.support:support-v4:23.+'
 
     compile 'com.koushikdutta.ion:ion:2.+'
