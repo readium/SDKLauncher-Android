@@ -307,13 +307,18 @@ public class ContainerList extends FragmentActivity
                     // Download is done
                     progressAcquisitionDialog(1.0f);
 
-                    // Remove acquisition dialog after 5 seconds
+                    // Remove acquisition dialog after 2 seconds
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
                             removeAcquisitionDialog();
-                            decryptAndOpenSelectedBook();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    decryptAndOpenSelectedBook();
+                                }
+                            });
                         }
                     }, 2000);
                 }
