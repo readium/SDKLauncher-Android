@@ -2,13 +2,13 @@ apply plugin: 'com.android.model.application'
 
 model {
     android {
-        compileSdkVersion = 23
-        buildToolsVersion = "23.0.3"
+        compileSdkVersion = 24
+        buildToolsVersion = "24.0.2"
 
         defaultConfig.with {
             applicationId="org.readium.sdk.android.launcher"
-            minSdkVersion.apiLevel   = 19
-            targetSdkVersion.apiLevel = 23
+            minSdkVersion.apiLevel   = 24
+            targetSdkVersion.apiLevel = 24
         }
     }
 
