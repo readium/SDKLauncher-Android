@@ -13,9 +13,11 @@ buildscript {
 
         // Use stable gradle or experimental gradle
         if (ndkDebug) {
-            classpath "com.android.tools.build:gradle-experimental:0.7.0"
+            //https://bintray.com/android/android-tools/com.android.tools.build.gradle-experimental/view
+            classpath "com.android.tools.build:gradle-experimental:0.8.1"
         } else {
-            classpath "com.android.tools.build:gradle:2.1.0"
+            //https://bintray.com/android/android-tools/com.android.tools.build.gradle/view
+            classpath "com.android.tools.build:gradle:2.2.1"
         }
     }
 }
