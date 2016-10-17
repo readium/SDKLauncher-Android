@@ -144,6 +144,7 @@ public class ContainerList extends FragmentActivity
         if (mAcquisition != null) {
             // Cancel download
             mAcquisition.cancel();
+            mAcquisition = null;
         }
 
         removeAcquisitionDialog();
@@ -231,7 +232,8 @@ public class ContainerList extends FragmentActivity
         StorageProvider storageProvider = new StorageProvider(getApplicationContext());
         NetProvider netProvider = new NetProvider(getApplicationContext());
         mLcpService = ServiceFactory.build(
-                certContent, storageProvider, netProvider, new CredentialHandler() {
+                certContent, storageProvider, netProvider,
+                new CredentialHandler() {
                     @Override
                     public void decrypt(License license) {
                         mLicense = license;
@@ -285,11 +287,13 @@ public class ContainerList extends FragmentActivity
 
         // New book local path is the temporary path
         mBookPath = outputFile.getAbsolutePath();
+        mBookName = outputFile.getName();
 
         // If there is a current acquisition cancel it
         if (mAcquisition != null) {
             // Cancel download
             mAcquisition.cancel();
+            mAcquisition = null;
         }
 
         mAcquisition = mLicense.createAcquisition(mBookPath);
@@ -353,7 +357,7 @@ public class ContainerList extends FragmentActivity
                                     alertBuilder.setTitle("LCP EPUB acquisition ...");
                                     alertBuilder.setMessage("Download not completed.");
 
-                                    alertBuilder.setCancelable(false);
+                                    alertBuilder.setCancelable(true);
 
                                     alertBuilder.setOnCancelListener(
                                             new DialogInterface.OnCancelListener() {
