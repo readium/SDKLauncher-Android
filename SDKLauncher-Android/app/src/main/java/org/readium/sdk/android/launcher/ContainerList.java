@@ -304,10 +304,11 @@ public class ContainerList extends FragmentActivity
 
                 @Override
                 public void onAcquisitionEnded() {
-                    // Download is done
+
+                    mAcquisition = null;
+
                     progressAcquisitionDialog(1.0f);
 
-                    // Remove acquisition dialog after 2 seconds
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
                         @Override
@@ -320,7 +321,7 @@ public class ContainerList extends FragmentActivity
                                 }
                             });
                         }
-                    }, 2000);
+                    }, 1000);
                 }
 
                 @Override
@@ -331,6 +332,70 @@ public class ContainerList extends FragmentActivity
 
                 @Override
                 public void onAcquisitionCanceled() {
+
+                    mAcquisition = null;
+
+                    progressAcquisitionDialog(1.0f);
+
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            removeAcquisitionDialog();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
+                                            .show();
+
+                                    AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+
+                                    alertBuilder.setTitle("LCP EPUB acquisition ...");
+                                    alertBuilder.setMessage("Download not completed.");
+
+                                    alertBuilder.setCancelable(false);
+
+                                    alertBuilder.setOnCancelListener(
+                                            new DialogInterface.OnCancelListener() {
+                                                @Override
+                                                public void onCancel(DialogInterface dialog) {
+                                                }
+                                            }
+                                    );
+
+                                    alertBuilder.setOnDismissListener(
+                                            new DialogInterface.OnDismissListener() {
+                                                @Override
+                                                public void onDismiss(DialogInterface dialog) {
+                                                }
+                                            }
+                                    );
+
+                                    alertBuilder.setPositiveButton("Okay",
+                                            new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            }
+                                    );
+//                                    alertBuilder.setNegativeButton("...",
+//                                            new DialogInterface.OnClickListener() {
+//                                                @Override
+//                                                public void onClick(DialogInterface dialog, int which) {
+//                                                    dialog.cancel();
+//                                                }
+//                                            }
+//                                    );
+
+                                    AlertDialog alert = alertBuilder.create();
+                                    alert.setCanceledOnTouchOutside(true);
+
+                                    alert.show(); //async!
+                                }
+                            });
+                        }
+                    }, 1000);
                 }
             });
         }
