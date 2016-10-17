@@ -43,10 +43,12 @@ import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
 import org.readium.sdk.lcp.Acquisition;
 import org.readium.sdk.lcp.CredentialHandler;
+import org.readium.sdk.lcp.StatusDocumentHandler;
 import org.readium.sdk.lcp.License;
 import org.readium.sdk.lcp.NetProvider;
 import org.readium.sdk.lcp.Service;
 import org.readium.sdk.lcp.ServiceFactory;
+import org.readium.sdk.lcp.StatusDocumentProcessing;
 import org.readium.sdk.lcp.StorageProvider;
 
 import android.app.ProgressDialog;
@@ -83,6 +85,7 @@ public class ContainerList extends FragmentActivity
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
     private Acquisition mAcquisition;
+    private StatusDocumentProcessing mStatusDocumentProcessing;
     private AcquisitionDialogFragment mAcquisitionDialogFragment;
     private Container mContainer;
     private String mBookName; // Name of the selected book
@@ -239,6 +242,14 @@ public class ContainerList extends FragmentActivity
                         mLicense = license;
                         showPassphraseDialog();
                     }
+                },
+                new StatusDocumentHandler() {
+                    @Override
+                    public void process(License license) {
+                        mLicense = license;
+                        AlertDialog alert = showStatusDocumentDialog();
+                        launchStatusDocumentProcessing(alert);
+                    }
                 });
 
 
@@ -259,6 +270,113 @@ public class ContainerList extends FragmentActivity
                 }
             }
         });
+    }
+
+    public void launchStatusDocumentProcessing(final AlertDialog alertDialog) {
+
+        //mLicense
+        //mLcpService
+
+        if (mStatusDocumentProcessing != null) {
+            mStatusDocumentProcessing.cancel();
+            mStatusDocumentProcessing = null;
+        }
+
+        mStatusDocumentProcessing = mLicense.createStatusDocumentProcessing(mBookPath);
+
+        if (mStatusDocumentProcessing != null) {
+
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+
+                    mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener() {
+                        @Override
+                        public void onStatusDocumentProcessingComplete() {
+                            mStatusDocumentProcessing = null;
+
+                            Timer timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    alertDialog.dismiss();
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
+
+                                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                                downloadAndOpenSelectedBook();
+                                            } else {
+                                                decryptAndOpenSelectedBook();
+                                            }
+                                        }
+                                    });
+                                }
+                            }, 1000);
+                        }
+                    });
+                    return null;
+                }
+            }.execute();
+        }
+    }
+
+    public AlertDialog showStatusDocumentDialog() {
+        Toast.makeText(ContainerList.this, "LCP EPUB => License Status Document in progress...", Toast.LENGTH_SHORT)
+                .show();
+
+        AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+
+        alertBuilder.setTitle("LCP EPUB => LSD ...");
+        alertBuilder.setMessage("License Status Document in progress...");
+
+        alertBuilder.setCancelable(true);
+
+        alertBuilder.setOnCancelListener(
+                new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        if (mStatusDocumentProcessing != null) {
+                            mStatusDocumentProcessing.cancel();
+                            mStatusDocumentProcessing = null;
+                        }
+                    }
+                }
+        );
+
+        alertBuilder.setOnDismissListener(
+                new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                    }
+                }
+        );
+//
+//        alertBuilder.setPositiveButton("Okay",
+//                new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.dismiss();
+//                    }
+//                }
+//        );
+        alertBuilder.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                }
+        );
+
+        AlertDialog alert = alertBuilder.create();
+        alert.setCanceledOnTouchOutside(false);
+
+        alert.show(); //async!
+
+        return alert;
     }
 
     /**
