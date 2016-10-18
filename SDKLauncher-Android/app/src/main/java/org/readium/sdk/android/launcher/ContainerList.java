@@ -81,6 +81,18 @@ public class ContainerList extends FragmentActivity
         implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener,
         AcquisitionDialogFragment.Listener
 {
+
+    public abstract class StatusDocumentProcessingListener implements StatusDocumentProcessing.IListener {
+        final private StatusDocumentProcessing m_StatusDocumentProcessing;
+        public StatusDocumentProcessingListener(StatusDocumentProcessing sdp) {
+            m_StatusDocumentProcessing = sdp;
+        }
+        public void onStatusDocumentProcessingComplete() {
+            this.onStatusDocumentProcessingComplete_(m_StatusDocumentProcessing);
+        }
+        public abstract void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp);
+    }
+
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
@@ -240,15 +252,39 @@ public class ContainerList extends FragmentActivity
                     @Override
                     public void decrypt(License license) {
                         mLicense = license;
-                        showPassphraseDialog();
+
+                        Timer timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showPassphraseDialog();
+                                    }
+                                });
+                            }
+                        }, 1000);
                     }
                 },
                 new StatusDocumentHandler() {
                     @Override
                     public void process(License license) {
                         mLicense = license;
-                        AlertDialog alert = showStatusDocumentDialog();
-                        launchStatusDocumentProcessing(alert);
+
+                        Timer timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        AlertDialog alert = showStatusDocumentDialog();
+                                        launchStatusDocumentProcessing(alert);
+                                    }
+                                });
+                            }
+                        }, 1000);
                     }
                 });
 
@@ -263,11 +299,22 @@ public class ContainerList extends FragmentActivity
 
                 Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
 
-                if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                    downloadAndOpenSelectedBook();
-                } else {
-                    decryptAndOpenSelectedBook();
-                }
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                    downloadAndOpenSelectedBook();
+                                } else {
+                                    decryptAndOpenSelectedBook();
+                                }
+                            }
+                        });
+                    }
+                }, 1000);
             }
         });
     }
@@ -276,6 +323,8 @@ public class ContainerList extends FragmentActivity
 
         //mLicense
         //mLcpService
+        //mBookName
+        //mBookPath
 
         if (mStatusDocumentProcessing != null) {
             mStatusDocumentProcessing.cancel();
@@ -290,19 +339,24 @@ public class ContainerList extends FragmentActivity
                 @Override
                 protected Void doInBackground(Void... params) {
 
-                    mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener() {
+                    mStatusDocumentProcessing.start(new StatusDocumentProcessingListener(mStatusDocumentProcessing) {
                         @Override
-                        public void onStatusDocumentProcessingComplete() {
+                        public void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp) {
+
                             mStatusDocumentProcessing = null;
+
+                            if (sdp.wasCancelled()) {
+                                return;
+                            }
 
                             Timer timer = new Timer();
                             timer.schedule(new TimerTask() {
                                 @Override
                                 public void run() {
-                                    alertDialog.dismiss();
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
+                                            alertDialog.dismiss();
 
                                             Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
 
@@ -341,6 +395,8 @@ public class ContainerList extends FragmentActivity
                         if (mStatusDocumentProcessing != null) {
                             mStatusDocumentProcessing.cancel();
                             mStatusDocumentProcessing = null;
+
+                            mLcpService.SetLicenseStatusDocumentProcessingCancelled();
                         }
                     }
                 }
@@ -435,10 +491,11 @@ public class ContainerList extends FragmentActivity
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            removeAcquisitionDialog();
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    removeAcquisitionDialog();
+
                                     decryptAndOpenSelectedBook();
                                 }
                             });
@@ -463,10 +520,11 @@ public class ContainerList extends FragmentActivity
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            removeAcquisitionDialog();
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    removeAcquisitionDialog();
+
                                     Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
                                             .show();
 
