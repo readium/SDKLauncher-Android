@@ -481,15 +481,22 @@ public class ContainerList extends FragmentActivity
         mAcquisition = mLicense.createAcquisition(mBookPath);
 
         if (mAcquisition != null) {
+
+            showAcquisitionDialog();
+
             mAcquisition.start(new Acquisition.Listener() {
                 @Override
                 public void onAcquisitionStarted() {
-                    // Show progress bar
-                    showAcquisitionDialog();
+                    // noop
                 }
 
                 @Override
                 public void onAcquisitionEnded() {
+
+                    // redundant check for cancelled
+                    if (mAcquisition == null) {
+                        return;
+                    }
 
                     mAcquisition = null;
 
