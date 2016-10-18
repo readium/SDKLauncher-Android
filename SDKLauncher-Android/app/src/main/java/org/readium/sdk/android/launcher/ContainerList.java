@@ -262,7 +262,6 @@ public class ContainerList extends FragmentActivity
 //                                runOnUiThread(new Runnable() {
 //                                    @Override
 //                                    public void run() {
-//                                        showPassphraseDialog();
 //                                    }
 //                                });
 //                            }
@@ -274,19 +273,20 @@ public class ContainerList extends FragmentActivity
                     public void process(License license) {
                         mLicense = license;
 
-                        Timer timer = new Timer();
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        AlertDialog alert = showStatusDocumentDialog();
-                                        launchStatusDocumentProcessing(alert);
-                                    }
-                                });
-                            }
-                        }, 1000);
+                        AlertDialog alert = showStatusDocumentDialog();
+                        launchStatusDocumentProcessing(alert);
+//
+//                        Timer timer = new Timer();
+//                        timer.schedule(new TimerTask() {
+//                            @Override
+//                            public void run() {
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                    }
+//                                });
+//                            }
+//                        }, 1000);
                     }
                 });
 
@@ -314,11 +314,6 @@ public class ContainerList extends FragmentActivity
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {
-//                                if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-//                                    downloadAndOpenSelectedBook();
-//                                } else {
-//                                    decryptAndOpenSelectedBook();
-//                                }
 //                            }
 //                        });
 //                    }
@@ -357,26 +352,32 @@ public class ContainerList extends FragmentActivity
                                 return;
                             }
 
-                            Timer timer = new Timer();
-                            timer.schedule(new TimerTask() {
+                            runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            alertDialog.dismiss();
+                                    alertDialog.dismiss();
 
-                                            Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
 
-                                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                                                downloadAndOpenSelectedBook();
-                                            } else {
-                                                decryptAndOpenSelectedBook();
-                                            }
-                                        }
-                                    });
+                                    if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                        downloadAndOpenSelectedBook();
+                                    } else {
+                                        decryptAndOpenSelectedBook();
+                                    }
                                 }
-                            }, 1000);
+                            });
+//
+//                            Timer timer = new Timer();
+//                            timer.schedule(new TimerTask() {
+//                                @Override
+//                                public void run() {
+//                                    runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                        }
+//                                    });
+//                                }
+//                            }, 1000);
                         }
                     });
                     return null;
@@ -500,25 +501,32 @@ public class ContainerList extends FragmentActivity
 
                     mAcquisition = null;
 
-                    progressAcquisitionDialog(1.0f);
-
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    removeAcquisitionDialog();
 
-                                    Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
-                                            .show();
+                            progressAcquisitionDialog(1.0f);
 
-                                    decryptAndOpenSelectedBook();
-                                }
-                            });
+                            removeAcquisitionDialog();
+
+                            Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
+                                    .show();
+
+                            decryptAndOpenSelectedBook();
                         }
-                    }, 1000);
+                    });
+//
+//                    Timer timer = new Timer();
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                }
+//                            });
+//                        }
+//                    }, 1000);
                 }
 
                 @Override
@@ -532,51 +540,48 @@ public class ContainerList extends FragmentActivity
 
                     mAcquisition = null;
 
-                    progressAcquisitionDialog(1.0f);
-
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    removeAcquisitionDialog();
 
-                                    Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
-                                            .show();
+                            progressAcquisitionDialog(1.0f);
 
-                                    AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+                            removeAcquisitionDialog();
 
-                                    alertBuilder.setTitle("LCP EPUB acquisition ...");
-                                    alertBuilder.setMessage("Download not completed.");
+                            Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
+                                    .show();
 
-                                    alertBuilder.setCancelable(true);
+                            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
 
-                                    alertBuilder.setOnCancelListener(
-                                            new DialogInterface.OnCancelListener() {
-                                                @Override
-                                                public void onCancel(DialogInterface dialog) {
-                                                }
-                                            }
-                                    );
+                            alertBuilder.setTitle("LCP EPUB acquisition ...");
+                            alertBuilder.setMessage("Download not completed.");
 
-                                    alertBuilder.setOnDismissListener(
-                                            new DialogInterface.OnDismissListener() {
-                                                @Override
-                                                public void onDismiss(DialogInterface dialog) {
-                                                }
-                                            }
-                                    );
+                            alertBuilder.setCancelable(true);
 
-                                    alertBuilder.setPositiveButton("Okay",
-                                            new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                }
-                                            }
-                                    );
+                            alertBuilder.setOnCancelListener(
+                                    new DialogInterface.OnCancelListener() {
+                                        @Override
+                                        public void onCancel(DialogInterface dialog) {
+                                        }
+                                    }
+                            );
+
+                            alertBuilder.setOnDismissListener(
+                                    new DialogInterface.OnDismissListener() {
+                                        @Override
+                                        public void onDismiss(DialogInterface dialog) {
+                                        }
+                                    }
+                            );
+
+                            alertBuilder.setPositiveButton("Okay",
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    }
+                            );
 //                                    alertBuilder.setNegativeButton("...",
 //                                            new DialogInterface.OnClickListener() {
 //                                                @Override
@@ -586,14 +591,24 @@ public class ContainerList extends FragmentActivity
 //                                            }
 //                                    );
 
-                                    AlertDialog alert = alertBuilder.create();
-                                    alert.setCanceledOnTouchOutside(true);
+                            AlertDialog alert = alertBuilder.create();
+                            alert.setCanceledOnTouchOutside(true);
 
-                                    alert.show(); //async!
-                                }
-                            });
+                            alert.show(); //async!
                         }
-                    }, 1000);
+                    });
+//
+//                    Timer timer = new Timer();
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                }
+//                            });
+//                        }
+//                    }, 1000);
                 }
             });
         }
