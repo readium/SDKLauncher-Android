@@ -61,6 +61,11 @@
             android:parentActivityName=".BookDataActivity">
         </activity>
         <activity
+            android:name=".ListOfLandmarksActivity"
+            android:label="@string/app_name"
+            android:parentActivityName=".BookDataActivity">
+        </activity>
+        <activity
             android:name=".ListOfFiguresActivity"
             android:label="@string/app_name"
             android:parentActivityName=".BookDataActivity">
