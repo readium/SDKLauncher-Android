@@ -73,6 +73,26 @@ import android.content.DialogInterface;
 
 import com.koushikdutta.ion.builder.Builders;
 
+import android.content.Context;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.util.Log;
+
+import com.koushikdutta.async.future.Future;
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.async.http.AsyncHttpRequest;
+import com.koushikdutta.async.http.Headers;
+import com.koushikdutta.ion.Ion;
+import com.koushikdutta.ion.loader.AsyncHttpRequestFactory;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author chtian
  *
@@ -96,7 +116,8 @@ public class ContainerList extends FragmentActivity
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
-    private Acquisition mAcquisition;
+    //#if ENABLE_NET_PROVIDER
+//    private Acquisition mAcquisition;
     private StatusDocumentProcessing mStatusDocumentProcessing;
     private AcquisitionDialogFragment mAcquisitionDialogFragment;
     private Container mContainer;
@@ -156,11 +177,12 @@ public class ContainerList extends FragmentActivity
 
     @Override
     public void onAcquisitionDialogCancel(DialogFragment dialog) {
-        if (mAcquisition != null) {
-            // Cancel download
-            mAcquisition.cancel();
-            mAcquisition = null;
-        }
+        //#if ENABLE_NET_PROVIDER
+//        if (mAcquisition != null) {
+//            // Cancel download
+//            mAcquisition.cancel();
+//            mAcquisition = null;
+//        }
 
         removeAcquisitionDialog();
     }
@@ -245,9 +267,12 @@ public class ContainerList extends FragmentActivity
         }
 
         StorageProvider storageProvider = new StorageProvider(getApplicationContext());
-        NetProvider netProvider = new NetProvider(getApplicationContext());
+        //#if ENABLE_NET_PROVIDER
+//        NetProvider netProvider = new NetProvider(getApplicationContext());
         mLcpService = ServiceFactory.build(
-                certContent, storageProvider, netProvider,
+                certContent, storageProvider,
+                //#if ENABLE_NET_PROVIDER
+//                netProvider,
                 new CredentialHandler() {
                     @Override
                     public void decrypt(License license) {
@@ -460,10 +485,10 @@ public class ContainerList extends FragmentActivity
         mLicense = mLcpService.openLicense(licenseInputStream);
 
         // Store downloaded epub in a temporary file
+        File outputDir = this.context.getCacheDir();
         File outputFile = null;
-
         try {
-            outputFile = File.createTempFile("lcp", ".epub", getCacheDir());
+            outputFile = File.createTempFile("readium-lcp", ".epub", outputDir);
         } catch (IOException e) {
             // TODO
         }
@@ -472,146 +497,209 @@ public class ContainerList extends FragmentActivity
         mBookPath = outputFile.getAbsolutePath();
         mBookName = outputFile.getName();
 
-        // If there is a current acquisition cancel it
-        if (mAcquisition != null) {
-            // Cancel download
-            mAcquisition.cancel();
-            mAcquisition = null;
-        }
 
-        mAcquisition = mLicense.createAcquisition(mBookPath);
+        //#if !ENABLE_NET_PROVIDER
 
-        if (mAcquisition != null) {
+        String url = mLicense.publicationLink;
 
-            showAcquisitionDialog();
+//        final AsyncHttpRequestFactory current = Ion.getDefault(context).configure().getAsyncHttpRequestFactory();
+//        Ion.getDefault(context).configure().setAsyncHttpRequestFactory(new AsyncHttpRequestFactory() {
+//            @Override
+//            public AsyncHttpRequest createAsyncHttpRequest(Uri uri, String method, Headers headers) {
+//                AsyncHttpRequest ret = current.createAsyncHttpRequest(uri, method, headers);
+//                ret.setTimeout(1000);
+//                return ret;
+//            }
+//        });
+//
 
-            mAcquisition.start(new Acquisition.Listener() {
-                @Override
-                public void onAcquisitionStarted() {
-                    // noop
-                }
+        Future<InputStream> request = Ion.with(this.context)
+                .load(url)
+                .setLogging("Ion", Log.VERBOSE)
+                .progress(callback) // not UI thread
+                //.progressHandler(callback) // UI thread
+                //.setTimeout(AsyncHttpRequest.DEFAULT_TIMEOUT) //30000
+                .setTimeout(6000)
+                //.setHeader(name, value)
+                .asInputStream().setCallback(new FutureCallback<InputStream>() {
+                    @Override
+                    public void onCompleted(Exception e, InputStream inputStream) {
+                        if (e != null) {
+                            callback.onCompleted(e, null);
+                            return;
+                        }
+                        if (inputStream == null) {
+                            callback.onCompleted(null, null);
+                            return;
+                        }
+                        File destFile = new File(destPath);
+                        try {
+                            FileOutputStream outputStream = new FileOutputStream(destFile);
+                            //inputStream.transferTo(outputStream);
 
-                @Override
-                public void onAcquisitionEnded() {
-
-                    // redundant check for cancelled
-                    if (mAcquisition == null) {
-                        return;
+                            byte[] buf = new byte[4096];
+                            int n;
+                            int total = 0;
+                            while((n = inputStream.read(buf))>0){
+                                total += n;
+                                outputStream.write(buf, 0, n);
+                            }
+                            outputStream.close();
+                            inputStream.close();
+                            callback.onCompleted(null, destFile);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            callback.onCompleted(ex, null);
+                        }
                     }
-
-                    mAcquisition = null;
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            progressAcquisitionDialog(1.0f);
-
-                            removeAcquisitionDialog();
-
-                            Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
-                                    .show();
-
-                            decryptAndOpenSelectedBook();
-                        }
-                    });
+                })
+//                .write(new File(dstPath))
+//                .setCallback(callback)
+                ;
 //
-//                    Timer timer = new Timer();
-//                    timer.schedule(new TimerTask() {
+
+        //#if ENABLE_NET_PROVIDER
+//
+//        // If there is a current acquisition cancel it
+//        if (mAcquisition != null) {
+//            // Cancel download
+//            mAcquisition.cancel();
+//            mAcquisition = null;
+//        }
+//
+//        mAcquisition = mLicense.createAcquisition(mBookPath);
+//
+//        if (mAcquisition != null) {
+//
+//            showAcquisitionDialog();
+//
+//            mAcquisition.start(new Acquisition.Listener() {
+//                @Override
+//                public void onAcquisitionStarted() {
+//                    // noop
+//                }
+//
+//                @Override
+//                public void onAcquisitionEnded() {
+//
+//                    // redundant check for cancelled
+//                    if (mAcquisition == null) {
+//                        return;
+//                    }
+//
+//                    mAcquisition = null;
+//
+//                    runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                }
-//                            });
-//                        }
-//                    }, 1000);
-                }
-
-                @Override
-                public void onAcquisitionProgressed(float value) {
-                    // Update progress bar value
-                    progressAcquisitionDialog(value);
-                }
-
-                @Override
-                public void onAcquisitionCanceled() {
-
-                    mAcquisition = null;
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            progressAcquisitionDialog(1.0f);
-
-                            removeAcquisitionDialog();
-
-                            Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
-                                    .show();
-
-                            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
-
-                            alertBuilder.setTitle("LCP EPUB acquisition ...");
-                            alertBuilder.setMessage("Download not completed.");
-
-                            alertBuilder.setCancelable(true);
-
-                            alertBuilder.setOnCancelListener(
-                                    new DialogInterface.OnCancelListener() {
-                                        @Override
-                                        public void onCancel(DialogInterface dialog) {
-                                        }
-                                    }
-                            );
-
-                            alertBuilder.setOnDismissListener(
-                                    new DialogInterface.OnDismissListener() {
-                                        @Override
-                                        public void onDismiss(DialogInterface dialog) {
-                                        }
-                                    }
-                            );
-
-                            alertBuilder.setPositiveButton("Okay",
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.dismiss();
-                                        }
-                                    }
-                            );
-//                                    alertBuilder.setNegativeButton("...",
-//                                            new DialogInterface.OnClickListener() {
-//                                                @Override
-//                                                public void onClick(DialogInterface dialog, int which) {
-//                                                    dialog.cancel();
-//                                                }
-//                                            }
-//                                    );
-
-                            AlertDialog alert = alertBuilder.create();
-                            alert.setCanceledOnTouchOutside(true);
-
-                            alert.show(); //async!
-                        }
-                    });
 //
-//                    Timer timer = new Timer();
-//                    timer.schedule(new TimerTask() {
+//                            progressAcquisitionDialog(1.0f);
+//
+//                            removeAcquisitionDialog();
+//
+//                            Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
+//                                    .show();
+//
+//                            decryptAndOpenSelectedBook();
+//                        }
+//                    });
+////
+////                    Timer timer = new Timer();
+////                    timer.schedule(new TimerTask() {
+////                        @Override
+////                        public void run() {
+////                            runOnUiThread(new Runnable() {
+////                                @Override
+////                                public void run() {
+////                                }
+////                            });
+////                        }
+////                    }, 1000);
+//                }
+//
+//                @Override
+//                public void onAcquisitionProgressed(float value) {
+//                    // Update progress bar value
+//                    progressAcquisitionDialog(value);
+//                }
+//
+//                @Override
+//                public void onAcquisitionCanceled() {
+//
+//                    mAcquisition = null;
+//
+//                    runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                }
-//                            });
+//
+//                            progressAcquisitionDialog(1.0f);
+//
+//                            removeAcquisitionDialog();
+//
+//                            Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
+//                                    .show();
+//
+//                            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+//
+//                            alertBuilder.setTitle("LCP EPUB acquisition ...");
+//                            alertBuilder.setMessage("Download not completed.");
+//
+//                            alertBuilder.setCancelable(true);
+//
+//                            alertBuilder.setOnCancelListener(
+//                                    new DialogInterface.OnCancelListener() {
+//                                        @Override
+//                                        public void onCancel(DialogInterface dialog) {
+//                                        }
+//                                    }
+//                            );
+//
+//                            alertBuilder.setOnDismissListener(
+//                                    new DialogInterface.OnDismissListener() {
+//                                        @Override
+//                                        public void onDismiss(DialogInterface dialog) {
+//                                        }
+//                                    }
+//                            );
+//
+//                            alertBuilder.setPositiveButton("Okay",
+//                                    new DialogInterface.OnClickListener() {
+//                                        @Override
+//                                        public void onClick(DialogInterface dialog, int which) {
+//                                            dialog.dismiss();
+//                                        }
+//                                    }
+//                            );
+////                                    alertBuilder.setNegativeButton("...",
+////                                            new DialogInterface.OnClickListener() {
+////                                                @Override
+////                                                public void onClick(DialogInterface dialog, int which) {
+////                                                    dialog.cancel();
+////                                                }
+////                                            }
+////                                    );
+//
+//                            AlertDialog alert = alertBuilder.create();
+//                            alert.setCanceledOnTouchOutside(true);
+//
+//                            alert.show(); //async!
 //                        }
-//                    }, 1000);
-                }
-            });
-        }
+//                    });
+////
+////                    Timer timer = new Timer();
+////                    timer.schedule(new TimerTask() {
+////                        @Override
+////                        public void run() {
+////                            runOnUiThread(new Runnable() {
+////                                @Override
+////                                public void run() {
+////                                }
+////                            });
+////                        }
+////                    }, 1000);
+//                }
+//            });
+//        }
     }
 
     private void decryptAndOpenSelectedBook() {
