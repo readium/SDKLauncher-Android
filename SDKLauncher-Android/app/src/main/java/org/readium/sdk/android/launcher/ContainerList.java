@@ -688,9 +688,9 @@ public class ContainerList extends FragmentActivity
 
     private void decryptAndOpenSelectedBook() {
 
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
+//        new AsyncTask<Void, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Void... params) {
 
                 m_SdkErrorHandler_Messages = new Stack<>();
                 EPub3.setSdkErrorHandler(ContainerList.this);
@@ -712,10 +712,10 @@ public class ContainerList extends FragmentActivity
                         }
                     }, 2000);
                 }
-
-                return null;
-            }
-        }.execute();
+//
+//                return null;
+//            }
+//        }.execute();
     }
 
     private void openSelectedBook() {
