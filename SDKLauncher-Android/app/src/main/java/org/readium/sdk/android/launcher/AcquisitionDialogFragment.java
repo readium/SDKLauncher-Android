@@ -22,19 +22,40 @@ public class AcquisitionDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
+
         progressDialog.setMessage("Download epub");
+
         progressDialog.setIndeterminate(false);
         progressDialog.setMax(100);
-        progressDialog.setCancelable(false);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+        progressDialog.setCancelable(true);
+        progressDialog.setCanceledOnTouchOutside(true);
+
+        progressDialog.setOnCancelListener(
+                new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        mListener.onAcquisitionDialogCancel(AcquisitionDialogFragment.this);
+                    }
+                }
+        );
+
+        progressDialog.setOnDismissListener(
+                new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        mListener.onAcquisitionDialogCancel(AcquisitionDialogFragment.this);
+                    }
+                }
+        );
+
         return progressDialog;
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-
-        // Cancel download
         mListener.onAcquisitionDialogCancel(AcquisitionDialogFragment.this);
     }
 

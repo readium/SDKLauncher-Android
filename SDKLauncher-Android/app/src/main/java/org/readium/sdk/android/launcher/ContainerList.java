@@ -129,6 +129,7 @@ public class ContainerList extends FragmentActivity
     private String mBookPath; // Path of the selected book
     private Service mLcpService;
 
+    Future<Response<InputStream>> mRequest = null;
 
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
@@ -188,7 +189,17 @@ public class ContainerList extends FragmentActivity
 //            mAcquisition = null;
 //        }
 
+        boolean requestWasNull = mRequest == null;
+        if (!requestWasNull) {
+            Future<Response<InputStream>> req = mRequest;
+            mRequest = null;
+            req.cancel();
+        }
+        if (requestWasNull) return;
+
         removeAcquisitionDialog();
+
+        notifyAcquisitionDialogFail();
     }
 
     public void showPassphraseDialog() {
@@ -424,8 +435,6 @@ public class ContainerList extends FragmentActivity
         alertBuilder.setTitle("LCP EPUB => LSD ...");
         alertBuilder.setMessage("License Status Document in progress...");
 
-        alertBuilder.setCancelable(true);
-
         alertBuilder.setOnCancelListener(
                 new DialogInterface.OnCancelListener() {
                     @Override
@@ -465,12 +474,70 @@ public class ContainerList extends FragmentActivity
                 }
         );
 
+        alertBuilder.setCancelable(true);
         AlertDialog alert = alertBuilder.create();
         alert.setCanceledOnTouchOutside(false);
 
         alert.show(); //async!
 
         return alert;
+    }
+
+    private void notifyAcquisitionDialogFail() {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
+                        .show();
+
+                AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+
+                alertBuilder.setTitle("LCP EPUB acquisition ...");
+                alertBuilder.setMessage("Download not completed.");
+
+                alertBuilder.setOnCancelListener(
+                        new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                            }
+                        }
+                );
+
+                alertBuilder.setOnDismissListener(
+                        new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                            }
+                        }
+                );
+
+                alertBuilder.setPositiveButton("Okay",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }
+                );
+                //                                    alertBuilder.setNegativeButton("...",
+                //                                            new DialogInterface.OnClickListener() {
+                //                                                @Override
+                //                                                public void onClick(DialogInterface dialog, int which) {
+                //                                                    dialog.cancel();
+                //                                                }
+                //                                            }
+                //                                    );
+
+                alertBuilder.setCancelable(true);
+                AlertDialog alert = alertBuilder.create();
+                alert.setCanceledOnTouchOutside(true);
+
+                alert.show(); //async!
+            }
+        });
+
     }
 
     /**
@@ -528,12 +595,20 @@ public class ContainerList extends FragmentActivity
 
         progressAcquisitionDialog(0.0f);
 
-        final Future<Response<InputStream>> request = Ion.with(this.context)
+        if (mRequest != null) {
+            Future<Response<InputStream>> req = mRequest;
+            mRequest = null;
+            req.cancel();
+        }
+
+        mRequest = Ion.with(this.context)
                 .load(url)
                 .setLogging("Ion", Log.VERBOSE)
                 .progress(new ProgressCallback() {
                     @Override
                     public void onProgress(long downloaded, long total) {
+
+                        if (mRequest == null) return;
 
                         // total is -1 when HTTP content-length header is not set.
                         if (total < downloaded) {
@@ -553,6 +628,9 @@ public class ContainerList extends FragmentActivity
                     @Override
                     public void onCompleted(Exception e, Response<InputStream> response) {
 
+                        if (mRequest == null) return;
+                        mRequest = null;
+
                         InputStream inputStream = response != null ? response.getResult() : null;
 
                         if (e != null || inputStream == null) {
@@ -560,59 +638,7 @@ public class ContainerList extends FragmentActivity
                             progressAcquisitionDialog(1.0f);
                             removeAcquisitionDialog();
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
-                                            .show();
-
-                                    AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
-
-                                    alertBuilder.setTitle("LCP EPUB acquisition ...");
-                                    alertBuilder.setMessage("Download not completed.");
-
-                                    alertBuilder.setCancelable(true);
-
-                                    alertBuilder.setOnCancelListener(
-                                            new DialogInterface.OnCancelListener() {
-                                                @Override
-                                                public void onCancel(DialogInterface dialog) {
-                                                }
-                                            }
-                                    );
-
-                                    alertBuilder.setOnDismissListener(
-                                            new DialogInterface.OnDismissListener() {
-                                                @Override
-                                                public void onDismiss(DialogInterface dialog) {
-                                                }
-                                            }
-                                    );
-
-                                    alertBuilder.setPositiveButton("Okay",
-                                            new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                }
-                                            }
-                                    );
-        //                                    alertBuilder.setNegativeButton("...",
-        //                                            new DialogInterface.OnClickListener() {
-        //                                                @Override
-        //                                                public void onClick(DialogInterface dialog, int which) {
-        //                                                    dialog.cancel();
-        //                                                }
-        //                                            }
-        //                                    );
-
-                                    AlertDialog alert = alertBuilder.create();
-                                    alert.setCanceledOnTouchOutside(true);
-
-                                    alert.show(); //async!
-                                }
-                            });
+                            notifyAcquisitionDialogFail();
 
                             return;
                         }
@@ -755,8 +781,6 @@ public class ContainerList extends FragmentActivity
             alertBuilder.setTitle("EPUB warning");
             alertBuilder.setMessage(message);
 
-            alertBuilder.setCancelable(false);
-
             alertBuilder.setOnCancelListener(
                     new DialogInterface.OnCancelListener() {
                         @Override
@@ -793,6 +817,7 @@ public class ContainerList extends FragmentActivity
                     }
             );
 
+            alertBuilder.setCancelable(false);
             AlertDialog alert = alertBuilder.create();
             alert.setCanceledOnTouchOutside(false);
 
