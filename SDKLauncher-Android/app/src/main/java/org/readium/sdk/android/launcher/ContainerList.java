@@ -378,9 +378,17 @@ public class ContainerList extends FragmentActivity
 
         if (mStatusDocumentProcessing != null) {
 
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
+                            Timer timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+//            new AsyncTask<Void, Void, Void>() {
+//                @Override
+//                protected Void doInBackground(Void... params) {
 
                     mStatusDocumentProcessing.start(new StatusDocumentProcessingListener(mStatusDocumentProcessing) {
                         @Override
@@ -391,38 +399,44 @@ public class ContainerList extends FragmentActivity
                             if (sdp.wasCancelled()) {
                                 return;
                             }
-
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    alertDialog.dismiss();
-
-                                    Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
-
-                                    if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                                        downloadAndOpenSelectedBook();
-                                    } else {
-                                        decryptAndOpenSelectedBook();
-                                    }
-                                }
-                            });
 //
-//                            Timer timer = new Timer();
-//                            timer.schedule(new TimerTask() {
+//                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
-//                                    runOnUiThread(new Runnable() {
-//                                        @Override
-//                                        public void run() {
-//                                        }
-//                                    });
 //                                }
-//                            }, 1000);
+//                            });
+
+                            Timer timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            alertDialog.dismiss();
+
+                                            Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
+
+                                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                                downloadAndOpenSelectedBook();
+                                            } else {
+                                                decryptAndOpenSelectedBook();
+                                            }
+                                        }
+                                    });
+                                }
+                            }, 1000);
                         }
                     });
-                    return null;
-                }
-            }.execute();
+//                    return null;
+//                }
+//            }.execute();
+                                         }
+                                    });
+
+                            }
+                        }, 1000);
         }
     }
 
@@ -714,9 +728,9 @@ public class ContainerList extends FragmentActivity
 
     private void decryptAndOpenSelectedBook() {
 
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
+//        new AsyncTask<Void, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Void... params) {
 
                 m_SdkErrorHandler_Messages = new Stack<>();
                 EPub3.setSdkErrorHandler(ContainerList.this);
@@ -724,10 +738,10 @@ public class ContainerList extends FragmentActivity
                 EPub3.setSdkErrorHandler(null);
 
                 if (mContainer != null) {
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
+//                    Timer timer = new Timer();
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -735,13 +749,13 @@ public class ContainerList extends FragmentActivity
                                     openSelectedBook();
                                 }
                             });
-                        }
-                    }, 2000);
+//                        }
+//                    }, 2000);
                 }
 
-                return null;
-            }
-        }.execute();
+//                return null;
+//            }
+//        }.execute();
     }
 
     private void openSelectedBook() {
