@@ -528,7 +528,7 @@ public class ContainerList extends FragmentActivity
 
         progressAcquisitionDialog(0.0f);
 
-        Future<Response<InputStream>> request = Ion.with(this.context)
+        final Future<Response<InputStream>> request = Ion.with(this.context)
                 .load(url)
                 .setLogging("Ion", Log.VERBOSE)
                 .progress(new ProgressCallback() {
@@ -553,7 +553,7 @@ public class ContainerList extends FragmentActivity
                     @Override
                     public void onCompleted(Exception e, Response<InputStream> response) {
 
-                        InputStream inputStream = response.getResult();
+                        InputStream inputStream = response != null ? response.getResult() : null;
 
                         if (e != null || inputStream == null) {
 
@@ -688,9 +688,9 @@ public class ContainerList extends FragmentActivity
 
     private void decryptAndOpenSelectedBook() {
 
-//        new AsyncTask<Void, Void, Void>() {
-//            @Override
-//            protected Void doInBackground(Void... params) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
 
                 m_SdkErrorHandler_Messages = new Stack<>();
                 EPub3.setSdkErrorHandler(ContainerList.this);
@@ -712,10 +712,10 @@ public class ContainerList extends FragmentActivity
                         }
                     }, 2000);
                 }
-//
-//                return null;
-//            }
-//        }.execute();
+
+                return null;
+            }
+        }.execute();
     }
 
     private void openSelectedBook() {
