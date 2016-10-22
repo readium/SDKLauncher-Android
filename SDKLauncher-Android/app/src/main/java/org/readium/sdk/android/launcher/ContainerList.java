@@ -71,6 +71,8 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
+import com.koushikdutta.ion.ProgressCallback;
+import com.koushikdutta.ion.Response;
 import com.koushikdutta.ion.builder.Builders;
 
 import android.content.Context;
@@ -92,6 +94,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * @author chtian
@@ -484,14 +488,21 @@ public class ContainerList extends FragmentActivity
 
         mLicense = mLcpService.openLicense(licenseInputStream);
 
-        // Store downloaded epub in a temporary file
-        File outputDir = this.context.getCacheDir();
-        File outputFile = null;
-        try {
-            outputFile = File.createTempFile("readium-lcp", ".epub", outputDir);
-        } catch (IOException e) {
-            // TODO
-        }
+//        // Store downloaded epub in a temporary file
+//        File outputDir = this.context.getCacheDir();
+//        final File outputFile;
+//        try {
+//            outputFile = File.createTempFile("readium-lcp", ".epub", outputDir);
+//        } catch (IOException e) {
+//
+//            Toast.makeText(ContainerList.this, "LCP EPUB file download failed to initiate.", Toast.LENGTH_SHORT)
+//                    .show();
+//            return;
+//        }
+
+        File lcplFile = new File(mBookPath);
+        File outputDir = lcplFile.getParentFile();
+        final File outputFile = new File(outputDir, lcplFile.getName()+".epub");
 
         // New book local path is the temporary path
         mBookPath = outputFile.getAbsolutePath();
@@ -500,7 +511,7 @@ public class ContainerList extends FragmentActivity
 
         //#if !ENABLE_NET_PROVIDER
 
-        String url = mLicense.publicationLink;
+        String url = mLicense.getLink_Publication();
 
 //        final AsyncHttpRequestFactory current = Ion.getDefault(context).configure().getAsyncHttpRequestFactory();
 //        Ion.getDefault(context).configure().setAsyncHttpRequestFactory(new AsyncHttpRequestFactory() {
@@ -513,205 +524,198 @@ public class ContainerList extends FragmentActivity
 //        });
 //
 
-        Future<InputStream> request = Ion.with(this.context)
+        showAcquisitionDialog();
+
+        progressAcquisitionDialog(0.0f);
+
+        Future<Response<InputStream>> request = Ion.with(this.context)
                 .load(url)
                 .setLogging("Ion", Log.VERBOSE)
-                .progress(callback) // not UI thread
+                .progress(new ProgressCallback() {
+                    @Override
+                    public void onProgress(long downloaded, long total) {
+
+                        // total is -1 when HTTP content-length header is not set.
+                        if (total < downloaded) {
+                            total = downloaded*2;
+                        }
+                        float value = (downloaded / (float)total);
+                        progressAcquisitionDialog(value);
+                    }
+                }) // not UI thread
                 //.progressHandler(callback) // UI thread
                 //.setTimeout(AsyncHttpRequest.DEFAULT_TIMEOUT) //30000
                 .setTimeout(6000)
                 //.setHeader(name, value)
-                .asInputStream().setCallback(new FutureCallback<InputStream>() {
+                .asInputStream()
+                .withResponse()
+                .setCallback(new FutureCallback<Response<InputStream>>() {
                     @Override
-                    public void onCompleted(Exception e, InputStream inputStream) {
-                        if (e != null) {
-                            callback.onCompleted(e, null);
+                    public void onCompleted(Exception e, Response<InputStream> response) {
+
+                        InputStream inputStream = response.getResult();
+
+                        if (e != null || inputStream == null) {
+
+                            progressAcquisitionDialog(1.0f);
+                            removeAcquisitionDialog();
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
+                                            .show();
+
+                                    AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+
+                                    alertBuilder.setTitle("LCP EPUB acquisition ...");
+                                    alertBuilder.setMessage("Download not completed.");
+
+                                    alertBuilder.setCancelable(true);
+
+                                    alertBuilder.setOnCancelListener(
+                                            new DialogInterface.OnCancelListener() {
+                                                @Override
+                                                public void onCancel(DialogInterface dialog) {
+                                                }
+                                            }
+                                    );
+
+                                    alertBuilder.setOnDismissListener(
+                                            new DialogInterface.OnDismissListener() {
+                                                @Override
+                                                public void onDismiss(DialogInterface dialog) {
+                                                }
+                                            }
+                                    );
+
+                                    alertBuilder.setPositiveButton("Okay",
+                                            new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            }
+                                    );
+        //                                    alertBuilder.setNegativeButton("...",
+        //                                            new DialogInterface.OnClickListener() {
+        //                                                @Override
+        //                                                public void onClick(DialogInterface dialog, int which) {
+        //                                                    dialog.cancel();
+        //                                                }
+        //                                            }
+        //                                    );
+
+                                    AlertDialog alert = alertBuilder.create();
+                                    alert.setCanceledOnTouchOutside(true);
+
+                                    alert.show(); //async!
+                                }
+                            });
+
                             return;
                         }
-                        if (inputStream == null) {
-                            callback.onCompleted(null, null);
-                            return;
-                        }
-                        File destFile = new File(destPath);
+
                         try {
-                            FileOutputStream outputStream = new FileOutputStream(destFile);
+                            progressAcquisitionDialog(0.0f);
+
+                            FileOutputStream outputStream = new FileOutputStream(outputFile);
                             //inputStream.transferTo(outputStream);
 
-                            byte[] buf = new byte[4096];
+                            int length = 0;
+                            try {
+                                String strLength = response.getHeaders().getHeaders().get("Content-Length");
+                                length = Integer.parseInt(strLength);
+                                //length = inputStream.available();
+                            } catch(Exception exc){
+                                // ignore
+                            }
+
+                            byte[] buf = new byte[16384];
                             int n;
                             int total = 0;
                             while((n = inputStream.read(buf))>0){
                                 total += n;
                                 outputStream.write(buf, 0, n);
+
+                                if (length < total) {
+                                    length = total*2;
+                                }
+                                float val = (total / (float)length);
+
+                                progressAcquisitionDialog(val);
                             }
-                            outputStream.close();
                             inputStream.close();
-                            callback.onCompleted(null, destFile);
+                            outputStream.flush();
+                            outputStream.close();
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
+                                            .show();
+                                }
+                            });
+
+                            Timer timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            decryptAndOpenSelectedBook();
+                                        }
+                                    });
+                                }
+                            }, 500);
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            callback.onCompleted(ex, null);
+                        } finally {
+                            progressAcquisitionDialog(1.0f);
+                            removeAcquisitionDialog();
                         }
                     }
                 })
 //                .write(new File(dstPath))
 //                .setCallback(callback)
                 ;
-//
-
-        //#if ENABLE_NET_PROVIDER
-//
-//        // If there is a current acquisition cancel it
-//        if (mAcquisition != null) {
-//            // Cancel download
-//            mAcquisition.cancel();
-//            mAcquisition = null;
-//        }
-//
-//        mAcquisition = mLicense.createAcquisition(mBookPath);
-//
-//        if (mAcquisition != null) {
-//
-//            showAcquisitionDialog();
-//
-//            mAcquisition.start(new Acquisition.Listener() {
-//                @Override
-//                public void onAcquisitionStarted() {
-//                    // noop
-//                }
-//
-//                @Override
-//                public void onAcquisitionEnded() {
-//
-//                    // redundant check for cancelled
-//                    if (mAcquisition == null) {
-//                        return;
-//                    }
-//
-//                    mAcquisition = null;
-//
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//
-//                            progressAcquisitionDialog(1.0f);
-//
-//                            removeAcquisitionDialog();
-//
-//                            Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
-//                                    .show();
-//
-//                            decryptAndOpenSelectedBook();
-//                        }
-//                    });
-////
-////                    Timer timer = new Timer();
-////                    timer.schedule(new TimerTask() {
-////                        @Override
-////                        public void run() {
-////                            runOnUiThread(new Runnable() {
-////                                @Override
-////                                public void run() {
-////                                }
-////                            });
-////                        }
-////                    }, 1000);
-//                }
-//
-//                @Override
-//                public void onAcquisitionProgressed(float value) {
-//                    // Update progress bar value
-//                    progressAcquisitionDialog(value);
-//                }
-//
-//                @Override
-//                public void onAcquisitionCanceled() {
-//
-//                    mAcquisition = null;
-//
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//
-//                            progressAcquisitionDialog(1.0f);
-//
-//                            removeAcquisitionDialog();
-//
-//                            Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
-//                                    .show();
-//
-//                            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
-//
-//                            alertBuilder.setTitle("LCP EPUB acquisition ...");
-//                            alertBuilder.setMessage("Download not completed.");
-//
-//                            alertBuilder.setCancelable(true);
-//
-//                            alertBuilder.setOnCancelListener(
-//                                    new DialogInterface.OnCancelListener() {
-//                                        @Override
-//                                        public void onCancel(DialogInterface dialog) {
-//                                        }
-//                                    }
-//                            );
-//
-//                            alertBuilder.setOnDismissListener(
-//                                    new DialogInterface.OnDismissListener() {
-//                                        @Override
-//                                        public void onDismiss(DialogInterface dialog) {
-//                                        }
-//                                    }
-//                            );
-//
-//                            alertBuilder.setPositiveButton("Okay",
-//                                    new DialogInterface.OnClickListener() {
-//                                        @Override
-//                                        public void onClick(DialogInterface dialog, int which) {
-//                                            dialog.dismiss();
-//                                        }
-//                                    }
-//                            );
-////                                    alertBuilder.setNegativeButton("...",
-////                                            new DialogInterface.OnClickListener() {
-////                                                @Override
-////                                                public void onClick(DialogInterface dialog, int which) {
-////                                                    dialog.cancel();
-////                                                }
-////                                            }
-////                                    );
-//
-//                            AlertDialog alert = alertBuilder.create();
-//                            alert.setCanceledOnTouchOutside(true);
-//
-//                            alert.show(); //async!
-//                        }
-//                    });
-////
-////                    Timer timer = new Timer();
-////                    timer.schedule(new TimerTask() {
-////                        @Override
-////                        public void run() {
-////                            runOnUiThread(new Runnable() {
-////                                @Override
-////                                public void run() {
-////                                }
-////                            });
-////                        }
-////                    }, 1000);
-//                }
-//            });
-//        }
     }
 
     private void decryptAndOpenSelectedBook() {
-        m_SdkErrorHandler_Messages = new Stack<>();
-        EPub3.setSdkErrorHandler(ContainerList.this);
-        mContainer = EPub3.openBook(mBookPath);
-        EPub3.setSdkErrorHandler(null);
 
-        if (mContainer != null) {
-            // Container opening succeed
-            openSelectedBook();
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                m_SdkErrorHandler_Messages = new Stack<>();
+                EPub3.setSdkErrorHandler(ContainerList.this);
+                mContainer = EPub3.openBook(mBookPath);
+                EPub3.setSdkErrorHandler(null);
+
+                if (mContainer != null) {
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Container opening succeed
+                                    openSelectedBook();
+                                }
+                            });
+                        }
+                    }, 2000);
+                }
+
+                return null;
+            }
+        }.execute();
     }
 
     private void openSelectedBook() {
