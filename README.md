@@ -5,15 +5,12 @@ Launcher-Android
 ---------------------
 A small Android application to serve as a launcher/testbed for the Readium SDK. 
 
-Jenkins build status
-----------------------
-master [![Build Status](http://jenkinsmaster.datalogics-cloud.com:8080/buildStatus/icon?job=Readium-SDK-Launcher-Android-master)](http://jenkinsmaster.datalogics-cloud.com:8080/view/Readium-Launcher/job/Readium-SDK-Launcher-Android-master/)
-
-develop [![Build Status](http://jenkinsmaster.datalogics-cloud.com:8080/buildStatus/icon?job=Readium-SDK-Launcher-Android-develop)](http://jenkinsmaster.datalogics-cloud.com:8080/view/Readium-Launcher/job/Readium-SDK-Launcher-Android-develop/)
-
 How to get source from github
 -------------------------------
  git clone --recursive https://github.com/readium/SDKLauncher-Android.git
+
+See a document on how to build the SDK and Launcher on Android [here](https://docs.google.com/document/d/1ebFQ-8BGoiamKO4K0ZiL1nH6b8wulJ-ORyZKiDEYi-8/edit)
+
 
 Test LCP
 --------
@@ -23,6 +20,7 @@ You can push this book in /sdcard/epubtest directory on your device
 
 To decrypt this epub, you will be required to enter the following passphrase: White whales are huge!
 If you do not you will be unable to open this epub
+
 
 Debug C++ code on Android Studio 2
 ----------------------------------
