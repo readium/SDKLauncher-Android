@@ -4,7 +4,7 @@ buildscript {
        jcenter()
     }
     dependencies {
-        // Retrieve ndk debug settings
+
         Properties properties = new Properties()
         properties.load(rootProject.file('local.properties').newDataInputStream())
 
@@ -26,14 +26,14 @@ buildscript {
 //        def ndk_skipARM = (rootProject.hasProperty("readium_ndk_skipARM") && rootProject.readium_ndk_skipARM)
 //        if (ndk_skipARM) environment 'READIUM_SKIPARM', 'true'
 
-        def ndkDebug = properties.getProperty('readium.ndk_debug', "false")
-        ndkDebug = (ndkDebug == "true") ? true : false;
-        rootProject.ext.set('readium_ndk_debug', ndkDebug)
-//        def ndk_debug = (rootProject.hasProperty("readium_ndk_debug") && rootProject.readium_ndk_debug)
-//        if (ndk_debug) environment 'READIUM_DEBUG', 'true'
+        def ndkExperimental = properties.getProperty('readium.ndk_experimental', "false")
+        ndkExperimental = (ndkExperimental == "true") ? true : false;
+        rootProject.ext.set('readium_ndk_experimental', ndkExperimental)
+//        def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && rootProject.readium_ndk_experimental)
+//        if (ndk_experimental) environment 'READIUM_EXPERIMENTAL', 'true'
 
         // Use stable gradle or experimental gradle
-        if (ndkDebug) {
+        if (ndkExperimental) {
             //https://bintray.com/android/android-tools/com.android.tools.build.gradle-experimental/view
             classpath "com.android.tools.build:gradle-experimental:0.8.2"
         } else {
