@@ -565,9 +565,21 @@ public class ContainerList extends FragmentActivity
             licenseInputStream = new FileInputStream(mBookPath);
         } catch (FileNotFoundException e) {
             // TODO
+            return;
         }
 
-        mLicense = mLcpService.openLicense(licenseInputStream);
+        String licenseContent = "";
+        try {
+            byte[] data = new byte[licenseInputStream.available()];
+            licenseInputStream.read(data);
+            licenseInputStream.close();
+            licenseContent = new String(data, "UTF-8");
+        } catch (IOException e) {
+            // TODO
+            return;
+        }
+
+        mLicense = mLcpService.openLicense(licenseContent);
 
 //        // Store downloaded epub in a temporary file
 //        File outputDir = this.context.getCacheDir();
@@ -585,7 +597,6 @@ public class ContainerList extends FragmentActivity
         File outputDir = lcplFile.getParentFile();
         final File outputFile = new File(outputDir, lcplFile.getName()+".epub");
 
-        // New book local path is the temporary path
         mBookPath = outputFile.getAbsolutePath();
         mBookName = outputFile.getName();
 
@@ -689,6 +700,8 @@ public class ContainerList extends FragmentActivity
                             inputStream.close();
                             outputStream.flush();
                             outputStream.close();
+
+                            mLcpService.injectLicense(outputFile.getAbsolutePath(), mLicense);
 
                             runOnUiThread(new Runnable() {
                                 @Override
