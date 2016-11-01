@@ -106,17 +106,6 @@ public class ContainerList extends FragmentActivity
         AcquisitionDialogFragment.Listener
 {
 
-    public abstract class StatusDocumentProcessingListener implements StatusDocumentProcessing.IListener {
-        final private StatusDocumentProcessing m_StatusDocumentProcessing;
-        public StatusDocumentProcessingListener(StatusDocumentProcessing sdp) {
-            m_StatusDocumentProcessing = sdp;
-        }
-        public void onStatusDocumentProcessingComplete() {
-            this.onStatusDocumentProcessingComplete_(m_StatusDocumentProcessing);
-        }
-        public abstract void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp);
-    }
-
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
@@ -218,7 +207,7 @@ public class ContainerList extends FragmentActivity
 
         if (!mLicense.isDecrypted()) {
             // Unable to decrypt license with the given passphrase
-            Toast.makeText(context, "Bad passphrase", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Wrong passphrase: " + mBookName, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -257,7 +246,7 @@ public class ContainerList extends FragmentActivity
         if (list.isEmpty()) {
             Toast.makeText(
                     context,
-                    epubpath + "/ is empty, copy epub3 test file first please.",
+                    "No ebooks found: " + epubpath,
                     Toast.LENGTH_LONG).show();
         }
 
@@ -305,6 +294,8 @@ public class ContainerList extends FragmentActivity
                         });
                     }
                 },
+
+                //#if !DISABLE_LSD
                 new StatusDocumentHandler() {
                     @Override
                     public void process(License license) {
@@ -333,8 +324,6 @@ public class ContainerList extends FragmentActivity
                 mBookName = list.get(arg2);
                 mBookPath = epubpath.getPath() + "/" + mBookName;
 
-                Toast.makeText(context, "Select " + mBookName, Toast.LENGTH_SHORT).show();
-
                 if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
                     downloadAndOpenSelectedBook();
                 } else {
@@ -356,6 +345,7 @@ public class ContainerList extends FragmentActivity
         });
     }
 
+    //#if !DISABLE_LSD
     public void launchStatusDocumentProcessing(final AlertDialog alertDialog) {
 
         //mLicense
@@ -372,9 +362,11 @@ public class ContainerList extends FragmentActivity
 
         if (mStatusDocumentProcessing != null) {
 
-            mStatusDocumentProcessing.start(new StatusDocumentProcessingListener(mStatusDocumentProcessing) {
+            mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener(mStatusDocumentProcessing) {
                 @Override
                 public void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp) {
+
+                    // assert sdp == mStatusDocumentProcessing (unless null)
 
                     mStatusDocumentProcessing = null;
 
@@ -382,26 +374,18 @@ public class ContainerList extends FragmentActivity
                         return;
                     }
 
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    alertDialog.dismiss();
+                            alertDialog.dismiss();
 
-                                    Toast.makeText(context, "Loading: " + mBookName, Toast.LENGTH_SHORT).show();
-
-                                    if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                                        downloadAndOpenSelectedBook();
-                                    } else {
-                                        decryptAndOpenSelectedBook();
-                                    }
-                                }
-                            });
+                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                downloadAndOpenSelectedBook();
+                            } else {
+                                decryptAndOpenSelectedBook();
+                            }
                         }
-                    }, 1000);
+                    });
                 }
             });
 
@@ -415,9 +399,10 @@ public class ContainerList extends FragmentActivity
         }
     }
 
+    //#if !DISABLE_LSD
     public AlertDialog showStatusDocumentDialog() {
-        Toast.makeText(ContainerList.this, "LCP EPUB => License Status Document in progress...", Toast.LENGTH_SHORT)
-                .show();
+//        Toast.makeText(ContainerList.this, "LCP EPUB => License Status Document in progress...", Toast.LENGTH_SHORT)
+//                .show();
 
         AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
 
@@ -432,6 +417,7 @@ public class ContainerList extends FragmentActivity
                             mStatusDocumentProcessing.cancel();
                             mStatusDocumentProcessing = null;
 
+                            // TODO: move this to .cancel()  (need to remove useless native C++ code, must now all be in Java)
                             mLcpService.SetLicenseStatusDocumentProcessingCancelled();
                         }
                     }
@@ -465,7 +451,7 @@ public class ContainerList extends FragmentActivity
 
         alertBuilder.setCancelable(true);
         AlertDialog alert = alertBuilder.create();
-        alert.setCanceledOnTouchOutside(false);
+        alert.setCanceledOnTouchOutside(true);
 
         alert.show(); //async!
 
@@ -477,9 +463,9 @@ public class ContainerList extends FragmentActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
-                Toast.makeText(ContainerList.this, "LCP EPUB download failed.", Toast.LENGTH_SHORT)
-                        .show();
+//
+//                Toast.makeText(ContainerList.this, "LCP EPUB download not completed.", Toast.LENGTH_SHORT)
+//                        .show();
 
                 AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
 
@@ -579,7 +565,7 @@ public class ContainerList extends FragmentActivity
 
         //#if !ENABLE_NET_PROVIDER
 
-        String url = mLicense.getLink_Publication();
+        final String url = mLicense.getLink_Publication();
 
 //        final AsyncHttpRequestFactory current = Ion.getDefault(context).configure().getAsyncHttpRequestFactory();
 //        Ion.getDefault(context).configure().setAsyncHttpRequestFactory(new AsyncHttpRequestFactory() {
@@ -602,9 +588,18 @@ public class ContainerList extends FragmentActivity
             req.cancel();
         }
 
-        mRequest = Ion.with(this.context)
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+
+
+        mRequest = Ion.with(ContainerList.this.context)
                 .load(url)
-                .setLogging("Ion", Log.VERBOSE)
+                .setLogging("Readium Ion", Log.VERBOSE)
                 .progress(new ProgressCallback() {
                     @Override
                     public void onProgress(long downloaded, long total) {
@@ -622,7 +617,10 @@ public class ContainerList extends FragmentActivity
                 //.progressHandler(callback) // UI thread
                 //.setTimeout(AsyncHttpRequest.DEFAULT_TIMEOUT) //30000
                 .setTimeout(6000)
-                //.setHeader(name, value)
+
+                // TODO: comment this in production! (this is only for testing a local HTTP server)
+                .setHeader("X-Add-Delay", "2s")
+
                 .asInputStream()
                 .withResponse()
                 .setCallback(new FutureCallback<Response<InputStream>>() {
@@ -679,15 +677,6 @@ public class ContainerList extends FragmentActivity
 
                             mLcpService.injectLicense(outputFile.getAbsolutePath(), mLicense);
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    Toast.makeText(ContainerList.this, "LCP EPUB download success.", Toast.LENGTH_SHORT)
-                                            .show();
-                                }
-                            });
-
                             Timer timer = new Timer();
                             timer.schedule(new TimerTask() {
                                 @Override
@@ -713,9 +702,24 @@ public class ContainerList extends FragmentActivity
 //                .write(new File(dstPath))
 //                .setCallback(callback)
                 ;
+
+
+//            }
+//        });
+    }
+}, 500);
     }
 
     private void decryptAndOpenSelectedBook() {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                Toast.makeText(ContainerList.this, "OPEN: " + mBookName, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
 
         m_SdkErrorHandler_Messages = new Stack<>();
         EPub3.setSdkErrorHandler(ContainerList.this);
@@ -761,7 +765,7 @@ public class ContainerList extends FragmentActivity
 
             AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
 
-            alertBuilder.setTitle("EPUB warning");
+            alertBuilder.setTitle("Warning: " + mBookName);
             alertBuilder.setMessage(message);
 
             alertBuilder.setOnCancelListener(
