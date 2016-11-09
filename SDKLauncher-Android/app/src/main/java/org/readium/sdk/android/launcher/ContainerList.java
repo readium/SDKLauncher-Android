@@ -543,6 +543,13 @@ public class ContainerList extends FragmentActivity
 
         mLicense = mLcpService.openLicense(licenseContent);
 
+        if (mLicense == null) {
+            // If license is NULL, it means that an error has occured
+            // TODO: Throws an exception instead of returning null license
+            Toast.makeText(ContainerList.this, "LCP EPUB license failed to initiate.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 //        // Store downloaded epub in a temporary file
 //        File outputDir = this.context.getCacheDir();
 //        final File outputFile;
