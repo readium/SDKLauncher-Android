@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -51,6 +52,7 @@ import org.readium.sdk.lcp.ServiceFactory;
 import org.readium.sdk.lcp.StatusDocumentProcessing;
 import org.readium.sdk.lcp.StorageProvider;
 
+import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -109,9 +111,13 @@ public class ContainerList extends FragmentActivity
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
-    //#if ENABLE_NET_PROVIDER
+
+//#if ENABLE_NET_PROVIDER
 //    private Acquisition mAcquisition;
+
+//#if !DISABLE_LSD
     private StatusDocumentProcessing mStatusDocumentProcessing;
+
     private AcquisitionDialogFragment mAcquisitionDialogFragment;
     private Container mContainer;
     private String mBookName; // Name of the selected book
@@ -308,8 +314,7 @@ public class ContainerList extends FragmentActivity
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                AlertDialog alert = showStatusDocumentDialog();
-                                launchStatusDocumentProcessing(alert);
+                                launchStatusDocumentProcessing();
                             }
                         });
                     }
@@ -346,7 +351,9 @@ public class ContainerList extends FragmentActivity
     }
 
     //#if !DISABLE_LSD
-    public void launchStatusDocumentProcessing(final AlertDialog alertDialog) {
+    public void launchStatusDocumentProcessing() {
+
+        final AlertDialog alertDialog = showStatusDocumentDialog();
 
         //mLicense
         //mLcpService
@@ -358,45 +365,45 @@ public class ContainerList extends FragmentActivity
             mStatusDocumentProcessing = null;
         }
 
-        mStatusDocumentProcessing = mLicense.createStatusDocumentProcessing(mBookPath);
+        mStatusDocumentProcessing = new StatusDocumentProcessing(ContainerList.this.context, mLcpService, mBookPath, mLicense);
 
-        if (mStatusDocumentProcessing != null) {
+        mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener(mStatusDocumentProcessing) {
+            @Override
+            public void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp) {
 
-            mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener(mStatusDocumentProcessing) {
-                @Override
-                public void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp) {
+                // assert sdp == mStatusDocumentProcessing (unless null)
 
-                    // assert sdp == mStatusDocumentProcessing (unless null)
-
-                    mStatusDocumentProcessing = null;
-
-                    if (sdp.wasCancelled()) {
-                        return;
-                    }
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alertDialog.dismiss();
-
-                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                                downloadAndOpenSelectedBook();
-                            } else {
-                                decryptAndOpenSelectedBook();
-                            }
-                        }
-                    });
+                if (mStatusDocumentProcessing == null) {
+                    return;
                 }
-            });
+                mStatusDocumentProcessing = null;
+
+                if (sdp.wasCancelled()) {
+                    return;
+                }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        alertDialog.dismiss();
+
+                        if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                            downloadAndOpenSelectedBook();
+                        } else {
+                            decryptAndOpenSelectedBook();
+                        }
+                    }
+                });
+            }
+        });
 
 //            new AsyncTask<Void, Void, Void>() {
 //                @Override
 //                protected Void doInBackground(Void... params) {
-            // .............
+        // .............
 //                    return null;
 //                }
 //            }.execute();
-        }
     }
 
     //#if !DISABLE_LSD
@@ -416,9 +423,6 @@ public class ContainerList extends FragmentActivity
                         if (mStatusDocumentProcessing != null) {
                             mStatusDocumentProcessing.cancel();
                             mStatusDocumentProcessing = null;
-
-                            // TODO: move this to .cancel()  (need to remove useless native C++ code, must now all be in Java)
-                            mLcpService.SetLicenseStatusDocumentProcessingCancelled();
                         }
                     }
                 }
@@ -516,12 +520,22 @@ public class ContainerList extends FragmentActivity
 
     }
 
+    @TargetApi(Build.VERSION_CODES.N)
+    public Locale getCurrentLocale(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+            return getResources().getConfiguration().getLocales().get(0);
+        } else{
+            //noinspection deprecation
+            return getResources().getConfiguration().locale;
+        }
+    }
+
     /**
      * Acquire epub defined in the LCPL license and open it
      */
     private void downloadAndOpenSelectedBook() {
-        InputStream licenseInputStream = null;
 
+        InputStream licenseInputStream = null;
         try {
             // Book path is a reference of an LCPL file
             licenseInputStream = new FileInputStream(mBookPath);
@@ -603,6 +617,9 @@ public class ContainerList extends FragmentActivity
 //                    @Override
 //                    public void run() {
 
+                Locale currentLocale = getCurrentLocale();
+                String langCode = currentLocale.toString().replace('_', '-');
+                langCode = langCode + ",en-US;q=0.7,en;q=0.5";
 
         mRequest = Ion.with(ContainerList.this.context)
                 .load(url)
@@ -626,7 +643,10 @@ public class ContainerList extends FragmentActivity
                 .setTimeout(6000)
 
                 // TODO: comment this in production! (this is only for testing a local HTTP server)
-                .setHeader("X-Add-Delay", "2s")
+                //.setHeader("X-Add-Delay", "2s")
+
+                // LCP / LSD server with message localization
+                .setHeader("Accept-Language", langCode)
 
                 .asInputStream()
                 .withResponse()
@@ -638,8 +658,9 @@ public class ContainerList extends FragmentActivity
                         mRequest = null;
 
                         InputStream inputStream = response != null ? response.getResult() : null;
-
-                        if (e != null || inputStream == null) {
+                        int httpResponseCode = response != null ? response.getHeaders().code() : 0;
+                        if (e != null || inputStream == null
+                                || httpResponseCode < 200 || httpResponseCode >= 300) {
 
                             progressAcquisitionDialog(1.0f);
                             removeAcquisitionDialog();
