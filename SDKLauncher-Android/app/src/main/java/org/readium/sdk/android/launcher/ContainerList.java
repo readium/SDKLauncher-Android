@@ -622,7 +622,7 @@ public class ContainerList extends FragmentActivity
                 langCode = langCode + ",en-US;q=0.7,en;q=0.5";
 
         mRequest = Ion.with(ContainerList.this.context)
-                .load(url)
+                .load("GET", url)
                 .setLogging("Readium Ion", Log.VERBOSE)
                 .progress(new ProgressCallback() {
                     @Override
