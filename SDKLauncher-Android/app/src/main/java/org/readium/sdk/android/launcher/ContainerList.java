@@ -757,6 +757,18 @@ public class ContainerList extends FragmentActivity
         if (mContainer != null) {
             openSelectedBook();
         }
+        else {
+
+            SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(null) {
+                @Override
+                public void once() {
+                    // will not be called because passed INTENT is null
+                }
+            };
+
+            // async!
+            popSdkErrorHandlerMessage(context, callback);
+        }
     }
 
     private void openSelectedBook() {
