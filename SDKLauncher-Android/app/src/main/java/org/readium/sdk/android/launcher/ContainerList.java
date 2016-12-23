@@ -555,14 +555,29 @@ public class ContainerList extends FragmentActivity
             return;
         }
 
+        m_SdkErrorHandler_Messages = new Stack<>();
         mLicense = mLcpService.openLicense(licenseContent);
+
 
         if (mLicense == null) {
             // If license is NULL, it means that an error has occured
             // TODO: Throws an exception instead of returning null license
             Toast.makeText(ContainerList.this, "LCP EPUB license failed to initiate.", Toast.LENGTH_SHORT).show();
+
+
+            SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(null) {
+                @Override
+                public void once() {
+                    // will not be called because passed INTENT is null
+                }
+            };
+
+            // async!
+            popSdkErrorHandlerMessage(context, callback);
+
             return;
         }
+
 
 //        // Store downloaded epub in a temporary file
 //        File outputDir = this.context.getCacheDir();
@@ -827,7 +842,7 @@ public class ContainerList extends FragmentActivity
                     }
             );
 
-            alertBuilder.setPositiveButton("Ignore",
+            alertBuilder.setPositiveButton("Ok",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
