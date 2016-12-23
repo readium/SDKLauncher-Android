@@ -556,8 +556,9 @@ public class ContainerList extends FragmentActivity
         }
 
         m_SdkErrorHandler_Messages = new Stack<>();
+        EPub3.setSdkErrorHandler(ContainerList.this);
         mLicense = mLcpService.openLicense(licenseContent);
-
+        EPub3.setSdkErrorHandler(null);
 
         if (mLicense == null) {
             // If license is NULL, it means that an error has occured
