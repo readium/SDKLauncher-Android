@@ -112,7 +112,7 @@ public class ContainerList extends FragmentActivity
     private Stack<String> m_SdkErrorHandler_Messages = null;
     private License mLicense;
 
-//#if ENABLE_NET_PROVIDER
+//#if ENABLE_NET_PROVIDER_ACQUISITION
 //    private Acquisition mAcquisition;
 
     private StatusDocumentProcessing mStatusDocumentProcessing;
@@ -176,7 +176,7 @@ public class ContainerList extends FragmentActivity
 
     @Override
     public void onAcquisitionDialogCancel(DialogFragment dialog) {
-        //#if ENABLE_NET_PROVIDER
+        //#if ENABLE_NET_PROVIDER_ACQUISITION
 //        if (mAcquisition != null) {
 //            // Cancel download
 //            mAcquisition.cancel();
@@ -595,8 +595,6 @@ public class ContainerList extends FragmentActivity
         mBookPath = outputFile.getAbsolutePath();
         mBookName = outputFile.getName();
 
-
-        //#if !ENABLE_NET_PROVIDER
 
         final String url = mLicense.getLink_Publication();
 
