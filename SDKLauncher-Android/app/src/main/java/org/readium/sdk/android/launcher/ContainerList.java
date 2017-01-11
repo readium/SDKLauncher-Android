@@ -115,7 +115,6 @@ public class ContainerList extends FragmentActivity
 //#if ENABLE_NET_PROVIDER
 //    private Acquisition mAcquisition;
 
-//#if !DISABLE_LSD
     private StatusDocumentProcessing mStatusDocumentProcessing;
 
     private AcquisitionDialogFragment mAcquisitionDialogFragment;
@@ -301,7 +300,6 @@ public class ContainerList extends FragmentActivity
                     }
                 },
 
-                //#if !DISABLE_LSD
                 new StatusDocumentHandler() {
                     @Override
                     public void process(License license) {
@@ -350,7 +348,6 @@ public class ContainerList extends FragmentActivity
         });
     }
 
-    //#if !DISABLE_LSD
     public void launchStatusDocumentProcessing() {
 
         final AlertDialog alertDialog = showStatusDocumentDialog();
@@ -406,7 +403,6 @@ public class ContainerList extends FragmentActivity
 //            }.execute();
     }
 
-    //#if !DISABLE_LSD
     public AlertDialog showStatusDocumentDialog() {
 //        Toast.makeText(ContainerList.this, "LCP EPUB => License Status Document in progress...", Toast.LENGTH_SHORT)
 //                .show();
