@@ -600,6 +600,8 @@ public class ContainerList extends FragmentActivity
 
 
         final String url = mLicense.getLink_Publication();
+        // no strict check for content-type
+        // See https://github.com/readium/readium-lcp-client/issues/15
 
 //        final AsyncHttpRequestFactory current = Ion.getDefault(context).configure().getAsyncHttpRequestFactory();
 //        Ion.getDefault(context).configure().setAsyncHttpRequestFactory(new AsyncHttpRequestFactory() {
