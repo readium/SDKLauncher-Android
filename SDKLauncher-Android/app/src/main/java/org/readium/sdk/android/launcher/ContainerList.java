@@ -56,6 +56,7 @@ import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -96,6 +97,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.lang.Integer.parseInt;
 
@@ -365,7 +367,71 @@ public class ContainerList extends FragmentActivity
             mStatusDocumentProcessing = null;
         }
 
-        mStatusDocumentProcessing = new StatusDocumentProcessing(ContainerList.this.context, mLcpService, mBookPath, mLicense);
+        StatusDocumentProcessing.IDeviceIDManager deviceIDManager = new StatusDocumentProcessing.IDeviceIDManager() {
+
+            private final String PREF_KEY_DEVICE_ID = "READIUM_LCP_LSD_DEVICE_ID";
+            private final String PREF_KEY_DEVICE_ID_CHECK = "READIUM_LCP_LSD_DEVICE_ID_CHECK_";
+
+            @Override
+            public String getDeviceID() {
+                SharedPreferences sharedPrefs_DEVICEID = ContainerList.this.context.getSharedPreferences(
+                        PREF_KEY_DEVICE_ID, Context.MODE_PRIVATE);
+                String pref_DEVICEID = sharedPrefs_DEVICEID.getString(PREF_KEY_DEVICE_ID, null);
+
+                if (pref_DEVICEID == null) {
+
+                    String id = UUID.randomUUID().toString();
+
+                    // TODO: weird MAC address on my device...not sure it's reliable (Wifi-ADB, LLDB debug session).
+//                try {
+//                    WifiManager wm = (WifiManager) ContainerList.this.context.getSystemService(Context.WIFI_SERVICE);
+//                    id = wm.getConnectionInfo().getMacAddress();
+//                } catch(Exception ex){
+//                    // ignore
+//                }
+
+                    SharedPreferences.Editor editor = sharedPrefs_DEVICEID.edit();
+                    editor.putString(PREF_KEY_DEVICE_ID, id);
+                    editor.commit();
+
+                    return id;
+                }
+
+                return pref_DEVICEID;
+            }
+
+            @Override
+            public String checkDeviceID(String key) {
+
+                String PREF_ID = PREF_KEY_DEVICE_ID_CHECK + key;
+
+                SharedPreferences sharedPrefs = ContainerList.this.context.getSharedPreferences(
+                        PREF_ID, Context.MODE_PRIVATE);
+                String pref = sharedPrefs.getString(PREF_ID, null);
+                return pref;
+            }
+
+            @Override
+            public void recordDeviceID(String key) {
+
+                String PREF_ID = PREF_KEY_DEVICE_ID_CHECK + key;
+
+                SharedPreferences sharedPrefs = ContainerList.this.context.getSharedPreferences(
+                        PREF_ID, Context.MODE_PRIVATE);
+//              String pref = sharedPrefs.getString(PREF_ID, null);
+                SharedPreferences.Editor editor = sharedPrefs.edit();
+//                if (pref != null) {
+//                    editor.remove(PREF_ID);
+//                }
+
+                String id = getDeviceID();
+
+                editor.putString(PREF_ID, id);
+                editor.commit();
+            }
+        };
+
+        mStatusDocumentProcessing = new StatusDocumentProcessing(ContainerList.this.context, mLcpService, mBookPath, mLicense, deviceIDManager);
 
         mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener(mStatusDocumentProcessing) {
             @Override
