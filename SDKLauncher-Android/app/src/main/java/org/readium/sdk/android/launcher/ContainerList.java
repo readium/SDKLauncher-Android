@@ -103,12 +103,10 @@ import static java.lang.Integer.parseInt;
 
 /**
  * @author chtian
- *
  */
 public class ContainerList extends FragmentActivity
         implements SdkErrorHandler, PassphraseDialogFragment.PassphraseDialogListener,
-        AcquisitionDialogFragment.Listener
-{
+        AcquisitionDialogFragment.Listener {
 
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
@@ -129,15 +127,18 @@ public class ContainerList extends FragmentActivity
 
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
+
         public SdkErrorHandlerMessagesCompleted(Intent intent) {
             m_intent = intent;
         }
+
         public void done() {
             if (m_intent != null) {
                 once();
                 m_intent = null;
             }
         }
+
         public abstract void once();
     }
 
@@ -150,6 +151,7 @@ public class ContainerList extends FragmentActivity
 
     /**
      * Set the progress bar value
+     *
      * @param value Progress value between 0 and 1
      */
     public void progressAcquisitionDialog(float value) {
@@ -164,7 +166,7 @@ public class ContainerList extends FragmentActivity
             return;
         }
 
-        dialog.setProgress((int)(value*100.0));
+        dialog.setProgress((int) (value * 100.0));
     }
 
     public void removeAcquisitionDialog() {
@@ -337,18 +339,6 @@ public class ContainerList extends FragmentActivity
                 } else {
                     decryptAndOpenSelectedBook();
                 }
-//
-//                Timer timer = new Timer();
-//                timer.schedule(new TimerTask() {
-//                    @Override
-//                    public void run() {
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                            }
-//                        });
-//                    }
-//                }, 1000);
             }
         });
     }
@@ -448,6 +438,11 @@ public class ContainerList extends FragmentActivity
                     return;
                 }
 
+                // StatusDocumentProcessing uses Ion lib to create HTTP requests,
+                // so the responses are received in a UI thread callback,
+                // so in principle this is redundant ...
+                // but we keep it anyway to ensure UI thread
+                // (just in case the underlying implementation changes)
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -462,21 +457,13 @@ public class ContainerList extends FragmentActivity
                 });
             }
         });
-
-//            new AsyncTask<Void, Void, Void>() {
-//                @Override
-//                protected Void doInBackground(Void... params) {
-        // .............
-//                    return null;
-//                }
-//            }.execute();
     }
 
     public AlertDialog showStatusDocumentDialog() {
 //        Toast.makeText(ContainerList.this, "LCP EPUB => License Status Document in progress...", Toast.LENGTH_SHORT)
 //                .show();
 
-        AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
 
         alertBuilder.setTitle("LCP EPUB => LSD ...");
         alertBuilder.setMessage("License Status Document in progress...");
@@ -529,42 +516,39 @@ public class ContainerList extends FragmentActivity
 
     private void notifyAcquisitionDialogFail() {
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
 //
 //                Toast.makeText(ContainerList.this, "LCP EPUB download not completed.", Toast.LENGTH_SHORT)
 //                        .show();
 
-                AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(context);
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
 
-                alertBuilder.setTitle("LCP EPUB acquisition ...");
-                alertBuilder.setMessage("Download not completed.");
+        alertBuilder.setTitle("LCP EPUB acquisition ...");
+        alertBuilder.setMessage("Download not completed.");
 
-                alertBuilder.setOnCancelListener(
-                        new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                            }
-                        }
-                );
+        alertBuilder.setOnCancelListener(
+                new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                    }
+                }
+        );
 
-                alertBuilder.setOnDismissListener(
-                        new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                            }
-                        }
-                );
+        alertBuilder.setOnDismissListener(
+                new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                    }
+                }
+        );
 
-                alertBuilder.setPositiveButton("Okay",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        }
-                );
+        alertBuilder.setPositiveButton("Okay",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                }
+        );
 
 //                alertBuilder.setNegativeButton("...",
 //                        new DialogInterface.OnClickListener() {
@@ -575,21 +559,18 @@ public class ContainerList extends FragmentActivity
 //                        }
 //                );
 
-                alertBuilder.setCancelable(true);
-                AlertDialog alert = alertBuilder.create();
-                alert.setCanceledOnTouchOutside(true);
+        alertBuilder.setCancelable(true);
+        AlertDialog alert = alertBuilder.create();
+        alert.setCanceledOnTouchOutside(true);
 
-                alert.show(); //async!
-            }
-        });
-
+        alert.show(); //async!
     }
 
     @TargetApi(Build.VERSION_CODES.N)
-    public Locale getCurrentLocale(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+    public Locale getCurrentLocale() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return getResources().getConfiguration().getLocales().get(0);
-        } else{
+        } else {
             //noinspection deprecation
             return getResources().getConfiguration().locale;
         }
@@ -659,7 +640,7 @@ public class ContainerList extends FragmentActivity
 
         File lcplFile = new File(mBookPath);
         File outputDir = lcplFile.getParentFile();
-        final File outputFile = new File(outputDir, lcplFile.getName()+".epub");
+        final File outputFile = new File(outputDir, lcplFile.getName() + ".epub");
 
         mBookPath = outputFile.getAbsolutePath();
         mBookName = outputFile.getName();
@@ -690,17 +671,21 @@ public class ContainerList extends FragmentActivity
             req.cancel();
         }
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
+//        new AsyncTask<Void, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Void... params) {
+
+//        Timer timer = new Timer();
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
 //                runOnUiThread(new Runnable() {
 //                    @Override
 //                    public void run() {
 
-                Locale currentLocale = getCurrentLocale();
-                String langCode = currentLocale.toString().replace('_', '-');
-                langCode = langCode + ",en-US;q=0.7,en;q=0.5";
+        Locale currentLocale = getCurrentLocale();
+        String langCode = currentLocale.toString().replace('_', '-');
+        langCode = langCode + ",en-US;q=0.7,en;q=0.5";
 
         mRequest = Ion.with(ContainerList.this.context)
                 .load("GET", url)
@@ -713,9 +698,9 @@ public class ContainerList extends FragmentActivity
 
                         // total is -1 when HTTP content-length header is not set.
                         if (total < downloaded) {
-                            total = downloaded*2;
+                            total = downloaded * 2;
                         }
-                        float value = (downloaded / (float)total);
+                        float value = (downloaded / (float) total);
                         progressAcquisitionDialog(value);
                     }
                 }) // not UI thread
@@ -731,6 +716,8 @@ public class ContainerList extends FragmentActivity
 
                 .asInputStream()
                 .withResponse()
+
+                // UI thread
                 .setCallback(new FutureCallback<Response<InputStream>>() {
                     @Override
                     public void onCompleted(Exception e, Response<InputStream> response) {
@@ -762,21 +749,21 @@ public class ContainerList extends FragmentActivity
                                 String strLength = response.getHeaders().getHeaders().get("Content-Length");
                                 length = Integer.parseInt(strLength);
                                 //length = inputStream.available();
-                            } catch(Exception exc){
+                            } catch (Exception exc) {
                                 // ignore
                             }
 
                             byte[] buf = new byte[16384];
                             int n;
                             int total = 0;
-                            while((n = inputStream.read(buf))>0){
+                            while ((n = inputStream.read(buf)) > 0) {
                                 total += n;
                                 outputStream.write(buf, 0, n);
 
                                 if (length < total) {
-                                    length = total*2;
+                                    length = total * 2;
                                 }
-                                float val = (total / (float)length);
+                                float val = (total / (float) length);
 
                                 progressAcquisitionDialog(val);
                             }
@@ -786,6 +773,7 @@ public class ContainerList extends FragmentActivity
 
                             mLcpService.injectLicense(outputFile.getAbsolutePath(), mLicense);
 
+                            // ensure file I/O in native layer is complete (buffer flush, filesystem sync, etc.)
                             Timer timer = new Timer();
                             timer.schedule(new TimerTask() {
                                 @Override
@@ -793,12 +781,11 @@ public class ContainerList extends FragmentActivity
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-
                                             decryptAndOpenSelectedBook();
                                         }
                                     });
                                 }
-                            }, 500);
+                            }, 500); // 500ms additional delay after EPUB download seems acceptable?
 
                         } catch (Exception ex) {
                             ex.printStackTrace();
@@ -810,25 +797,23 @@ public class ContainerList extends FragmentActivity
                 })
 //                .write(new File(dstPath))
 //                .setCallback(callback)
-                ;
+        ;
 
 
 //            }
 //        });
-    }
-}, 500);
+//            }
+
+//}, 500);
+
+//                return null;
+//            }
+//    }.execute();
     }
 
     private void decryptAndOpenSelectedBook() {
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                Toast.makeText(ContainerList.this, "OPEN: " + mBookName, Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
+        Toast.makeText(ContainerList.this, "OPEN: " + mBookName, Toast.LENGTH_SHORT).show();
 
         m_SdkErrorHandler_Messages = new Stack<>();
         EPub3.setSdkErrorHandler(ContainerList.this);
@@ -837,8 +822,7 @@ public class ContainerList extends FragmentActivity
 
         if (mContainer != null) {
             openSelectedBook();
-        }
-        else {
+        } else {
 
             SdkErrorHandlerMessagesCompleted callback = new SdkErrorHandlerMessagesCompleted(null) {
                 @Override
@@ -872,8 +856,7 @@ public class ContainerList extends FragmentActivity
     }
 
     // async!
-    private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback)
-    {
+    private void popSdkErrorHandlerMessage(final Context ctx, final SdkErrorHandlerMessagesCompleted callback) {
         if (m_SdkErrorHandler_Messages != null) {
 
             if (m_SdkErrorHandler_Messages.size() == 0) {
@@ -884,7 +867,7 @@ public class ContainerList extends FragmentActivity
 
             String message = m_SdkErrorHandler_Messages.pop();
 
-            AlertDialog.Builder alertBuilder  = new AlertDialog.Builder(ctx);
+            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx);
 
             alertBuilder.setTitle("Warning: " + mBookName);
             alertBuilder.setMessage(message);
@@ -930,8 +913,7 @@ public class ContainerList extends FragmentActivity
             alert.setCanceledOnTouchOutside(false);
 
             alert.show(); //async!
-        }
-        else {
+        } else {
             callback.done();
         }
     }
