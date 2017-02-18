@@ -363,6 +363,11 @@ public class ContainerList extends FragmentActivity
             private final String PREF_KEY_DEVICE_ID_CHECK = "READIUM_LCP_LSD_DEVICE_ID_CHECK_";
 
             @Override
+            public String getDeviceNAME() {
+                return "Android device";
+            }
+
+            @Override
             public String getDeviceID() {
                 SharedPreferences sharedPrefs_DEVICEID = ContainerList.this.context.getSharedPreferences(
                         PREF_KEY_DEVICE_ID, Context.MODE_PRIVATE);
