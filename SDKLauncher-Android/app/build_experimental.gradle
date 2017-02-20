@@ -14,6 +14,17 @@ model {
         abortOnError = false
     }
 
+    android.signingConfigs {
+        create("mySigningConfig") {
+        //mySigningConfig {
+            keyAlias = 'ReadiumAndroidAPKSign'
+            keyPassword = 'keyPass'
+            storePassword = 'storePass'
+            storeType "jks"
+            storeFile = file('./ReadiumAndroidAPKSign.jks')
+        }
+    }
+
     android {
         compileSdkVersion = 25
         buildToolsVersion = "25.0.2"
@@ -62,8 +73,12 @@ model {
                 minifyEnabled = false
             }
             release {
-                minifyEnabled = true
+                minifyEnabled = false
                 //proguardFiles.add(file('proguard-rules.txt'))
+
+                //signingConfig signingConfigs.mySigningConfig
+                //signingConfig $.android.signingConfigs.get("mySigningConfig")
+                //signingConfig $("android.signingConfigs.mySigningConfig")
             }
         } //buildTypes
 
