@@ -71,12 +71,12 @@ model {
 
         buildTypes {
             debug {
-                ext.enableCrashlytics = true
+                ext.enableCrashlytics = false
 
                 minifyEnabled = false
             }
             release {
-                ext.enableCrashlytics = true
+                ext.enableCrashlytics = false
 
                 minifyEnabled = false
                 //proguardFiles.add(file('proguard-rules.txt'))

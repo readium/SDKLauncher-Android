@@ -126,19 +126,19 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        CrashlyticsCore core = new CrashlyticsCore.Builder().disabled(false).build(); //BuildConfig.DEBUG
-//
-//        Crashlytics kit = new Crashlytics.Builder().core(core).build(); //new Crashlytics()
-//        //kit.setDebugMode(true);
-//
-//        //Fabric.with(this, kit);
-//        final Fabric fabric = new Fabric.Builder(this)
-//                .kits(kit)
-//                .debuggable(true)
-//                .build();
-//        Fabric.with(fabric);
+        CrashlyticsCore core = new CrashlyticsCore.Builder().disabled(true).build(); //BuildConfig.DEBUG
 
-        Fabric.with(this, new Crashlytics());
+        Crashlytics kit = new Crashlytics.Builder().core(core).build(); //new Crashlytics()
+        //kit.setDebugMode(true);
+
+        //Fabric.with(this, kit);
+        final Fabric fabric = new Fabric.Builder(this)
+                .kits(kit)
+                .debuggable(false)
+                .build();
+        Fabric.with(fabric);
+
+//        Fabric.with(this, new Crashlytics());
 
         setContentView(R.layout.activity_main);
         Message msg = new Message();

@@ -28,17 +28,6 @@ android {
         }
     }
 
-    signingConfigs {
-        create("mySigningConfig") {
-            //mySigningConfig {
-            keyAlias = 'ReadiumAndroidAPKSign'
-            keyPassword = 'daniel'
-            storePassword = 'daniel'
-            storeType "jks"
-            storeFile = file('./ReadiumAndroidAPKSign.jks')
-        }
-    }
-
     defaultConfig {
         // manifest@package attribute in src/main/AndroidManifest.xml
         applicationId = "org.readium.sdk.android.launcher"
@@ -80,12 +69,12 @@ android {
 
     buildTypes {
         debug {
-            ext.enableCrashlytics = true
+            ext.enableCrashlytics = false
 
             minifyEnabled = false
         }
         release {
-            ext.enableCrashlytics = true
+            ext.enableCrashlytics = false
 
             minifyEnabled = false
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'

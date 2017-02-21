@@ -74,14 +74,3 @@ tasks.whenTaskAdded { task ->
         }
     }
 }
-
-android {
-    signingConfigs {
-        ReadiumAndroidAPKSign {
-            keyAlias 'ReadiumAndroidAPKSign'
-            keyPassword 'daniel'
-            storeFile file('/Users/danielweck/Code/SDKLauncher-Android/SDKLauncher-Android/app/ReadiumAndroidAPKSign.jks')
-            storePassword 'daniel'
-        }
-    }
-}
