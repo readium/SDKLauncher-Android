@@ -38,6 +38,10 @@ import org.readium.sdk.lcp.ServiceFactory;
 
 import java.io.File;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
+import io.fabric.sdk.android.Fabric;
+
 public class MainActivity extends Activity {
 
     private static final int STOPSPLASH = 0;
@@ -110,6 +114,8 @@ public class MainActivity extends Activity {
 
                 startActivityForResult(i, 0);
 
+                //Crashlytics.logException(new Exception("Crashlytics ready."));
+
                 break;
             }
             super.handleMessage(msg);
@@ -119,6 +125,21 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        CrashlyticsCore core = new CrashlyticsCore.Builder().disabled(true).build(); //BuildConfig.DEBUG
+
+        Crashlytics kit = new Crashlytics.Builder().core(core).build(); //new Crashlytics()
+        //kit.setDebugMode(true);
+
+        //Fabric.with(this, kit);
+        final Fabric fabric = new Fabric.Builder(this)
+                .kits(kit)
+                .debuggable(false)
+                .build();
+        Fabric.with(fabric);
+
+//        Fabric.with(this, new Crashlytics());
+
         setContentView(R.layout.activity_main);
         Message msg = new Message();
         msg.what = STOPSPLASH;

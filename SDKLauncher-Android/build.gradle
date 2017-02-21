@@ -2,6 +2,7 @@
 buildscript {
     repositories {
        jcenter()
+        maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
 
@@ -40,6 +41,8 @@ buildscript {
             //https://bintray.com/android/android-tools/com.android.tools.build.gradle/view
             classpath "com.android.tools.build:gradle:2.2.3"
         }
+
+        classpath 'io.fabric.tools:gradle:1.+'
     }
 }
 
