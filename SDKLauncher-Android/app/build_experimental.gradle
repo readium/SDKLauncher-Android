@@ -15,14 +15,17 @@ model {
         abortOnError = false
     }
 
+    // May require -Dorg.gradle.model.dsl=true
+    // For example:
+    //sh ./gradlew -Dorg.gradle.model.dsl=true assembleRelease
     android.signingConfigs {
-        create("mySigningConfig") {
         //mySigningConfig {
-            keyAlias = 'ReadiumAndroidAPKSign'
-            keyPassword = 'keyPass'
-            storePassword = 'storePass'
+        create("mySigningConfig") {
+            keyAlias = "ReadiumAndroidAPKSign"
+            keyPassword = "keyPass"
+            storePassword = "storePass"
             storeType "jks"
-            storeFile = file('./ReadiumAndroidAPKSign.jks')
+            storeFile = new File("app/ReadiumAndroidAPKSign.jks")
         }
     }
 
@@ -81,9 +84,9 @@ model {
                 minifyEnabled = false
                 //proguardFiles.add(file('proguard-rules.txt'))
 
-                //signingConfig signingConfigs.mySigningConfig
-                //signingConfig $.android.signingConfigs.get("mySigningConfig")
-                //signingConfig $("android.signingConfigs.mySigningConfig")
+                //signingConfig = signingConfigs.mySigningConfig
+                //signingConfig = $.android.signingConfigs.get("mySigningConfig")
+                signingConfig = $("android.signingConfigs.mySigningConfig")
             }
         } //buildTypes
 
