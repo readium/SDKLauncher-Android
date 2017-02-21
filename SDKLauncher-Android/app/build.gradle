@@ -24,12 +24,9 @@ repositories {
 
 dependencies {
     compile 'com.nononsenseapps:filepicker:3.0.0'
-
     compile 'com.android.support:support-v4:23.+'
-
     compile 'com.koushikdutta.ion:ion:2.+'
     // compile 'com.koushikdutta.async:androidasync:2.+' ALREADY INCLUDED AS DEPENDENCY OF com.koushikdutta.ion
-
     compile 'commons-io:commons-io:2.4'
 
     compile('com.crashlytics.sdk.android:crashlytics:2.6.6@aar') {
@@ -74,6 +71,17 @@ tasks.whenTaskAdded { task ->
                     ":epub3:buildMk",
                     ":lcp:buildMk",
                     "buildEpubReadingSystem"
+        }
+    }
+}
+
+android {
+    signingConfigs {
+        ReadiumAndroidAPKSign {
+            keyAlias 'ReadiumAndroidAPKSign'
+            keyPassword 'daniel'
+            storeFile file('/Users/danielweck/Code/SDKLauncher-Android/SDKLauncher-Android/app/ReadiumAndroidAPKSign.jks')
+            storePassword 'daniel'
         }
     }
 }
