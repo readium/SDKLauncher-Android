@@ -44,6 +44,7 @@ import org.readium.sdk.android.launcher.model.BookmarkDatabase;
 import org.readium.sdk.android.SdkErrorHandler;
 import org.readium.sdk.lcp.Acquisition;
 import org.readium.sdk.lcp.CredentialHandler;
+import org.readium.sdk.lcp.DoneCallback;
 import org.readium.sdk.lcp.StatusDocumentHandler;
 import org.readium.sdk.lcp.License;
 import org.readium.sdk.lcp.NetProvider;
@@ -343,9 +344,109 @@ public class ContainerList extends FragmentActivity
         });
     }
 
+    private void checkLink_RENEW(final StatusDocumentProcessing lsd, final DoneCallback doneCallback_checkLink_RENEW) {
+
+        if (!lsd.isActive()) {
+            doneCallback_checkLink_RENEW.Done(false);
+            return;
+        }
+
+        if (!lsd.hasRenewLink()) {
+            doneCallback_checkLink_RENEW.Done(false);
+            return;
+        }
+
+        showStatusDocumentDialog_RETURN_RENEW("renew", new DoneCallback() {
+            @Override
+            public void Done(boolean done) {
+                if (!done) {
+                    doneCallback_checkLink_RENEW.Done(false);
+                    return;
+                }
+                lsd.doRenew(doneCallback_checkLink_RENEW);
+            }
+        });
+    }
+
+    private void checkLink_RETURN(final StatusDocumentProcessing lsd, final DoneCallback doneCallback_checkLink_RETURN) {
+
+        if (!lsd.isActive()) {
+            doneCallback_checkLink_RETURN.Done(false);
+            return;
+        }
+
+        if (!lsd.hasReturnLink()) {
+            doneCallback_checkLink_RETURN.Done(false);
+            return;
+        }
+
+        showStatusDocumentDialog_RETURN_RENEW("return", new DoneCallback() {
+            @Override
+            public void Done(boolean done) {
+                if (!done) {
+                    doneCallback_checkLink_RETURN.Done(false);
+                    return;
+                }
+                lsd.doReturn(doneCallback_checkLink_RETURN);
+            }
+        });
+    }
+
+    private AlertDialog showStatusDocumentDialog_RETURN_RENEW(String msgType, final DoneCallback doneCallback_showStatusDocumentDialog_RETURN_RENEW) {
+
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ContainerList.this.context);
+
+        alertBuilder.setTitle("LCP EPUB => LSD [" + msgType + "]?");
+        alertBuilder.setMessage("License Status Document [" + msgType + "] LCP EPUB?");
+
+        alertBuilder.setOnCancelListener(
+                new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        doneCallback_showStatusDocumentDialog_RETURN_RENEW.Done(false);
+                    }
+                }
+        );
+
+        alertBuilder.setOnDismissListener(
+                new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                    }
+                }
+        );
+
+        alertBuilder.setPositiveButton("Yes",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+
+                        doneCallback_showStatusDocumentDialog_RETURN_RENEW.Done(true);
+                    }
+                }
+        );
+        alertBuilder.setNegativeButton("No",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                }
+        );
+
+        alertBuilder.setCancelable(true);
+        AlertDialog alert = alertBuilder.create();
+        alert.setCanceledOnTouchOutside(true);
+
+        alert.show(); //async!
+
+        return alert;
+    }
+
     public void launchStatusDocumentProcessing() {
 
-        final AlertDialog alertDialog = showStatusDocumentDialog();
+        final AlertDialog alertDialogStatusDocumentProcessingCancel = showStatusDocumentDialog();
 
         //mLicense
         //mLcpService
@@ -430,7 +531,7 @@ public class ContainerList extends FragmentActivity
 
         mStatusDocumentProcessing.start(new StatusDocumentProcessing.Listener(mStatusDocumentProcessing) {
             @Override
-            public void onStatusDocumentProcessingComplete_(StatusDocumentProcessing sdp) {
+            public void onStatusDocumentProcessingComplete_(final StatusDocumentProcessing lsd) {
 
                 // assert sdp == mStatusDocumentProcessing (unless null)
 
@@ -439,7 +540,7 @@ public class ContainerList extends FragmentActivity
                 }
                 mStatusDocumentProcessing = null;
 
-                if (sdp.wasCancelled()) {
+                if (lsd.wasCancelled()) {
                     return;
                 }
 
@@ -451,13 +552,59 @@ public class ContainerList extends FragmentActivity
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        alertDialog.dismiss();
+                        alertDialogStatusDocumentProcessingCancel.dismiss();
 
-                        if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
-                            downloadAndOpenSelectedBook();
-                        } else {
-                            decryptAndOpenSelectedBook();
+                        // Note that when the license is updated (injected) inside the EPUB archive,
+                        // the LCPL file has a different canonical form, and therefore the user passphrase
+                        // is asked again (even though it probably is exactly the same).
+                        // This is because the passphrase is cached in secure storage based on unique keys
+                        // for each LCPL file, based on their canonical form (serialised JSON syntax).
+                        if (lsd.hasLicenseUpdatePending()) {
+
+                            // Note: this should always be EPUB, not LCPL
+                            if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                downloadAndOpenSelectedBook();
+                            } else {
+                                decryptAndOpenSelectedBook();
+                            }
+
+                            return;
                         }
+
+                        // The renew + return LSD interactions are invoked here for demonstration purposes only.
+                        // A real-word app would probably expose the return link in a very different fashion,
+                        // and may even not necessarily expose the return / renew interactions at the app level (to the end-user),
+                        // instead: via an intermediary online service / web page, controlled by the content provider.
+                        checkLink_RENEW(lsd, new DoneCallback() {
+                            @Override
+                            public void Done(final boolean done_checkLink_RENEW) {
+
+                                if (done_checkLink_RENEW) {
+
+                                    // Note: this should always be EPUB, not LCPL
+                                    if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                        downloadAndOpenSelectedBook();
+                                    } else {
+                                        decryptAndOpenSelectedBook();
+                                    }
+
+                                    return;
+                                }
+
+                                checkLink_RETURN(lsd, new DoneCallback() {
+                                    @Override
+                                    public void Done(final boolean done_checkLink_RETURN) {
+
+                                        // Note: this should always be EPUB, not LCPL
+                                        if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {
+                                            downloadAndOpenSelectedBook();
+                                        } else {
+                                            decryptAndOpenSelectedBook();
+                                        }
+                                    }
+                                });
+                            }
+                        });
                     }
                 });
             }
