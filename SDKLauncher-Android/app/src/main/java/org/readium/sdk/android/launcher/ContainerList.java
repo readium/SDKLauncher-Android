@@ -559,7 +559,8 @@ public class ContainerList extends FragmentActivity
                         // is asked again (even though it probably is exactly the same).
                         // This is because the passphrase is cached in secure storage based on unique keys
                         // for each LCPL file, based on their canonical form (serialised JSON syntax).
-                        if (lsd.hasLicenseUpdatePending()) {
+                        if (!lsd.isInitialized() || // e.g. network timeout during LSD HTTP fetch3
+                                lsd.hasLicenseUpdatePending()) {
 
                             // Note: this should always be EPUB, not LCPL
                             if (FilenameUtils.getExtension(mBookName).equals("lcpl")) {

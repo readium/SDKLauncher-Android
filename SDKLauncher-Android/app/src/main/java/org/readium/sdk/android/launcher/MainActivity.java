@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        CrashlyticsCore core = new CrashlyticsCore.Builder().disabled(true).build(); //BuildConfig.DEBUG
+        CrashlyticsCore core = new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build();
 
         Crashlytics kit = new Crashlytics.Builder().core(core).build(); //new Crashlytics()
         //kit.setDebugMode(true);
