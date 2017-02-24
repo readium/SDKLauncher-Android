@@ -33,6 +33,12 @@ buildscript {
 //        def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && rootProject.readium_ndk_experimental)
 //        if (ndk_experimental) environment 'READIUM_EXPERIMENTAL', 'true'
 
+        def signKeyPassword = properties.getProperty('readium.sign_key_password', "na")
+        rootProject.ext.set('readium_sign_key_password', signKeyPassword)
+
+        def signStorePassword = properties.getProperty('readium.sign_store_password', "na")
+        rootProject.ext.set('readium_sign_store_password', signStorePassword)
+
         // Use stable gradle or experimental gradle
         if (ndkExperimental) {
             //https://bintray.com/android/android-tools/com.android.tools.build.gradle-experimental/view
