@@ -42,10 +42,10 @@ android {
         targetSdkVersion 25
 
         // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
-        versionCode 2
+        versionCode 3
 
         // manifest@android:versionName attribute in src/main/AndroidManifest.xml
-        versionName "1.25.2"
+        versionName "1.25.3"
     } //defaultConfig
 
     sourceSets {
