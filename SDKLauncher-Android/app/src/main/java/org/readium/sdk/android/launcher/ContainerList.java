@@ -23,43 +23,13 @@
 
 package org.readium.sdk.android.launcher;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Stack;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import org.apache.commons.io.FilenameUtils;
-import org.readium.sdk.android.EPub3;
-import org.readium.sdk.android.Container;
-import org.readium.sdk.android.launcher.model.BookmarkDatabase;
-import org.readium.sdk.android.SdkErrorHandler;
-import org.readium.sdk.lcp.Acquisition;
-import org.readium.sdk.lcp.CredentialHandler;
-import org.readium.sdk.lcp.DoneCallback;
-import org.readium.sdk.lcp.StatusDocumentHandler;
-import org.readium.sdk.lcp.License;
-import org.readium.sdk.lcp.NetProvider;
-import org.readium.sdk.lcp.Service;
-import org.readium.sdk.lcp.ServiceFactory;
-import org.readium.sdk.lcp.StatusDocumentProcessing;
-import org.readium.sdk.lcp.StorageProvider;
-
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -72,35 +42,42 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-
-import com.koushikdutta.ion.ProgressCallback;
-import com.koushikdutta.ion.Response;
-import com.koushikdutta.ion.builder.Builders;
-
-import android.content.Context;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.util.Log;
-
 import com.koushikdutta.async.future.Future;
 import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.async.http.AsyncHttpRequest;
-import com.koushikdutta.async.http.Headers;
 import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.loader.AsyncHttpRequestFactory;
+import com.koushikdutta.ion.ProgressCallback;
+import com.koushikdutta.ion.Response;
+
+import org.apache.commons.io.FilenameUtils;
+import org.readium.sdk.android.Container;
+import org.readium.sdk.android.EPub3;
+import org.readium.sdk.android.SdkErrorHandler;
+import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.lcp.CredentialHandler;
+import org.readium.sdk.lcp.DoneCallback;
+import org.readium.sdk.lcp.License;
+import org.readium.sdk.lcp.NetProvider;
+import org.readium.sdk.lcp.Service;
+import org.readium.sdk.lcp.ServiceFactory;
+import org.readium.sdk.lcp.StatusDocumentHandler;
+import org.readium.sdk.lcp.StatusDocumentProcessing;
+import org.readium.sdk.lcp.StorageProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Stack;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
-
-import static java.lang.Integer.parseInt;
 
 /**
  * @author chtian
@@ -203,7 +180,14 @@ public class ContainerList extends FragmentActivity
 
     public void showPassphraseDialog() {
         FragmentManager fragmentManager = getSupportFragmentManager();
+
         PassphraseDialogFragment newFragment = new PassphraseDialogFragment();
+
+        String hint = mLicense.getPassphraseHint();
+        Bundle bundle = new Bundle();
+        bundle.putString("passHint", hint);
+        newFragment.setArguments(bundle);
+
         newFragment.show(fragmentManager, "dialog");
     }
 

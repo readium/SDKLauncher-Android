@@ -48,10 +48,10 @@ model {
             targetSdkVersion.apiLevel = 25
 
             // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
-            versionCode 3
+            versionCode 4
 
             // manifest@android:versionName attribute in src/main/AndroidManifest.xml
-            versionName "1.25.3"
+            versionName "1.25.4"
         } //defaultConfig
 
         sources {

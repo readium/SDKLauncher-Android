@@ -40,7 +40,7 @@
     <string name="fontSize">Font size (in %)</string>
     <string name="columnGap">Column gap</string>
     <string name="syntheticSpread">Synthetic spread</string>
-    <string name="passphrase">Enter a passphrase</string>
+    <string name="passphrase">Passphrase:</string>
 
     <!-- Media Overlay Menu Text -->
     <string name="menu_mo_previous">Previous</string>

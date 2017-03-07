@@ -3,20 +3,29 @@ package org.readium.sdk.android.launcher;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.support.v4.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.text.InputType;
 import android.widget.EditText;
 
 public class PassphraseDialogFragment extends DialogFragment {
+
+//    String mPassphraseHint;
+//    public PassphraseDialogFragment(String hint) {
+//        super();
+//        mPassphraseHint = hint;
+//    }
+
     PassphraseDialogListener mListener;
+
 
     /* The activity that creates an instance of this dialog fragment must
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface PassphraseDialogListener {
         public void onPassphraseDialogPositiveClick(DialogFragment dialog, String passPhrase);
+
         public void onPassphraseDialogNegativeClick(DialogFragment dialog);
     }
 
@@ -32,7 +41,18 @@ public class PassphraseDialogFragment extends DialogFragment {
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         builder.setView(input);
 
-        builder.setMessage(R.string.passphrase)
+        //String hint = mPassphraseHint;
+        String hint = getString(R.string.passphrase);
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            String hint_ = bundle.getString("passHint", "");
+
+            if (hint_ != null && hint.length() > 0) {
+                hint = hint_;
+            }
+        }
+
+        builder.setMessage(hint)
                 .setPositiveButton(R.string.generic_ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // User validated the passphrase
