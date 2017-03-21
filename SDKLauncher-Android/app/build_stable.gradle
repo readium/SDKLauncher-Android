@@ -52,19 +52,14 @@ android {
             java {
                 srcDirs = [
                         './src/main/java',
-                        '../../readium-sdk/Platform/Android/lib/src/main/java',
-                        '../../readium-lcp-client/platform/android/lib/src/main/java'
+                        '../../readium-sdk/Platform/Android/lib/src/main/java'
                 ]
             } //java
 
             jniLibs {
                 dependencies {
                     project ":epub3"
-                    project ":lcp"
                 }
-                srcDirs = [
-                        '../../readium-lcp-client/platform/android/lcp/libs'
-                ]
             } //jniLibs
         } //main
     } //sourceSets
