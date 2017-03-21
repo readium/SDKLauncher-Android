@@ -240,4 +240,3 @@ task buildEpubReadingSystem(type: Copy) {
                 return line
     }
 }
-
