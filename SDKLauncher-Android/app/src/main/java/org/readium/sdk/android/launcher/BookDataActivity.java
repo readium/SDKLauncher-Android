@@ -80,6 +80,7 @@ public class BookDataActivity extends Activity {
 	private void initPageList() {
         final ListView pageList = (ListView) findViewById(R.id.pageList);
         String[] pageList_values = new String[] {
+                getString(R.string.list_of_landmarks),
                 getString(R.string.list_of_figures),
                 getString(R.string.list_of_illustrations),
                 getString(R.string.list_of_tables),
@@ -87,6 +88,7 @@ public class BookDataActivity extends Activity {
                 getString(R.string.table_of_contents) };
 
         Class<?>[] classList = new Class<?>[] { 
+                ListOfLandmarksActivity.class,
         		ListOfFiguresActivity.class,
         		ListOfIllustrationsActivity.class,
         		ListOfTablesActivity.class,
