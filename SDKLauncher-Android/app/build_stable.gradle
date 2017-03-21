@@ -41,10 +41,10 @@ android {
         targetSdkVersion 25
 
         // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
-        versionCode 5
+        versionCode 25
 
         // manifest@android:versionName attribute in src/main/AndroidManifest.xml
-        versionName "1.25.5"
+        versionName "1.25"
     } //defaultConfig
 
     sourceSets {
@@ -60,6 +60,9 @@ android {
                 dependencies {
                     project ":epub3"
                 }
+                srcDirs = [
+                        '../../readium-sdk/Platform/Android/epub3/libs'
+                ]
             } //jniLibs
         } //main
     } //sourceSets
