@@ -34,9 +34,9 @@ import android.widget.Toast;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
 
-import org.readium.sdk.lcp.ServiceFactory;
-
 import java.io.File;
+
+import org.readium.sdk.lcp.ServiceFactory;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;

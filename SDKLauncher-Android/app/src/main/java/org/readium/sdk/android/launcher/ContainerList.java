@@ -53,6 +53,7 @@ import org.readium.sdk.android.Container;
 import org.readium.sdk.android.EPub3;
 import org.readium.sdk.android.SdkErrorHandler;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+
 import org.readium.sdk.lcp.CredentialHandler;
 import org.readium.sdk.lcp.DoneCallback;
 import org.readium.sdk.lcp.License;
@@ -88,21 +89,23 @@ public class ContainerList extends FragmentActivity
 
     private Context context;
     private Stack<String> m_SdkErrorHandler_Messages = null;
-    private License mLicense;
-
-//#if ENABLE_NET_PROVIDER_ACQUISITION
-//    private Acquisition mAcquisition;
-
-    private StatusDocumentProcessing mStatusDocumentProcessing;
-
-    private AcquisitionDialogFragment mAcquisitionDialogFragment;
+    
     private Container mContainer;
     private String mBookName; // Name of the selected book
     private String mBookPath; // Path of the selected book
+    
+    private License mLicense;
     private Service mLcpService;
+    
+//#if ENABLE_NET_PROVIDER_ACQUISITION
+//    private Acquisition mAcquisition;
 
+    private AcquisitionDialogFragment mAcquisitionDialogFragment;
+    
     Future<Response<InputStream>> mRequest = null;
 
+    private StatusDocumentProcessing mStatusDocumentProcessing;
+    
     protected abstract class SdkErrorHandlerMessagesCompleted {
         Intent m_intent = null;
 
