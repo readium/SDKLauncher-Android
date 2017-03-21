@@ -1,33 +1,100 @@
 apply plugin: 'com.android.application'
 
+def ndk_skipX86 = (rootProject.hasProperty("readium_ndk_skipX86") && rootProject.readium_ndk_skipX86)
+def ndk_skipARM = (rootProject.hasProperty("readium_ndk_skipARM") && rootProject.readium_ndk_skipARM)
+def ndk_clang = (rootProject.hasProperty("readium_ndk_clang") && rootProject.readium_ndk_clang)
+def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && rootProject.readium_ndk_experimental)
+
+def key_password =  (rootProject.hasProperty("readium_sign_key_password") ? rootProject.readium_sign_key_password : "nope")
+def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? rootProject.readium_sign_store_password : "nope")
+
 android {
     compileSdkVersion = 25
     buildToolsVersion = "25.0.2"
 
-    defaultConfig {
-        applicationId = "org.readium.sdk.android.launcher"
-        minSdkVersion 19
-        targetSdkVersion 25
+    lintOptions {
+        checkReleaseBuilds = false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError = false
     }
+
+    signingConfigs {
+        create("mySigningConfig") {
+            //mySigningConfig {
+            keyAlias = 'ReadiumAndroidAPKSign'
+            keyPassword = key_password
+            storePassword = store_password
+            storeType "jks"
+            storeFile = file('./ReadiumAndroidAPKSign.jks')
+        }
+    }
+
+    defaultConfig {
+        // manifest@package attribute in src/main/AndroidManifest.xml
+        applicationId = "org.readium.sdk.android.launcher"
+
+        // manifest/uses-sdk@android:minSdkVersion attribute in src/main/AndroidManifest.xml
+        minSdkVersion 19
+
+        // manifest/uses-sdk@android:targetSdkVersion attribute in src/main/AndroidManifest.xml
+        targetSdkVersion 25
+
+        // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
+        versionCode 25
+
+        // manifest@android:versionName attribute in src/main/AndroidManifest.xml
+        versionName "1.25"
+    } //defaultConfig
 
     sourceSets {
         main {
-            java.srcDirs = [
-                    './src/main/java',
-                    '../../readium-sdk/Platform/Android/lib/src/main/java'
-            ]
-            jniLibs.srcDirs = [
-                    '../../readium-sdk/Platform/Android/epub3/libs'
-            ]
-        }
-    }
+            java {
+                srcDirs = [
+                        './src/main/java',
+                        '../../readium-sdk/Platform/Android/lib/src/main/java'
+                ]
+            } //java
+
+            jniLibs {
+                dependencies {
+                    project ":epub3"
+                }
+                srcDirs = [
+                        '../../readium-sdk/Platform/Android/epub3/libs'
+                ]
+            } //jniLibs
+        } //main
+    } //sourceSets
 
     buildTypes {
         debug {
             minifyEnabled = false
         }
         release {
-            minifyEnabled = true
+            minifyEnabled = false
+            //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            //proguardFiles.add(file('proguard-rules.txt'))
+
+            signingConfig signingConfigs.mySigningConfig
+            //signingConfig $.android.signingConfigs.get("mySigningConfig")
+            //signingConfig $("android.signingConfigs.mySigningConfig")
         }
-    }
-}
+    } //buildTypes
+
+    productFlavors {
+        if (!ndk_skipARM)
+            "arm" {
+                ndk.with {
+                    abiFilters = ["armeabi-v7a"]
+                }
+            }
+
+        if (!ndk_skipX86)
+            "x86" {
+                ndk.with {
+                    abiFilters = ["x86"]
+                }
+            }
+    } //productFlavors
+} //android
