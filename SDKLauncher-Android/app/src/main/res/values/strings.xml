@@ -11,6 +11,7 @@
     <string name="container_list_title">Choose an EPUB</string>
     <string name="generic_cancel">Cancel</string>
     <string name="generic_ok">OK</string>
+    <string name="list_of_landmarks">List of Landmarks</string>
     <string name="list_of_figures">List of Figures</string>
     <string name="list_of_illustrations">List of Illustrations</string>
     <string name="list_of_tables">List of Tables</string>

@@ -5,11 +5,12 @@
     android:versionName="1.25" >
 
     <uses-sdk
-        android:minSdkVersion="11"
-        android:targetSdkVersion="19" />
+        android:minSdkVersion="19"
+        android:targetSdkVersion="25" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -30,6 +31,16 @@
             </intent-filter>
         </activity>
         <activity
+            android:name="com.nononsenseapps.filepicker.FilePickerActivity"
+            android:label="Select an EPUB folder"
+            android:theme="@style/FilePickerTheme"
+            android:parentActivityName=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.GET_CONTENT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".ContainerList"
             android:label="@string/container_list_title">
         </activity>
@@ -46,6 +57,11 @@
         </activity>
         <activity
             android:name=".SpineItemsActivity"
+            android:label="@string/app_name"
+            android:parentActivityName=".BookDataActivity">
+        </activity>
+        <activity
+            android:name=".ListOfLandmarksActivity"
             android:label="@string/app_name"
             android:parentActivityName=".BookDataActivity">
         </activity>

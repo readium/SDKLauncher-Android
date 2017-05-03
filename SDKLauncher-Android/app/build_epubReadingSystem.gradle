@@ -1,5 +1,10 @@
 import groovy.json.JsonSlurper
 
+def ndk_skipX86 = (rootProject.hasProperty("readium_ndk_skipX86") && rootProject.readium_ndk_skipX86)
+def ndk_skipARM = (rootProject.hasProperty("readium_ndk_skipARM") && rootProject.readium_ndk_skipARM)
+def ndk_clang = (rootProject.hasProperty("readium_ndk_clang") && rootProject.readium_ndk_clang)
+def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && rootProject.readium_ndk_experimental)
+
 def getCommandOutput(cwd, cmd) {
     def stdout = new ByteArrayOutputStream()
 
@@ -235,4 +240,3 @@ task buildEpubReadingSystem(type: Copy) {
                 return line
     }
 }
-
