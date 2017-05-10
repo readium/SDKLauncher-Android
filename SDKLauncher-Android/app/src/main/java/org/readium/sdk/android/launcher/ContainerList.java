@@ -271,7 +271,7 @@ public class ContainerList extends FragmentActivity
         StorageProvider storageProvider = new StorageProvider(getApplicationContext());
 
 //#if !DISABLE_NET_PROVIDER
-        NetProvider netProvider = new NetProvider(getApplicationContext());
+        NetProvider netProvider = new NetProvider(getApplicationContext(), this);
 
         mLcpService = ServiceFactory.build(
                 certContent, storageProvider,
