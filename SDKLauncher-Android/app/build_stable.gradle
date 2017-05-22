@@ -64,7 +64,7 @@ android {
                     project ":lcp"
                 }
                 srcDirs = [
-                        '../../readium-sdk/Platform/Android/epub3/libs',
+                        //'../../readium-sdk/Platform/Android/epub3/libs',
                         '../../readium-lcp-client/platform/android/lcp/libs'
                 ]
             } //jniLibs
