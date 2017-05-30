@@ -9,8 +9,10 @@ def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && r
 def key_password =  (rootProject.hasProperty("readium_sign_key_password") ? rootProject.readium_sign_key_password : "nope")
 def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? rootProject.readium_sign_store_password : "nope")
 
-model {
+def lcpDir = project(':lcp').projectDir
+def epub3Dir = project(':epub3').projectDir
 
+model {
     android.lintOptions {
         checkReleaseBuilds = false
         // Or, if you prefer, you can continue to check for errors in release builds,
@@ -60,17 +62,22 @@ model {
                     source {
                         srcDirs = [
                                 './src/main/java',
-                                '../../readium-sdk/Platform/Android/lib/src/main/java',
-                                '../../readium-lcp-client/platform/android/lib/src/main/java'
+                                "${epub3Dir}/../lib/src/main/java",
+                                "${lcpDir}/src/clientlib/java",
+                                "${lcpDir}/src/contentfilter/java"
                         ]
                     } //source
+
                 } //java
 
                 jniLibs {
                     dependencies {
                         project ":epub3"
-                        project ":lcp"
                     } //dependencies
+
+                    source {
+                        srcDir "${lcpDir}/libs"
+                    }
                 } //jniLibs
             } //main
         } //sources

@@ -31,6 +31,12 @@ local.properties
 # IDEA project files
 .idea
 
+# External libraries
+libs/
+
+.settings/
+.project
+
 SDKLauncher-Android/app/src/main/assets/readium-shared-js/builds
 SDKLauncher-Android/assets/readium-shared-js/epubReadingSystem_.js
 SDKLauncher-Android/.settings/org.eclipse.core.resources.prefs
