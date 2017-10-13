@@ -89,8 +89,13 @@ public class WebViewActivity extends FragmentActivity implements
 	private final boolean quiet = false;
 
 	private static final String TAG = "WebViewActivity";
-	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
-	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
+
+	private static final String ASSET_PREFIX_FILE = "file:///android_asset/readium-shared-js/";
+	private static final String READER_SKELETON_FILE = ASSET_PREFIX_FILE + "reader.html";
+
+	private static final String ASSET_PREFIX = "http://" + EpubServer.HTTP_HOST + ":" + EpubServer.HTTP_PORT + "/readium-shared-js/";
+	private static final String READER_SKELETON = ASSET_PREFIX + "reader.html";
+
 
 	// Installs "hook" function so that top-level window (application) can later
 	// inject the window.navigator.epubReadingSystem into this HTML document's
@@ -282,7 +287,7 @@ public class WebViewActivity extends FragmentActivity implements
 	protected void onDestroy() {
 		super.onDestroy();
 		mServer.stop();
-		mWebview.loadUrl(READER_SKELETON);
+		mWebview.loadUrl(READER_SKELETON_FILE);
 		((ViewGroup) mWebview.getParent()).removeView(mWebview);
 		mWebview.removeAllViews();
 		mWebview.clearCache(true);
@@ -487,6 +492,40 @@ public class WebViewActivity extends FragmentActivity implements
 				if (!quiet)
 					Log.d(TAG, url + " => " + cleanedUrl);
 
+				String mime = null;
+				int dot = cleanedUrl.lastIndexOf('.');
+				if (dot >= 0) {
+					mime = EpubServer.MIME_TYPES.get(cleanedUrl.substring(
+							dot + 1).toLowerCase());
+				}
+				if (mime == null) {
+					mime = "application/octet-stream";
+				}
+
+				if (url.startsWith(ASSET_PREFIX)) {
+
+					if (!quiet)
+						Log.d(TAG, "READER ASSET ...");
+
+					// reader.html
+					if (mime.equals("application/xhtml+xml")) {
+						mime = "text/html";
+					}
+
+					InputStream is = null;
+					try {
+						is = getAssets().open(cleanedUrl);
+					} catch (IOException e) {
+
+						Log.e(TAG, "asset fail: " + cleanedUrl);
+
+						return new WebResourceResponse(null, UTF_8,
+								new ByteArrayInputStream("".getBytes()));
+					}
+
+					return new WebResourceResponse(mime, UTF_8, is);
+				}
+
 				if (cleanedUrl
 						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
 					if (!quiet)
@@ -541,15 +580,6 @@ public class WebViewActivity extends FragmentActivity implements
 					return new WebResourceResponse("text/css", UTF_8, is);
 				}
 
-				String mime = null;
-				int dot = cleanedUrl.lastIndexOf('.');
-				if (dot >= 0) {
-					mime = EpubServer.MIME_TYPES.get(cleanedUrl.substring(
-							dot + 1).toLowerCase());
-				}
-				if (mime == null) {
-					mime = "application/octet-stream";
-				}
 
 				ManifestItem item = mPackage.getManifestItem(cleanedUrl);
 				String contentType = item != null ? item.getMediaType() : null;
