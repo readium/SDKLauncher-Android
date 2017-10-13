@@ -109,25 +109,31 @@ public class WebViewActivity extends FragmentActivity implements
 	// window.navigator.epubReadingSystem if the expected hook function exists (
 	// readium_set_epubReadingSystem() ).
 	private static final String INJECT_EPUB_RSO_SCRIPT_2 = ""
-			+ "var epubRSInject =\nfunction(win) {"
+			+ "var epubRSInject =\nfunction(win) {" // 1
 			+ "\nvar ret = '';"
 			+ "\nret += win.location.href;"
 			+ "\nret += ' ---- ';"
-			+
 			// "\nret += JSON.stringify(win.navigator.epubReadingSystem);" +
 			// "\nret += ' ---- ';" +
-			"\nif (win.frames)"
-			+ "\n{"
+			+ "\nif (win.frames)"
+			+ "\n{" // 2
 			+ "\nfor (var i = 0; i < win.frames.length; i++)"
-			+ "\n{"
+			+ "\n{" // 3
 			+ "\nvar iframe = win.frames[i];"
 			+ "\nret += ' IFRAME ';"
+			+ "\ntry {\n" // 4
 			+ "\nif (iframe.readium_set_epubReadingSystem)"
-			+ "\n{"
+			+ "\n{" // 5
 			+ "\nret += ' EPBRS ';"
 			+ "\niframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem);"
-			+ "\n}" + "\nret += epubRSInject(iframe);" + "\n}" + "\n}"
-			+ "\nreturn ret;" + "\n};" + "\nepubRSInject(window);";
+			+ "\n}" // 5
+			+ "\nret += epubRSInject(iframe);"
+			+ "\n} catch(err) { console.log(err); }" // 4
+			+ "\n}" // 3
+			+ "\n}" // 2
+			+ "\nreturn ret;"
+			+ "\n};" // 1
+			+ "\nepubRSInject(window);";
 
 	// Script tag to inject the "hook" function installer script, added to the
 	// head of every epub iframe document
