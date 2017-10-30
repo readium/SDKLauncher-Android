@@ -36,7 +36,7 @@ model {
 
     android {
         compileSdkVersion = 25
-        buildToolsVersion = "26.0.2"
+        buildToolsVersion = "27"
 
         defaultConfig {
 
