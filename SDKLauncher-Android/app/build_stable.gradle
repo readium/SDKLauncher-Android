@@ -10,7 +10,7 @@ def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? 
 
 android {
     compileSdkVersion = 25
-    buildToolsVersion = "26.0.2"
+    buildToolsVersion = "27"
 
     lintOptions {
         checkReleaseBuilds = false
