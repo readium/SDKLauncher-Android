@@ -9,8 +9,8 @@ def key_password =  (rootProject.hasProperty("readium_sign_key_password") ? root
 def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? rootProject.readium_sign_store_password : "nope")
 
 android {
-    compileSdkVersion = 25
-    buildToolsVersion = "27"
+    compileSdkVersion = 26
+    buildToolsVersion = "27.0.2"
 
     lintOptions {
         checkReleaseBuilds = false
@@ -38,13 +38,13 @@ android {
         minSdkVersion 19
 
         // manifest/uses-sdk@android:targetSdkVersion attribute in src/main/AndroidManifest.xml
-        targetSdkVersion 25
+        targetSdkVersion 26
 
         // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
-        versionCode 25
+        versionCode 29
 
         // manifest@android:versionName attribute in src/main/AndroidManifest.xml
-        versionName "1.25"
+        versionName "1.29"
     } //defaultConfig
 
     sourceSets {
