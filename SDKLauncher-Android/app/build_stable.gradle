@@ -11,8 +11,8 @@ def lcpDir = project(':lcp').projectDir
 def epub3Dir = project(':epub3').projectDir
 
 android {
-    compileSdkVersion = 25
-    buildToolsVersion = "27"
+    compileSdkVersion = 26
+    buildToolsVersion = "27.0.2"
 
     lintOptions {
         checkReleaseBuilds = false
@@ -40,13 +40,13 @@ android {
         minSdkVersion 19
 
         // manifest/uses-sdk@android:targetSdkVersion attribute in src/main/AndroidManifest.xml
-        targetSdkVersion 25
+        targetSdkVersion 26
 
         // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
-        versionCode 5
+        versionCode 29
 
         // manifest@android:versionName attribute in src/main/AndroidManifest.xml
-        versionName "1.25.5"
+        versionName "1.29"
     } //defaultConfig
 
     sourceSets {
