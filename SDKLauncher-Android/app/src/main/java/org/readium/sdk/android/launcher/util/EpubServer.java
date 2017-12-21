@@ -31,7 +31,11 @@ package org.readium.sdk.android.launcher.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -47,6 +51,7 @@ import org.readium.sdk.android.Package;
 import org.readium.sdk.android.PackageResource;
 import org.readium.sdk.android.util.ResourceInputStream;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.koushikdutta.async.AsyncServer;
@@ -183,6 +188,24 @@ public class EpubServer implements HttpServerRequestCallback {
 		uri = iHttpPrefix == 0 ? uri.substring(httpPrefix.length()) : uri;
 		uri = uri.startsWith("/") ? uri.substring(1) : uri;
 
+        String newUri = null;
+
+        try {
+            URI normalizedUri = new URI(URLDecoder.decode(uri, "UTF-8"));
+
+            normalizedUri = normalizedUri.normalize();
+            newUri = normalizedUri.toString();
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "onRequest: " + e.toString());
+        } catch (URISyntaxException e) {
+            Log.e(TAG, "onRequest: " + e.toString());
+        }
+        if (!quiet) {
+            Log.d(TAG, "onRequest: uri = " + uri + ", newUri = " + newUri);
+        }
+        if (!TextUtils.isEmpty(newUri)) {
+            uri = newUri;
+        }
 		int indexOfQ = uri.indexOf('?');
 		if (indexOfQ >= 0) {
 			uri = uri.substring(0, indexOfQ);
