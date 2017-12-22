@@ -89,8 +89,13 @@ public class WebViewActivity extends FragmentActivity implements
 	private final boolean quiet = false;
 
 	private static final String TAG = "WebViewActivity";
-	private static final String ASSET_PREFIX = "file:///android_asset/readium-shared-js/";
-	private static final String READER_SKELETON = "file:///android_asset/readium-shared-js/reader.html";
+
+	private static final String ASSET_PREFIX_FILE = "file:///android_asset/readium-shared-js/";
+	private static final String READER_SKELETON_FILE = ASSET_PREFIX_FILE + "reader.html";
+
+	private static final String ASSET_PREFIX = "http://" + EpubServer.HTTP_HOST + ":" + EpubServer.HTTP_PORT + "/readium-shared-js/";
+	private static final String READER_SKELETON = ASSET_PREFIX + "reader.html";
+
 
 	// Installs "hook" function so that top-level window (application) can later
 	// inject the window.navigator.epubReadingSystem into this HTML document's
@@ -109,25 +114,31 @@ public class WebViewActivity extends FragmentActivity implements
 	// window.navigator.epubReadingSystem if the expected hook function exists (
 	// readium_set_epubReadingSystem() ).
 	private static final String INJECT_EPUB_RSO_SCRIPT_2 = ""
-			+ "var epubRSInject =\nfunction(win) {"
+			+ "var epubRSInject =\nfunction(win) {" // 1
 			+ "\nvar ret = '';"
 			+ "\nret += win.location.href;"
 			+ "\nret += ' ---- ';"
-			+
 			// "\nret += JSON.stringify(win.navigator.epubReadingSystem);" +
 			// "\nret += ' ---- ';" +
-			"\nif (win.frames)"
-			+ "\n{"
+			+ "\nif (win.frames)"
+			+ "\n{" // 2
 			+ "\nfor (var i = 0; i < win.frames.length; i++)"
-			+ "\n{"
+			+ "\n{" // 3
 			+ "\nvar iframe = win.frames[i];"
 			+ "\nret += ' IFRAME ';"
+			+ "\ntry {\n" // 4
 			+ "\nif (iframe.readium_set_epubReadingSystem)"
-			+ "\n{"
+			+ "\n{" // 5
 			+ "\nret += ' EPBRS ';"
 			+ "\niframe.readium_set_epubReadingSystem(window.navigator.epubReadingSystem);"
-			+ "\n}" + "\nret += epubRSInject(iframe);" + "\n}" + "\n}"
-			+ "\nreturn ret;" + "\n};" + "\nepubRSInject(window);";
+			+ "\n}" // 5
+			+ "\nret += epubRSInject(iframe);"
+			+ "\n} catch(err) { console.log(err); }" // 4
+			+ "\n}" // 3
+			+ "\n}" // 2
+			+ "\nreturn ret;"
+			+ "\n};" // 1
+			+ "\nepubRSInject(window);";
 
 	// Script tag to inject the "hook" function installer script, added to the
 	// head of every epub iframe document
@@ -276,7 +287,7 @@ public class WebViewActivity extends FragmentActivity implements
 	protected void onDestroy() {
 		super.onDestroy();
 		mServer.stop();
-		mWebview.loadUrl(READER_SKELETON);
+		mWebview.loadUrl(READER_SKELETON_FILE);
 		((ViewGroup) mWebview.getParent()).removeView(mWebview);
 		mWebview.removeAllViews();
 		mWebview.clearCache(true);
@@ -481,6 +492,40 @@ public class WebViewActivity extends FragmentActivity implements
 				if (!quiet)
 					Log.d(TAG, url + " => " + cleanedUrl);
 
+				String mime = null;
+				int dot = cleanedUrl.lastIndexOf('.');
+				if (dot >= 0) {
+					mime = EpubServer.MIME_TYPES.get(cleanedUrl.substring(
+							dot + 1).toLowerCase());
+				}
+				if (mime == null) {
+					mime = "application/octet-stream";
+				}
+
+				if (url.startsWith(ASSET_PREFIX)) {
+
+					if (!quiet)
+						Log.d(TAG, "READER ASSET ...");
+
+					// reader.html
+					if (mime.equals("application/xhtml+xml")) {
+						mime = "text/html";
+					}
+
+					InputStream is = null;
+					try {
+						is = getAssets().open(cleanedUrl);
+					} catch (IOException e) {
+
+						Log.e(TAG, "asset fail: " + cleanedUrl);
+
+						return new WebResourceResponse(null, UTF_8,
+								new ByteArrayInputStream("".getBytes()));
+					}
+
+					return new WebResourceResponse(mime, UTF_8, is);
+				}
+
 				if (cleanedUrl
 						.matches("\\/?\\d*\\/readium_epubReadingSystem_inject.js")) {
 					if (!quiet)
@@ -535,15 +580,6 @@ public class WebViewActivity extends FragmentActivity implements
 					return new WebResourceResponse("text/css", UTF_8, is);
 				}
 
-				String mime = null;
-				int dot = cleanedUrl.lastIndexOf('.');
-				if (dot >= 0) {
-					mime = EpubServer.MIME_TYPES.get(cleanedUrl.substring(
-							dot + 1).toLowerCase());
-				}
-				if (mime == null) {
-					mime = "application/octet-stream";
-				}
 
 				ManifestItem item = mPackage.getManifestItem(cleanedUrl);
 				String contentType = item != null ? item.getMediaType() : null;
