@@ -12,7 +12,7 @@ def epub3Dir = project(':epub3').projectDir
 
 android {
     compileSdkVersion = 26
-    buildToolsVersion = "27.0.2"
+    buildToolsVersion = "27.0.3"
 
     lintOptions {
         checkReleaseBuilds = false
