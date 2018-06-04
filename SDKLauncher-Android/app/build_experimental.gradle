@@ -71,12 +71,16 @@ model {
                 } //java
 
                 jniLibs {
-                    dependencies {
-                        project ":epub3"
-                    } //dependencies
+                    // dependencies {
+                    //     project ":epub3"
+                    // } //dependencies
 
                     source {
-                        srcDir "${lcpDir}/libs"
+                        srcDirs = [
+                            "${epub3Dir}/libs",
+                            "${lcpDir}/libs"
+                        ]
+                        // srcDir "${lcpDir}/libs"
                     }
                 } //jniLibs
             } //main

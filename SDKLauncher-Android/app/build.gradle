@@ -61,12 +61,12 @@ tasks.whenTaskAdded { task ->
     if (taskName.startsWith("compile")) {
         if (ndk_experimental) {
             task.dependsOn "buildAssets",
-                    ":lcp:build",
+//                    ":lcp:build",
                     "buildEpubReadingSystem"
         } else {
             println("Task: ${taskName}")
             task.dependsOn "buildAssets",
-                    ":epub3:buildMk",
+//                    ":epub3:buildMk",
                     "buildEpubReadingSystem"
         }
     }

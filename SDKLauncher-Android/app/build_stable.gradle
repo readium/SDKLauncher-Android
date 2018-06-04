@@ -61,10 +61,10 @@ android {
             } //java
 
             jniLibs {
-                dependencies {
-                    project ":epub3"
-                    project ":lcp"
-                }
+                // dependencies {
+                //     project ":epub3"
+                //     project ":lcp"
+                // }
                 srcDirs = [
                     "${epub3Dir}/libs",
                     "${lcpDir}/libs"
