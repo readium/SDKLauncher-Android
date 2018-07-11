@@ -199,10 +199,16 @@ require(['readium_shared_js/views/reader_view'], function (ReaderView)
     };
 }();
 
+    var fontsArray = [];
+    if (typeof readiumFontFaces != "undefined") { // Injected by WebViewActivity
+        fontsArray = readiumFontFaces;
+    }
+
     var opts = {
         needsFixedLayoutScalerWorkAround: true,
         el: "#viewport",
-        annotationCSSUrl: '/readium_Annotations.css' //prefix + '/css/annotations.css'
+        annotationCSSUrl: '/readium_Annotations.css', //prefix + '/css/annotations.css'
+        fonts: fontsArray
     };
 
     ReadiumSDK.on(ReadiumSDK.Events.PLUGINS_LOADED, function(reader)

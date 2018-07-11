@@ -36,8 +36,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.readium.sdk.android.Container;
@@ -45,6 +47,7 @@ import org.readium.sdk.android.ManifestItem;
 import org.readium.sdk.android.Package;
 import org.readium.sdk.android.SpineItem;
 import org.readium.sdk.android.launcher.model.BookmarkDatabase;
+import org.readium.sdk.android.launcher.model.Font;
 import org.readium.sdk.android.launcher.model.OpenPageRequest;
 import org.readium.sdk.android.launcher.model.Page;
 import org.readium.sdk.android.launcher.model.PaginationInfo;
@@ -207,6 +210,7 @@ public class WebViewActivity extends FragmentActivity implements
 	private Package mPackage;
 	private OpenPageRequest mOpenPageRequestData;
 	private TextView mPageInfo;
+    private ArrayList<Font> mFontArray;
 	private ViewerSettings mViewerSettings;
 	private ReadiumJSApi mReadiumJSApi;
 	private EpubServer mServer;
@@ -269,11 +273,18 @@ public class WebViewActivity extends FragmentActivity implements
 				mPackage, quiet, dataPreProcessor);
 		mServer.startServer();
 
-		// Load the page skeleton
-		mWebview.loadUrl(READER_SKELETON);
-		mViewerSettings = new ViewerSettings(
-				ViewerSettings.SyntheticSpreadMode.AUTO,
-				ViewerSettings.ScrollMode.AUTO, 100, 20);
+        // Load the page skeleton
+        mWebview.loadUrl(READER_SKELETON);
+
+        ArrayList<Font> fontList = new ArrayList<>();
+        fontList.add(new Font("Open Dyslexic", "OpenDyslexic", "font-faces/OpenDyslexic/OpenDyslexic.css"));
+        fontList.add(new Font("Open Sans", "Open Sans", "font-faces/Open-Sans/Open-Sans.css"));
+        fontList.add(new Font("Noto Serif", "Noto Serif", "font-faces/Noto-Serif/Noto-Serif.css"));
+        mFontArray = fontList;
+
+        mViewerSettings = new ViewerSettings(
+                ViewerSettings.SyntheticSpreadMode.AUTO,
+                ViewerSettings.ScrollMode.AUTO, 0, 100, 20);
 
 		mReadiumJSApi = new ReadiumJSApi(new ReadiumJSApi.JSLoader() {
 			@Override
@@ -364,7 +375,7 @@ public class WebViewActivity extends FragmentActivity implements
 	private void showSettings() {
 		FragmentManager fm = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fm.beginTransaction();
-		DialogFragment dialog = new ViewerSettingsDialog(this, mViewerSettings);
+		DialogFragment dialog = new ViewerSettingsDialog(this, mViewerSettings, mFontArray);
 		dialog.show(fm, "dialog");
 		fragmentTransaction.commit();
 	}
@@ -507,10 +518,35 @@ public class WebViewActivity extends FragmentActivity implements
 					if (!quiet)
 						Log.d(TAG, "READER ASSET ...");
 
-					// reader.html
-					if (mime.equals("application/xhtml+xml")) {
-						mime = "text/html";
-					}
+                    // Font injection
+                    if (url.matches(ASSET_PREFIX + "\\/?font-faces\\/fonts.js")) {
+                        if (!quiet)
+                            Log.d(TAG, "readiumFontFaces inject ...");
+
+                        if (mFontArray != null && mFontArray.size() > 0) {
+                            try {
+                                JSONArray jsonArray = new JSONArray();
+                                for (Font fontFace : mFontArray) {
+                                    jsonArray.put(fontFace.toJSON());
+                                }
+
+                                String readiumFontFaces = "var readiumFontFaces =" + jsonArray.toString() + ";";
+
+                                return new WebResourceResponse("text/javascript", UTF_8, new ByteArrayInputStream(readiumFontFaces.getBytes()));
+                            } catch (JSONException e) {
+                                return new WebResourceResponse(null, UTF_8,
+                                        new ByteArrayInputStream("".getBytes()));
+                            }
+                        } else {
+                            return new WebResourceResponse(null, UTF_8,
+                                    new ByteArrayInputStream("".getBytes()));
+                        }
+                    }
+
+                    // reader.html
+                    if (mime.equals("application/xhtml+xml")) {
+                        mime = "text/html";
+                    }
 
 					InputStream is = null;
 					try {
@@ -538,12 +574,12 @@ public class WebViewActivity extends FragmentActivity implements
 					// iframe(s)
 
 					evaluateJavascript(INJECT_EPUB_RSO_SCRIPT_2);
-					
+
 					return new WebResourceResponse("text/javascript", UTF_8,
 							new ByteArrayInputStream(
 									"(function(){})()".getBytes()));
 				}
-				
+
 				if (cleanedUrl.matches("\\/?readium_MathJax.js")) {
 					if (!quiet)
 						Log.d(TAG, "MathJax.js inject ...");
@@ -579,6 +615,24 @@ public class WebViewActivity extends FragmentActivity implements
 
 					return new WebResourceResponse("text/css", UTF_8, is);
 				}
+
+                if (cleanedUrl.matches("\\/?font-faces\\/.*")) {
+                    if (!quiet)
+                        Log.d(TAG, "font-face inject ...");
+
+                    InputStream is = null;
+                    try {
+                        is = getAssets().open(cleanedUrl);
+                    } catch (IOException e) {
+
+                        Log.e(TAG, "font-face asset fail!");
+
+                        return new WebResourceResponse(null, UTF_8,
+                                new ByteArrayInputStream("".getBytes()));
+                    }
+
+                    return new WebResourceResponse(null, UTF_8, is);
+                }
 
 
 				ManifestItem item = mPackage.getManifestItem(cleanedUrl);

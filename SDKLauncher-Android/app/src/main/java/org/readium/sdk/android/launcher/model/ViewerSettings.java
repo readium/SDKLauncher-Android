@@ -42,12 +42,14 @@ public class ViewerSettings {
 
     private final SyntheticSpreadMode mSyntheticSpreadMode;
     private final ScrollMode mScrollMode;
+    private final int mFontSelection;
     private final int mFontSize;
     private final int mColumnGap;
 
-	public ViewerSettings(SyntheticSpreadMode syntheticSpreadMode, ScrollMode scrollMode, int fontSize, int columnGap) {
+	public ViewerSettings(SyntheticSpreadMode syntheticSpreadMode, ScrollMode scrollMode, int fontSelection, int fontSize, int columnGap) {
 		mSyntheticSpreadMode = syntheticSpreadMode;
         mScrollMode = scrollMode;
+        mFontSelection = fontSelection;
 		mFontSize = fontSize;
 		mColumnGap = columnGap;
 	}
@@ -60,6 +62,10 @@ public class ViewerSettings {
         return mScrollMode;
     }
 
+    public int getFontSelection() {
+        return mFontSelection;
+    }
+
     public int getFontSize() {
         return mFontSize;
     }
@@ -67,7 +73,7 @@ public class ViewerSettings {
     public int getColumnGap() {
         return mColumnGap;
     }
-	
+
 	public JSONObject toJSON() throws JSONException {
 		JSONObject json = new JSONObject();
 
@@ -100,6 +106,7 @@ public class ViewerSettings {
         }
         json.put("scroll", scroll);
 
+        json.put("fontSelection", mFontSelection);
 		json.put("fontSize", mFontSize);
 		json.put("columnGap", mColumnGap);
 		return json;
@@ -110,6 +117,7 @@ public class ViewerSettings {
         return "ViewerSettings{" +
                 "mSyntheticSpreadMode=" + mSyntheticSpreadMode +
                 ", mScrollMode=" + mScrollMode +
+                ", mFontSelection=" + mFontSelection +
                 ", mFontSize=" + mFontSize +
                 ", mColumnGap=" + mColumnGap +
                 '}';

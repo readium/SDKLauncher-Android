@@ -29,18 +29,24 @@
 
 package org.readium.sdk.android.launcher;
 
-import org.readium.sdk.android.launcher.model.ViewerSettings;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
+
+import org.readium.sdk.android.launcher.model.Font;
+import org.readium.sdk.android.launcher.model.ViewerSettings;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This dialog displays the viewer settings to the user.
@@ -48,7 +54,7 @@ import android.widget.RadioGroup;
  *
  */
 public class ViewerSettingsDialog extends DialogFragment {
-	
+
 	/**
 	 * Interface to notify the listener when a viewer settings have been changed.
 	 */
@@ -56,16 +62,16 @@ public class ViewerSettingsDialog extends DialogFragment {
 		public void onViewerSettingsChange(ViewerSettings settings);
 	}
 
-	protected static final String TAG = "ViewerSettingsDialog";
-	
-	private OnViewerSettingsChange mListener;
+    protected static final String TAG = "ViewerSettingsDialog";
+    private final List<Font> mFontFaces;
+    private OnViewerSettingsChange mListener;
+    private ViewerSettings mOriginalSettings;
 
-	private ViewerSettings mOriginalSettings;
-	
-	public ViewerSettingsDialog(OnViewerSettingsChange listener, ViewerSettings originalSettings) {
-		mListener = listener;
-		mOriginalSettings = originalSettings;
-	}
+    public ViewerSettingsDialog(OnViewerSettingsChange listener, ViewerSettings originalSettings, List<Font> fontFaces) {
+        mListener = listener;
+        mOriginalSettings = originalSettings;
+        mFontFaces = fontFaces;
+    }
 
 	@Override
 	public Dialog onCreateDialog(
@@ -102,6 +108,18 @@ public class ViewerSettingsDialog extends DialogFragment {
                 break;
         }
 
+        final Spinner fontSpinner = (Spinner) dialogView.findViewById(R.id.spinner);
+        List<String> fontDisplayName = new ArrayList<String>();
+        fontDisplayName.add("Default");
+        for (Font font : mFontFaces) {
+            fontDisplayName.add(font.getDisplayName());
+        }
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(getContext(),
+                android.R.layout.simple_spinner_item, fontDisplayName);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        fontSpinner.setAdapter(dataAdapter);
+        fontSpinner.setSelection(mOriginalSettings.getFontSelection());
+
         final EditText fontSizeText = (EditText) dialogView.findViewById(R.id.fontSize);
         fontSizeText.setText("" + mOriginalSettings.getFontSize());
 
@@ -115,6 +133,7 @@ public class ViewerSettingsDialog extends DialogFragment {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         if (mListener != null) {
+                            int fontSelection = fontSpinner.getSelectedItemPosition();
                             int fontSize = parseString(fontSizeText.getText().toString(), 100);
                             int columnGap = parseString(columnGapText.getText().toString(), 20);
 
@@ -144,7 +163,7 @@ public class ViewerSettingsDialog extends DialogFragment {
                                     break;
                             }
 
-                            ViewerSettings settings = new ViewerSettings(syntheticSpreadMode, scrollMode, fontSize, columnGap);
+                            ViewerSettings settings = new ViewerSettings(syntheticSpreadMode, scrollMode, fontSelection, fontSize, columnGap);
                             mListener.onViewerSettingsChange(settings);
                         }
                         dismiss();
