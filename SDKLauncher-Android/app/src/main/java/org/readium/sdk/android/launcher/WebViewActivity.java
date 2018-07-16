@@ -616,19 +616,20 @@ public class WebViewActivity extends FragmentActivity implements
 					return new WebResourceResponse("text/css", UTF_8, is);
 				}
 
-                if (cleanedUrl.matches("\\/?font-faces\\/.*")) {
+                if (cleanedUrl.matches(".*\\/?font-faces\\/.*")) {
                     if (!quiet)
                         Log.d(TAG, "font-face inject ...");
 
+                    String assetPath = cleanedUrl.substring(cleanedUrl.lastIndexOf("font-faces/"));
+
                     InputStream is = null;
                     try {
-                        is = getAssets().open(cleanedUrl);
+                        is = getAssets().open(assetPath);
                     } catch (IOException e) {
 
                         Log.e(TAG, "font-face asset fail!");
 
-                        return new WebResourceResponse(null, UTF_8,
-                                new ByteArrayInputStream("".getBytes()));
+                        return super.shouldInterceptRequest(view, url);
                     }
 
                     return new WebResourceResponse(null, UTF_8, is);
