@@ -1,21 +1,26 @@
 def ndk_experimental = (rootProject.hasProperty("readium_ndk_experimental") && rootProject.readium_ndk_experimental)
 
+println "[[${project.name}]] (APP) Gradle Experimental: ${ndk_experimental}"
+
 if (ndk_experimental) {
-    println "${project.name}: Using Gradle EXPERIMENTAL to build application"
     apply from: 'build_experimental.gradle'
 } else {
-    println "${project.name}: Using Gradle STABLE to build application"
     apply from: 'build_stable.gradle'
 }
 
-
 repositories {
+    if (!ndk_experimental) {
+        google()
+    }
+    maven {
+        url "https://maven.google.com"
+    }
     mavenCentral()
     jcenter()
+    maven { url 'https://maven.fabric.io/public' }
     flatDir {
         dirs '../libs'
     }
-    maven { url 'https://maven.fabric.io/public' }
 }
 
 dependencies {
@@ -56,18 +61,22 @@ buildAssets.dependsOn "buildCssAssets",
 apply from: 'build_epubReadingSystem.gradle'
 
 tasks.whenTaskAdded { task ->
-    def taskName = task.name
+    println "[[${project.name}]] (APP) TaskAdded: ${task.name}"
 
-    if (taskName.startsWith("compile")) {
+    if (task.name.startsWith("compile")) {
+        def isDebug = task.name.toLowerCase().contains("debug")
+
         if (ndk_experimental) {
             task.dependsOn "buildAssets",
-                    ":lcp:build",
-                    "buildEpubReadingSystem"
+                isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
+                "buildEpubReadingSystem"
         } else {
-            println("Task: ${taskName}")
             task.dependsOn "buildAssets",
-                    ":epub3:buildMk",
-                    "buildEpubReadingSystem"
+                isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
+                "buildEpubReadingSystem"
         }
     }
+}
+gradle.buildFinished { buildResult ->
+    println "[[${project.name}]] (APP) buildFinished"
 }

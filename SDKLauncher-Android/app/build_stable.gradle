@@ -9,8 +9,19 @@ def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? 
 
 def lcpDir = project(':lcp').projectDir
 def epub3Dir = project(':epub3').projectDir
+def rsdkDir = project(':rsdk').projectDir
 
+println "[[${project.name}]] (APP) Skip ARM: ${ndk_skipARM}"
+println "[[${project.name}]] (APP) Skip x86: ${ndk_skipX86}"
+
+def currentBuildType
 android {
+    applicationVariants.all { variant ->
+        println "[[${project.name}]] (APP) libraryVariant buildType: ${variant.buildType.name}"
+
+        // currentBuildType = variant.buildType.name
+    }
+
     compileSdkVersion = 28
     buildToolsVersion = "28.0.3"
 
@@ -62,24 +73,36 @@ android {
 
             jniLibs {
                 dependencies {
-                    project ":epub3"
+                    // project ":rsdk"
                     project ":lcp"
                 }
-                srcDirs = [
-                    "${epub3Dir}/libs",
-                    "${lcpDir}/libs"
-                ]
+                // srcDirs = [
+                //     "${epub3Dir}/jniLibs/RELEASE",
+                //     "${lcpDir}/jniLibs/RELEASE",
+                //     "${epub3Dir}/jniLibs/DEBUG",
+                //     "${lcpDir}/jniLibs/DEBUG"
+                // ]
             } //jniLibs
         } //main
     } //sourceSets
 
     buildTypes {
         debug {
+            sourceSets.main.jniLibs.srcDirs = [
+                // "${epub3Dir}/jniLibs/DEBUG",
+                "${lcpDir}/jniLibs/DEBUG"
+            ]
+            
             ext.enableCrashlytics = false
 
             minifyEnabled = false
         }
         release {
+            sourceSets.main.jniLibs.srcDirs = [
+                // "${epub3Dir}/jniLibs/RELEASE",
+                "${lcpDir}/jniLibs/RELEASE"
+            ]
+            
             ext.enableCrashlytics = false
 
             minifyEnabled = false
@@ -92,27 +115,96 @@ android {
         }
     } //buildTypes
 
+    flavorDimensions "version"
     productFlavors {
-        if (!ndk_skipARM)
-            "arm" {
-                /*dependencies {
-                    compile('org.readium.sdk.lcp:liblcp-armeabi-v7a@aar')
-                }*/
-
+        if (!ndk_skipARM && !ndk_skipX86) {
+            'armeabi-v7a--arm64-v8a--x86--x86_64' {
+                dimension "version"
                 ndk.with {
-                    abiFilters = ["armeabi-v7a"]
+                    abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
                 }
             }
-
-        if (!ndk_skipX86)
-            "x86" {
-                /*dependencies {
-                    compile('org.readium.sdk.lcp:liblcp-x86@aar')
-                }*/
-
-                ndk.with {
-                    abiFilters = ["x86"]
+        } else {
+            if (!ndk_skipARM) {
+                'armeabi-v7a--arm64-v8a' {
+                    dimension "version"
+                    ndk.with {
+                        abiFilters = ['armeabi-v7a', 'arm64-v8a']
+                    }
                 }
             }
+            if (!ndk_skipX86) {
+                'x86--x86_64' {
+                    dimension "version"
+                    ndk.with {
+                        abiFilters = ['x86', 'x86_64']
+                    }
+                }
+            }
+        }
     } //productFlavors
 } //android
+
+// task sourceSetJniLibsSrcDirs {
+//     doFirst {
+//         println ("sourceSetJniLibsSrcDirs: ${currentBuildType}")
+//         android.sourceSets.jniLibs.srcDirs = [
+//             "${epub3Dir}/libs/${currentBuildType.toUpperCase()}",
+//             "${lcpDir}/libs/${currentBuildType.toUpperCase()}"
+//         ]
+//     }
+// }
+
+// tasks.whenTaskAdded { task ->
+//     def taskName = task.name
+
+//     if (taskName.startsWith("compile")) {
+//         task.dependsOn "sourceSetJniLibsSrcDirs"
+//     }
+// }
+
+// dependencies {
+//     compile project(":lcp")
+// }
+
+gradle.taskGraph.whenReady { taskGraph ->
+    println "[[${project.name}]] (APP) taskGraph ready"
+
+    // taskGraph.getAllTasks().last().finalizedBy copyLibs
+    taskGraph.getAllTasks().last().doLast {
+        println "[[${project.name}]] (APP) last TASK (${currentBuildType})"
+    } // .dependsOn copyLibs
+
+    if (taskGraph.hasTask(buildRelease)) {
+        println "[[${project.name}]] (APP) taskGraph RELEASE (build)"
+
+        currentBuildType = "release"
+    } else if (taskGraph.hasTask(buildDebug)) {
+        println "[[${project.name}]] (APP) taskGraph DEBUG (build)"
+
+        currentBuildType = "debug"
+    } else {
+        if (taskGraph.hasTask(assembleRelease)) {
+            println "[[${project.name}]] (APP) taskGraph RELEASE (assemble)"
+
+            currentBuildType = "release"
+        }
+        if (taskGraph.hasTask(assembleDebug)) {
+            println "[[${project.name}]] (APP) taskGraph DEBUG (assemble)"
+
+            currentBuildType = "debug"
+        }
+    }
+}
+
+task buildRelease(type: GradleBuild, dependsOn: build) {
+}
+
+task buildDebug(type: GradleBuild, dependsOn: build) {
+}
+
+// task assembleRelease(type: GradleBuild, dependsOn: assemble) {
+// }
+
+// task assembleDebug(type: GradleBuild, dependsOn: assemble) {
+// }
