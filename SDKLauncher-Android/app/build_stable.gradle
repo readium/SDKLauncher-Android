@@ -7,15 +7,22 @@ def ndk_skipARM = (rootProject.hasProperty("readium_ndk_skipARM") && rootProject
 def key_password =  (rootProject.hasProperty("readium_sign_key_password") ? rootProject.readium_sign_key_password : "nope")
 def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? rootProject.readium_sign_store_password : "nope")
 
-def lcpDir = project(':lcp').projectDir
-def epub3Dir = project(':epub3').projectDir
-def rsdkDir = project(':rsdk').projectDir
+//def lcpDir = project(':lcp').projectDir
+//def epub3Dir = project(':epub3').projectDir
+//def rsdkDir = project(':rsdk').projectDir
 
 println "[[${project.name}]] (APP) Skip ARM: ${ndk_skipARM}"
 println "[[${project.name}]] (APP) Skip x86: ${ndk_skipX86}"
 
 def currentBuildType
 android {
+    packagingOptions {
+        pickFirst 'lib/armeabi-v7a/libgnustl_shared.so'
+        pickFirst 'lib/arm64-v8a/libgnustl_shared.so'
+        pickFirst 'lib/x86/libgnustl_shared.so'
+        pickFirst 'lib/x86_64/libgnustl_shared.so'
+    }
+
     applicationVariants.all { variant ->
         println "[[${project.name}]] (APP) libraryVariant buildType: ${variant.buildType.name}"
 
@@ -65,43 +72,48 @@ android {
             java {
                 srcDirs = [
                         './src/main/java',
-                        "${epub3Dir}/../lib/src/main/java",
-                        "${lcpDir}/src/clientlib/java",
-                        "${lcpDir}/src/contentfilter/java"
+//                         "../../readium-sdk/Platform/Android/lib/src/main/java",
+//                         "../../readium-lcp-client/platform/android/lib/src/clientlib/java",
+//                         "../../readium-lcp-client/platform/android/lib/src/contentfilter/java"
+                        // "${epub3Dir}/../lib/src/main/java",
+                        // "${lcpDir}/src/clientlib/java",
+                        // "${lcpDir}/src/contentfilter/java"
                 ]
             } //java
 
-            jniLibs {
-                dependencies {
-                    // project ":rsdk"
-                    project ":lcp"
-                }
-                // srcDirs = [
-                //     "${epub3Dir}/jniLibs/RELEASE",
-                //     "${lcpDir}/jniLibs/RELEASE",
-                //     "${epub3Dir}/jniLibs/DEBUG",
-                //     "${lcpDir}/jniLibs/DEBUG"
-                // ]
-            } //jniLibs
+//             jniLibs {
+//                 dependencies {
+//                     // project ":rsdk"
+//                     // project ":lcp"
+//                     project ":readium-sdk"
+//                     project ":readium-lcp"
+//                 }
+//                 // srcDirs = [
+//                 //     "${epub3Dir}/jniLibs/RELEASE",
+//                 //     "${lcpDir}/jniLibs/RELEASE",
+//                 //     "${epub3Dir}/jniLibs/DEBUG",
+//                 //     "${lcpDir}/jniLibs/DEBUG"
+//                 // ]
+//             } //jniLibs
         } //main
     } //sourceSets
 
     buildTypes {
         debug {
-            sourceSets.main.jniLibs.srcDirs = [
-                // "${epub3Dir}/jniLibs/DEBUG",
-                "${lcpDir}/jniLibs/DEBUG"
-            ]
+            // sourceSets.main.jniLibs.srcDirs = [
+            //     // "${epub3Dir}/jniLibs/DEBUG",
+            //     "${lcpDir}/jniLibs/DEBUG"
+            // ]
             
             ext.enableCrashlytics = false
 
             minifyEnabled = false
         }
         release {
-            sourceSets.main.jniLibs.srcDirs = [
-                // "${epub3Dir}/jniLibs/RELEASE",
-                "${lcpDir}/jniLibs/RELEASE"
-            ]
+            // sourceSets.main.jniLibs.srcDirs = [
+            //     // "${epub3Dir}/jniLibs/RELEASE",
+            //     "${lcpDir}/jniLibs/RELEASE"
+            // ]
             
             ext.enableCrashlytics = false
 
@@ -120,25 +132,25 @@ android {
         if (!ndk_skipARM && !ndk_skipX86) {
             'armeabi-v7a--arm64-v8a--x86--x86_64' {
                 dimension "version"
-                ndk.with {
-                    abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
-                }
+                // ndk.with {
+                //     abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
+                // }
             }
         } else {
             if (!ndk_skipARM) {
                 'armeabi-v7a--arm64-v8a' {
                     dimension "version"
-                    ndk.with {
-                        abiFilters = ['armeabi-v7a', 'arm64-v8a']
-                    }
+                    // ndk.with {
+                    //     abiFilters = ['armeabi-v7a', 'arm64-v8a']
+                    // }
                 }
             }
             if (!ndk_skipX86) {
                 'x86--x86_64' {
                     dimension "version"
-                    ndk.with {
-                        abiFilters = ['x86', 'x86_64']
-                    }
+                    // ndk.with {
+                    //     abiFilters = ['x86', 'x86_64']
+                    // }
                 }
             }
         }

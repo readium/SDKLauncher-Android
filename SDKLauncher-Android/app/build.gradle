@@ -33,6 +33,20 @@ dependencies {
     compile('com.crashlytics.sdk.android:crashlytics:2.7.1@aar') {
         transitive = true;
     }
+
+    api project(path: ':readium-sdk')
+    api project(path: ':readium-lcp')
+
+//    api fileTree(dir: 'libs', include: ['readium-lcp.aar'])
+//    api fileTree(dir: 'libs', include: ['readium-sdk.aar'])
+
+//    api files("libs/readium-sdk.aar")
+//    api files("libs/readium-lcp.aar")
+//    api files("readium-sdk.aar")
+//    api files("readium-lcp.aar")
+
+//    compile(name:'readium-sdk', ext:'aar')
+//    compile(name:'readium-lcp', ext:'aar')
 }
 
 task buildCssAssets(type: Copy) {
@@ -68,11 +82,11 @@ tasks.whenTaskAdded { task ->
 
         if (ndk_experimental) {
             task.dependsOn "buildAssets",
-                isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
+                // isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
                 "buildEpubReadingSystem"
         } else {
             task.dependsOn "buildAssets",
-                isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
+                // isDebug ? ":lcp:assembleDebug" : ":lcp:assembleRelease",
                 "buildEpubReadingSystem"
         }
     }

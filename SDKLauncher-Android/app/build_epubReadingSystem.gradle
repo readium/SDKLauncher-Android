@@ -66,16 +66,16 @@ task buildEpubReadingSystem_Git() {
         ext.branchAndroid = { return rootBranch }
 
         // SDK
-        def sdkFolder = "$projectDir/../../readium-sdk/"
-        def sdkSha = getGitSha(sdkFolder)
-        def sdkStatus = getGitStatus(sdkFolder)
-        def sdkBranch = getGitBranch(sdkFolder, sdkSha)
-        def sdkTag = getGitTag(sdkFolder, sdkSha)
+//        def sdkFolder = "$projectDir/../../readium-sdk/"
+        def sdkSha = "N/A" // getGitSha(sdkFolder)
+        def sdkStatus = "N/A" // getGitStatus(sdkFolder)
+        def sdkBranch = "N/A" // getGitBranch(sdkFolder, sdkSha)
+        def sdkTag = "N/A" // getGitTag(sdkFolder, sdkSha)
         def sdkClean = "false";
 
-        if (sdkStatus.length() == 0) {
-            sdkClean = "true";
-        }
+//        if (sdkStatus.length() == 0) {
+//            sdkClean = "true";
+//        }
 
         ext.shaSDK = { return sdkSha }
         ext.tagSDK = { return sdkTag }
