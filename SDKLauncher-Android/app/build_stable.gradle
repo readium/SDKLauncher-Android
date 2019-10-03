@@ -84,25 +84,43 @@ android {
                 // ]
             } //jniLibs
         } //main
+
+        debug {
+            jniLibs {
+                srcDirs = [
+                        // "${epub3Dir}/jniLibs/DEBUG",
+                        "${lcpDir}/jniLibs/DEBUG"
+                ]
+            } //jniLibs
+        } //debug
+
+        release {
+            jniLibs {
+                srcDirs = [
+                        // "${epub3Dir}/jniLibs/RELEASE",
+                        "${lcpDir}/jniLibs/RELEASE"
+                ]
+            } //jniLibs
+        } //release
     } //sourceSets
 
     buildTypes {
         debug {
-            sourceSets.main.jniLibs.srcDirs = [
-                // "${epub3Dir}/jniLibs/DEBUG",
-                "${lcpDir}/jniLibs/DEBUG"
-            ]
-            
+//            sourceSets.main.jniLibs.srcDirs = [
+//                // "${epub3Dir}/jniLibs/DEBUG",
+//                "${lcpDir}/jniLibs/DEBUG"
+//            ]
+
             ext.enableCrashlytics = false
 
             minifyEnabled = false
         }
         release {
-            sourceSets.main.jniLibs.srcDirs = [
-                // "${epub3Dir}/jniLibs/RELEASE",
-                "${lcpDir}/jniLibs/RELEASE"
-            ]
-            
+//            sourceSets.main.jniLibs.srcDirs = [
+//                // "${epub3Dir}/jniLibs/RELEASE",
+//                "${lcpDir}/jniLibs/RELEASE"
+//            ]
+
             ext.enableCrashlytics = false
 
             minifyEnabled = false
