@@ -11,7 +11,11 @@ def store_password =  (rootProject.hasProperty("readium_sign_store_password") ? 
 
 def lcpDir = project(':lcp').projectDir
 def epub3Dir = project(':epub3').projectDir
+def rsdkDir = project(':rsdk').projectDir
 
+def _buildTypes = []
+def _productFlavors = []
+def currentBuildType
 model {
     android.lintOptions {
         checkReleaseBuilds = false
@@ -35,8 +39,8 @@ model {
     }
 
     android {
-        compileSdkVersion = 26
-        buildToolsVersion = "27.0.3"
+        compileSdkVersion = 28
+        buildToolsVersion = "28.0.3"
 
         defaultConfig {
 
@@ -47,7 +51,7 @@ model {
             minSdkVersion.apiLevel = 19
 
             // manifest/uses-sdk@android:targetSdkVersion attribute in src/main/AndroidManifest.xml
-            targetSdkVersion.apiLevel = 26
+            targetSdkVersion.apiLevel = 28
 
             // manifest@android:versionCode attribute in src/main/AndroidManifest.xml
             versionCode 31
@@ -101,19 +105,105 @@ model {
         } //buildTypes
 
         productFlavors {
-            if (!ndk_skipARM)
-                create("arm") {
+            if (!ndk_skipARM && !ndk_skipX86) {
+                create('armeabi-v7a--arm64-v8a--x86--x86_64') {
                     ndk.with {
-                        abiFilters.add("armeabi-v7a")
+                        abiFilters.add('armeabi-v7a')
+                        abiFilters.add('arm64-v8a')
+                        abiFilters.add('x86')
+                        abiFilters.add('x86_64')
                     }
                 }
-
-            if (!ndk_skipX86)
-                create("x86") {
-                    ndk.with {
-                        abiFilters.add("x86")
+            } else {
+                if (!ndk_skipARM) {
+                    create('armeabi-v7a--arm64-v8a') {
+                        ndk.with {
+                            abiFilters.add('armeabi-v7a')
+                            abiFilters.add('arm64-v8a')
+                        }
                     }
                 }
+                if (!ndk_skipX86) {
+                    create('x86--x86_64') {
+                        ndk.with {
+                            abiFilters.add('x86')
+                            abiFilters.add('x86_64')
+                        }
+                    }
+                }
+            }
         } //productFlavors
     } //android
+
+    components.android {
+        binaries.afterEach { binary ->
+            println "[[${project.name}]] (APP) components.android.binaries buildType: ${binary.getBuildType().name}"
+            if (!_buildTypes.contains(binary.getBuildType().name)) {
+                println "[[${project.name}]] (APP) components.android.binaries buildType ADDED"
+                _buildTypes += binary.getBuildType().name
+            }
+
+            binary.getProductFlavors().each { flavor ->
+                println "  [[${project.name}]] (APP) components.android.binaries productFlavor: ${flavor.name}"
+                if (!_productFlavors.contains(flavor)) {
+                    println "  [[${project.name}]] (APP) components.android.binaries productFlavor ADDED"
+                    _productFlavors += flavor
+                }
+
+                flavor.ndk.abiFilters.each { abiFilter ->
+                    println "    [[${project.name}]] (APP) components.android.binaries abiFilter (${abiFilter})"
+                }
+            }
+            // binary.mergedNdkConfig.cppFlags.add("-DVARIANT=\"" + binary.name + "\"")
+        }
+    }
 } //model
+
+gradle.taskGraph.whenReady { taskGraph ->
+    println "[[${project.name}]] (APP) taskGraph ready"
+
+    // taskGraph.getAllTasks().last().finalizedBy("copyLibs")
+    // taskGraph.getAllTasks().last().doLast "copyLibs"
+    taskGraph.getAllTasks().last().doLast {
+        println "[[${project.name}]] (APP) last TASK (${currentBuildType})"
+    } // .dependsOn "copyLibs"
+
+    if (taskGraph.hasTask(buildRelease)) {
+        println "[[${project.name}]] (APP) taskGraph RELEASE (build)"
+
+        currentBuildType = "release"
+    } else if (taskGraph.hasTask(buildDebug)) {
+        println "[[${project.name}]] (APP) taskGraph DEBUG (build)"
+
+        currentBuildType = "debug"
+    } else {
+        if (taskGraph.hasTask(assembleRelease)) {
+            println "[[${project.name}]] (APP) taskGraph RELEASE (assemble)"
+
+            currentBuildType = "release"
+        }
+        if (taskGraph.hasTask(assembleDebug)) {
+            println "[[${project.name}]] (APP) taskGraph DEBUG (assemble)"
+
+            currentBuildType = "debug"
+        }
+    }
+}
+
+task buildRelease(type: GradleBuild, dependsOn: build) {
+}
+
+task buildDebug(type: GradleBuild, dependsOn: build) {
+}
+
+// task assembleRelease(type: GradleBuild, dependsOn: assemble) {
+// }
+
+// task assembleDebug(type: GradleBuild, dependsOn: assemble) {
+// }
+
+// tasks.all { task ->
+//     if (task.name.startsWith('compile') && task.name.endsWith('Ndk')) {
+//         task.enabled = false
+//     }
+// }
